@@ -23,10 +23,11 @@ extern "C"
 {
 JNIEXPORT jboolean Java_app_organicmaps_sdk_Map_nativeCreateEngine(JNIEnv * env, jclass, jobject surface, jint density,
                                                                    jboolean firstLaunch, jboolean isLaunchByDeepLink,
-                                                                   jint appVersionCode, jboolean isCustomROM)
+                                                                   jint appVersionCode, jboolean isCustomROM,
+                                                                   jboolean isAuto)
 {
   return g_framework->CreateDrapeEngine(env, surface, density, firstLaunch, isLaunchByDeepLink,
-                                        base::asserted_cast<uint32_t>(appVersionCode), isCustomROM);
+                                        base::asserted_cast<uint32_t>(appVersionCode), isCustomROM, isAuto);
 }
 
 JNIEXPORT jboolean Java_app_organicmaps_sdk_Map_nativeIsEngineCreated(JNIEnv *, jclass)

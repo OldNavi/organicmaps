@@ -55,6 +55,7 @@ public enum TtsPlayer
 
   private ContentObserver mTtsEngineObserver;
   private TextToSpeech mTts;
+  private RoxVoice mRoxVoice;
   private final AtomicInteger mTtsQueueSize = new AtomicInteger(0);
   private final UtteranceProgressListener mUtteranceProgressListener = new UtteranceProgressListener() {
     @Override
@@ -90,6 +91,8 @@ public enum TtsPlayer
 
     private void handleStop(@NonNull String utteranceId)
     {
+      if (mRoxVoice != null)
+        return;
       Logger.d(TAG, "TTS Utterance stopped: " + utteranceId);
       if (mTtsQueueSize.decrementAndGet() <= 0)
         mAudioFocusManager.releaseAudioFocus();
@@ -160,9 +163,11 @@ public enum TtsPlayer
 
   private boolean setLanguageInternal(@NonNull LanguageData lang)
   {
-    mTts.setLanguage(lang.locale);
+    if (mTts != null)
+      mTts.setLanguage(lang.locale);
     nativeSetTurnNotificationsLocale(lang.internalCode);
-    Config.TTS.setLanguage(lang.internalCode);
+    if (!Config.TTS.useRoxVoice())
+      Config.TTS.setLanguage(lang.internalCode);
 
     return true;
   }
@@ -193,7 +198,8 @@ public enum TtsPlayer
 
   public static @Nullable LanguageData getSelectedLanguage(List<LanguageData> langs)
   {
-    return findSupportedLanguage(Config.TTS.getLanguage(), langs);
+    return Config.TTS.useRoxVoice() ? getDefaultLanguage(langs)
+                                    : findSupportedLanguage(Config.TTS.getLanguage(), langs);
   }
 
   private void lockDown()
@@ -206,11 +212,25 @@ public enum TtsPlayer
   {
     mContext = context;
 
-    if (mTts != null || mInitializing || mUnavailable)
+    if (mTts != null || mRoxVoice != null || mInitializing || mUnavailable)
       return;
 
     mInitializing = true;
     final int generation = ++mInitGeneration;
+    if (Config.TTS.useRoxVoice())
+    {
+      mRoxVoice = new RoxVoice(context, ready -> {
+        if (generation != mInitGeneration)
+          return;
+        mInitializing = false;
+        mUnavailable = !ready;
+        mHasUsableLanguage = ready && !refreshLanguages().isEmpty();
+        if (sOnReloadCallback != null)
+          sOnReloadCallback.run();
+        notifyStateChanged();
+      });
+      return;
+    }
     // TextToSpeech.OnInitListener() can be called from a non-main thread
     // on LineageOS '20.0-20231127-RELEASE-thyme' 'Xiaomi/thyme/thyme'.
     // https://github.com/organicmaps/organicmaps/issues/6903
@@ -249,6 +269,8 @@ public enum TtsPlayer
         @Override
         public void onChange(boolean selfChange)
         {
+          if (Config.TTS.useRoxVoice())
+            return;
           Logger.d(TAG, "System TTS engine changed – reloading TTS engine");
           mReloadTriggered = true;
           if (mTts != null)
@@ -270,7 +292,8 @@ public enum TtsPlayer
 
   private static boolean isReady()
   {
-    return INSTANCE.mTts != null && !INSTANCE.mUnavailable && !INSTANCE.mInitializing;
+    return (INSTANCE.mTts != null || (INSTANCE.mRoxVoice != null && INSTANCE.mRoxVoice.isReady()))
+ && !INSTANCE.mUnavailable && !INSTANCE.mInitializing;
   }
 
   /**
@@ -301,7 +324,7 @@ public enum TtsPlayer
   {
     if (INSTANCE.mUnavailable)
       return State.UNAVAILABLE;
-    if (INSTANCE.mTts == null || INSTANCE.mInitializing)
+    if ((INSTANCE.mTts == null && INSTANCE.mRoxVoice == null) || INSTANCE.mInitializing)
       return State.INITIALIZING;
     if (!INSTANCE.mHasUsableLanguage)
       return State.NEEDS_LANGUAGE;
@@ -313,6 +336,12 @@ public enum TtsPlayer
     if (!isReady())
       return;
 
+    if (mRoxVoice != null)
+    {
+      if (Config.TTS.isEnabled())
+        mRoxVoice.speak(textToSpeak);
+      return;
+    }
     if (!speakFirstString(textToSpeak))
       stop();
   }
@@ -322,6 +351,12 @@ public enum TtsPlayer
     if (!isReady())
       return;
 
+    if (mRoxVoice != null)
+    {
+      if (Config.TTS.isEnabled())
+        mRoxVoice.speak(String.join(" ", turnNotifications));
+      return;
+    }
     for (int i = 0; i < turnNotifications.length; i++)
     {
       final String text = turnNotifications[i];
@@ -377,6 +412,11 @@ public enum TtsPlayer
 
   public void stop()
   {
+    if (mRoxVoice != null)
+    {
+      mRoxVoice.stop();
+      return;
+    }
     if (!isReady())
       return;
 
@@ -397,6 +437,27 @@ public enum TtsPlayer
     nativeEnableTurnNotifications(enabled);
     if (wasEnabled != enabled)
       notifyStateChanged();
+  }
+
+  public void setUseRoxVoice(boolean enabled)
+  {
+    if (Config.TTS.useRoxVoice() == enabled)
+      return;
+    stop();
+    ++mInitGeneration;
+    if (mTts != null)
+      mTts.shutdown();
+    if (mRoxVoice != null)
+      mRoxVoice.close();
+    mTts = null;
+    mRoxVoice = null;
+    mInitializing = false;
+    mUnavailable = false;
+    mHasUsableLanguage = false;
+    mReloadTriggered = true;
+    Config.TTS.setUseRoxVoice(enabled);
+    initialize(mContext);
+    notifyStateChanged();
   }
 
   public float getVolume()
@@ -463,6 +524,23 @@ public enum TtsPlayer
   public @NonNull List<LanguageData> refreshLanguages()
   {
     List<LanguageData> res = new ArrayList<>();
+    if (mRoxVoice != null)
+    {
+      if (!mRoxVoice.isReady())
+        return res;
+      for (Pair<String, String> language : getSupportedLanguages())
+        res.add(new LanguageData(language.first, language.second));
+      LanguageData selected = getDefaultLanguage(res);
+      res.clear();
+      if (selected != null)
+      {
+        res.add(selected);
+        setLanguageInternal(selected);
+      }
+      mHasUsableLanguage = selected != null;
+      nativeEnableTurnNotifications(Config.TTS.isEnabled());
+      return res;
+    }
     if (mUnavailable || mTts == null)
       return res;
 

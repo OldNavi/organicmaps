@@ -84,6 +84,23 @@
       android:networkSecurityConfig="@xml/network_security_config"
       android:manageSpaceActivity="${applicationId}.ManageSpaceActivity"
       tools:targetApi="33">
+    <meta-data android:name="gwclub-version" android:value="1" />
+
+    <service
+        android:name=".cluster.NavigationReadyService"
+        android:exported="true"
+        android:permission="android.permission.ACCESS_FINE_LOCATION" />
+    <provider
+        android:name=".cluster.NavigationProvider"
+        android:authorities="organicmaps.auto.navi"
+        android:exported="true"
+        android:readPermission="android.permission.ACCESS_FINE_LOCATION" />
+    <service
+        android:name=".cluster.ClusterDisplayService"
+        android:exported="false"
+        android:foregroundServiceType="location"
+        android:stopWithTask="false" />
+
 
     <!-- Allows for config and orientation change without killing/restarting main activity -->
     <activity

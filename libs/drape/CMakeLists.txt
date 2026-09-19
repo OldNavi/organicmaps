@@ -158,7 +158,8 @@ if (PLATFORM_IPHONE OR PLATFORM_MAC)
   )
 endif()
 
-set(SRC ${DRAPE_TESTABLE_SRC} gl_functions.cpp)
+set(SRC
+  render_context.hpp ${DRAPE_TESTABLE_SRC} gl_functions.cpp)
 
 if (PLATFORM_IPHONE)
   append(SRC

@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:installLocation="auto">
 
+  <queries>
+    <package android:name="com.roxmotor.launcherapp" />
+    <package android:name="com.roxmotor.voiceservice" />
+  </queries>
+
   <!-- Requiring "android.hardware.touchscreen" here breaks DeX mode -->
   <uses-feature
       android:glEsVersion="0x00030000"

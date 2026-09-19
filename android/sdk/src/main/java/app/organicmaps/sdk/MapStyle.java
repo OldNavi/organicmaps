@@ -28,8 +28,8 @@ public enum MapStyle
   }
 
   /**
-   * This method allows to set new map style without immediate applying. It can be used before
-   * engine recreation instead of nativeSetMapStyle to avoid huge flow of OpenGL invocations.
+   * Stores the style before rendering resumes. An existing engine queues a refresh of retained
+   * graphics resources; a suspended renderer applies it on resume.
    *
    * @param mapStyle style index
    */

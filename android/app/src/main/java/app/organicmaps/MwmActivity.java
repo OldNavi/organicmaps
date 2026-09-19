@@ -262,6 +262,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (intent == null || mIntentConsumed)
       return;
     mIntentConsumed = true;
+    app.organicmaps.intent.NavigationCommandProcessor.cancelPendingRequests();
 
     final long categoryId = intent.getLongExtra(EXTRA_CATEGORY_ID, -1);
     final long bookmarkId = intent.getLongExtra(EXTRA_BOOKMARK_ID, -1);
@@ -293,6 +294,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     final IntentProcessor[] mIntentProcessors = {
         new Factory.GoggleAssistanceIntentProcessor(),
+        new app.organicmaps.intent.NavigationCommandProcessor(),
         new Factory.UrlProcessor(),
         new Factory.KmzKmlProcessor(),
     };

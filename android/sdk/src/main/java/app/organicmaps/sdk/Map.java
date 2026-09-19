@@ -102,10 +102,11 @@ public final class Map
     final int marginX = Utils.dimen(context, R.dimen.margin_compass) + navPadding;
     final int marginY = Utils.dimen(context, R.dimen.margin_compass_top) + navPadding;
     nativeSetupWidget(WIDGET_COMPASS, mWidth - x - marginX, y + marginY, ANCHOR_CENTER);
-    if (forceRedraw && mSurfaceCreated)
-      nativeApplyWidgets();
     mCurrentCompassOffsetX = x;
     mCurrentCompassOffsetY = y;
+    updateDebugInfoOffset(context);
+    if (forceRedraw && mSurfaceCreated)
+      nativeApplyWidgets();
   }
 
   public static void onCompassUpdated(double north, boolean forceRedraw)
@@ -172,7 +173,7 @@ public final class Map
 
     final boolean firstStart = mLocationHelper.isInFirstRun();
     if (!nativeCreateEngine(surface, surfaceDpi, firstStart, mLaunchByDeepLink, Config.getVersionCode(),
-                            ROMUtils.isCustomROM()))
+                            ROMUtils.isCustomROM(), Config.isAuto()))
     {
       if (mCallbackUnsupported != null)
         mCallbackUnsupported.report();
@@ -328,16 +329,19 @@ public final class Map
     updateBottomWidgetsOffset(context, mBottomWidgetOffsetX, mBottomWidgetOffsetY);
     if (mDisplayType == DisplayType.Device)
     {
-      nativeSetupWidget(WIDGET_SCALE_FPS_LABEL, Utils.dimen(context, R.dimen.margin_base),
-                        Utils.dimen(context, R.dimen.margin_base) * 2, ANCHOR_LEFT_TOP);
       updateCompassOffset(context, mCurrentCompassOffsetX, mCurrentCompassOffsetY, false);
     }
     else
     {
-      nativeSetupWidget(WIDGET_SCALE_FPS_LABEL, (float) mWidth / 2 + Utils.dimen(context, R.dimen.margin_base) * 2,
-                        Utils.dimen(context, R.dimen.margin_base), ANCHOR_LEFT_TOP);
       updateCompassOffset(context, mWidth, mCurrentCompassOffsetY, true);
     }
+  }
+
+  private void updateDebugInfoOffset(Context context)
+  {
+    int margin = Utils.dimen(context, R.dimen.margin_base);
+    float x = mDisplayType == DisplayType.Device ? mBottomWidgetOffsetX + margin : mWidth / 2.0f + 2 * margin;
+    nativeSetupWidget(WIDGET_SCALE_FPS_LABEL, x, mCurrentCompassOffsetY + 2 * margin, ANCHOR_LEFT_TOP);
   }
 
   private void updateRulerOffset(final Context context, int offsetX, int offsetY)
@@ -361,7 +365,8 @@ public final class Map
 
   // Engine
   private static native boolean nativeCreateEngine(Surface surface, int density, boolean firstLaunch,
-                                                   boolean isLaunchByDeepLink, int appVersionCode, boolean isCustomROM);
+                                                   boolean isLaunchByDeepLink, int appVersionCode, boolean isCustomROM,
+                                                   boolean isAuto);
 
   private static native boolean nativeIsEngineCreated();
 

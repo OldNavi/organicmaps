@@ -184,7 +184,7 @@ bool Framework::DestroySurfaceOnDetach()
 }
 
 bool Framework::CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi, bool firstLaunch,
-                                  bool launchByDeepLink, uint32_t appVersionCode, bool isCustomROM)
+                                  bool launchByDeepLink, uint32_t appVersionCode, bool isCustomROM, bool isAuto)
 {
   // Vulkan is supported only since Android 8.0, because some Android devices with Android 7.x
   // have fatal driver issue, which can lead to process termination and whole OS destabilization.
@@ -246,6 +246,7 @@ bool Framework::CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi
   p.m_isChoosePositionMode = m_isChoosePositionMode != ChoosePositionMode::None;
   p.m_hints.m_isFirstLaunch = firstLaunch;
   p.m_hints.m_isLaunchByDeepLink = launchByDeepLink;
+  p.m_hints.m_maxFps = isAuto ? 30 : 0;
   ASSERT(!m_guiPositions.empty(), ("GUI elements must be set-up before engine is created"));
   p.m_widgetsInitInfo = m_guiPositions;
 
@@ -259,6 +260,91 @@ bool Framework::CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi
   m_work.EnterForeground();
 
   return true;
+}
+
+Framework::~Framework()
+{
+  while (!m_navigationViews.empty())
+    DestroyNavigationView(m_navigationViews.begin()->first);
+}
+
+int64_t Framework::CreateNavigationView(JNIEnv * env, jobject surface, int dpi, int zoom, bool showPoi,
+                                        bool buildings3d, double tilt, double anchorX, double anchorY)
+{
+  auto factory = make_unique_dp<AndroidOGLContextFactory>(env, surface);
+  if (!factory->IsValid())
+    return 0;
+  int const width = factory->GetWidth();
+  int const height = factory->GetHeight();
+  NavigationView view;
+  view.m_factory = make_unique_dp<dp::ThreadSafeFactory>(factory.release());
+  view.m_engine =
+      m_work.CreateNavigationRenderer(make_ref(view.m_factory), width, height, df::DPI2VS(dpi), showPoi, buildings3d);
+  int const initialZoom = zoom == 0 ? 16 : zoom;
+  view.m_engine->SetModelViewCenter(mercator::FromLatLon(0.0, 0.0), initialZoom, false, false);
+  view.m_engine->SetClusterCamera(zoom, tilt, {anchorX, anchorY});
+  m_work.GetRoutingManager().GetNavigationScene().Attach(view.m_engine.get());
+  auto const id = ++m_nextNavigationView;
+  m_navigationViews.emplace(id, std::move(view));
+  return id;
+}
+
+void Framework::DestroyNavigationView(int64_t id)
+{
+  auto it = m_navigationViews.find(id);
+  if (it == m_navigationViews.end())
+    return;
+  m_work.GetRoutingManager().GetNavigationScene().Detach(it->second.m_engine.get());
+  m_navigationViews.erase(it);
+}
+
+void Framework::ResizeNavigationView(int64_t id, int width, int height)
+{
+  auto it = m_navigationViews.find(id);
+  if (it == m_navigationViews.end())
+    return;
+  it->second.m_factory->CastFactory<AndroidOGLContextFactory>()->UpdateSurfaceSize(width, height);
+  it->second.m_engine->Resize(width, height);
+  it->second.m_engine->SetVisibleViewport(m2::RectD(0, 0, width, height));
+}
+
+void Framework::SetNavigationViewCamera(int64_t id, int zoom, double tilt, double anchorX, double anchorY)
+{
+  auto it = m_navigationViews.find(id);
+  if (it != m_navigationViews.end())
+    it->second.m_engine->SetClusterCamera(zoom, tilt, {anchorX, anchorY});
+}
+
+void Framework::SetNavigationView3dBuildings(int64_t id, bool enabled)
+{
+  auto const it = m_navigationViews.find(id);
+  if (it != m_navigationViews.end())
+    it->second.m_engine->SetCluster3dBuildings(enabled);
+}
+
+void Framework::SetNavigationViewPoiVisible(int64_t id, bool visible)
+{
+  auto const it = m_navigationViews.find(id);
+  if (it != m_navigationViews.end())
+    it->second.m_engine->SetPoiVisible(visible);
+}
+
+std::array<uint32_t, 4> Framework::GetNavigationViewTileStats(int64_t id) const
+{
+  auto const it = m_navigationViews.find(id);
+  return it == m_navigationViews.end() ? std::array<uint32_t, 4>{} : it->second.m_engine->GetTileStats();
+}
+
+double Framework::GetNavigationViewTilt(int64_t id) const
+{
+  auto const it = m_navigationViews.find(id);
+  return it == m_navigationViews.end() ? 0.0 : it->second.m_engine->GetCurrentTilt();
+}
+
+double Framework::GetNavigationViewZoom(int64_t id) const
+{
+  auto const it = m_navigationViews.find(id);
+  return it == m_navigationViews.end() ? 0.0 : it->second.m_engine->GetCurrentZoomLevel();
 }
 
 bool Framework::IsDrapeEngineCreated() const
@@ -424,12 +510,9 @@ void Framework::SetMapStyle(MapStyle mapStyle)
 
 void Framework::MarkMapStyle(MapStyle mapStyle)
 {
-  // In case of Vulkan rendering we don't recreate geometry and textures data, so
-  // we need use SetMapStyle instead of MarkMapStyle in all cases.
-  if (m_vulkanContextFactory)
-    m_work.SetMapStyle(mapStyle);
-  else
-    m_work.MarkMapStyle(mapStyle);
+  // Both Vulkan and OpenGL can retain tiles across activity configuration changes.
+  // Queue their refresh even while detached; a suspended renderer applies it on resume.
+  m_work.SetMapStyle(mapStyle);
 }
 
 MapStyle Framework::GetMapStyle() const

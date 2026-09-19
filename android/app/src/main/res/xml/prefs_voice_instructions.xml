@@ -4,6 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools">
 
   <SwitchPreferenceCompat
+      android:key="@string/pref_tts_rox"
+      android:title="@string/pref_tts_rox_title"
+      android:summary="@string/pref_tts_rox_summary"
+      android:defaultValue="false" />
+  <SwitchPreferenceCompat
       android:key="@string/pref_tts_enabled"
       android:title="@string/pref_tts_enable_title" />
   <SwitchPreferenceCompat

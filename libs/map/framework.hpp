@@ -426,6 +426,9 @@ public:
   ref_ptr<df::DrapeEngine> GetDrapeEngine();
   bool IsDrapeEngineCreated() const { return m_drapeEngine != nullptr; }
   void DestroyDrapeEngine();
+  drape_ptr<df::DrapeEngine> CreateNavigationRenderer(ref_ptr<dp::GraphicsContextFactory> factory, int width,
+                                                      int height, double visualScale, bool showPoi = false,
+                                                      bool allow3dBuildings = false);
   /// Called when graphics engine should be temporarily paused and then resumed.
   void SetRenderingEnabled(ref_ptr<dp::GraphicsContextFactory> contextFactory = nullptr);
   void SetRenderingDisabled(bool destroySurface);

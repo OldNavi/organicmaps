@@ -45,6 +45,13 @@ private:
   drape_ptr<dp::ThreadSafeFactory> m_oglContextFactory;
   drape_ptr<dp::GraphicsContextFactory> m_vulkanContextFactory;
   ::Framework m_work;
+  struct NavigationView
+  {
+    drape_ptr<dp::ThreadSafeFactory> m_factory;
+    drape_ptr<df::DrapeEngine> m_engine;
+  };
+  std::map<int64_t, NavigationView> m_navigationViews;
+  int64_t m_nextNavigationView = 0;
 
   math::LowPassVector<float, 3> m_sensors[2];
   double m_lastCompass = 0;
@@ -68,6 +75,7 @@ private:
 
 public:
   Framework(std::function<void()> && afterMapsLoaded);
+  ~Framework();
 
   storage::Storage & GetStorage();
   DataSource const & GetDataSource();
@@ -79,8 +87,18 @@ public:
   void OnCompassUpdated(location::CompassInfo const & info, bool forceRedraw);
 
   bool CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi, bool firstLaunch, bool launchByDeepLink,
-                         uint32_t appVersionCode, bool isCustomROM);
+                         uint32_t appVersionCode, bool isCustomROM, bool isAuto);
   bool IsDrapeEngineCreated() const;
+  int64_t CreateNavigationView(JNIEnv * env, jobject surface, int dpi, int zoom, bool showPoi, bool buildings3d,
+                               double tilt, double anchorX, double anchorY);
+  void DestroyNavigationView(int64_t id);
+  void ResizeNavigationView(int64_t id, int width, int height);
+  void SetNavigationViewCamera(int64_t id, int zoom, double tilt, double anchorX, double anchorY);
+  double GetNavigationViewTilt(int64_t id) const;
+  std::array<uint32_t, 4> GetNavigationViewTileStats(int64_t id) const;
+  void SetNavigationViewPoiVisible(int64_t id, bool visible);
+  void SetNavigationView3dBuildings(int64_t id, bool enabled);
+  double GetNavigationViewZoom(int64_t id) const;
   void UpdateDpi(int dpi);
   bool DestroySurfaceOnDetach();
   void DetachSurface(bool destroySurface);

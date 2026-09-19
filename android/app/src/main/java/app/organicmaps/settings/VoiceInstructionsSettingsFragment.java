@@ -26,6 +26,7 @@ import app.organicmaps.R;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.settings.SpeedCameraMode;
 import app.organicmaps.sdk.sound.LanguageData;
+import app.organicmaps.sdk.sound.RoxVoice;
 import app.organicmaps.sdk.sound.TtsPlayer;
 import app.organicmaps.sdk.util.Config;
 import app.organicmaps.util.UiUtils;
@@ -41,6 +42,7 @@ public class VoiceInstructionsSettingsFragment extends BaseXmlSettingsFragment
   @NonNull
   @SuppressWarnings("NotNullFieldNotInitialized")
   private TwoStatePreference mTtsPrefEnabled;
+  private TwoStatePreference mTtsRox;
   @NonNull
   @SuppressWarnings("NotNullFieldNotInitialized")
   private ListPreference mTtsPrefLanguages;
@@ -143,6 +145,13 @@ public class VoiceInstructionsSettingsFragment extends BaseXmlSettingsFragment
   {
     super.onViewCreated(view, savedInstanceState);
 
+    mTtsRox = getPreference(getString(R.string.pref_tts_rox));
+    mTtsRox.setPersistent(false);
+    mTtsRox.setOnPreferenceChangeListener((preference, value) -> {
+      TtsPlayer.INSTANCE.setUseRoxVoice((Boolean) value);
+      updateTts();
+      return true;
+    });
     mTtsPrefEnabled = getPreference(getString(R.string.pref_tts_enabled));
     mTtsPrefLanguages = getPreference(getString(R.string.pref_tts_language));
     mTtsPrefStreetNames = getPreference(getString(R.string.pref_tts_street_names));
@@ -178,11 +187,7 @@ public class VoiceInstructionsSettingsFragment extends BaseXmlSettingsFragment
       return true;
     });
 
-    TtsPlayer.sOnReloadCallback = () ->
-    {
-      Toast.makeText(requireContext(), "TTS engine reloaded", Toast.LENGTH_SHORT).show();
-      updateTts();
-    };
+    TtsPlayer.sOnReloadCallback = this::updateTts;
 
     initVolume();
     initTtsLangInfoLink();
@@ -233,6 +238,11 @@ public class VoiceInstructionsSettingsFragment extends BaseXmlSettingsFragment
   private void updateTts()
   {
     enableListeners(false);
+    boolean rox = Config.TTS.useRoxVoice();
+    mTtsRox.setVisible(rox || RoxVoice.isAvailable(requireContext()));
+    mTtsRox.setChecked(rox);
+    getPreference(getString(R.string.pref_tts_open_system_settings)).setVisible(!rox);
+    getPreference(getString(R.string.pref_tts_info_link)).setVisible(!rox);
 
     final List<LanguageData> languages = TtsPlayer.INSTANCE.refreshLanguages();
     mLanguages.clear();
@@ -279,11 +289,11 @@ public class VoiceInstructionsSettingsFragment extends BaseXmlSettingsFragment
     mCurrentLanguage = TtsPlayer.getSelectedLanguage(languages);
     final boolean available = (mCurrentLanguage != null && mCurrentLanguage.downloaded);
     mTtsPrefEnabled.setChecked(available && TtsPlayer.isEnabled());
-    mTtsPrefLanguages.setVisible(available && TtsPlayer.isEnabled());
+    mTtsPrefLanguages.setVisible(!rox && available && TtsPlayer.isEnabled());
     mTtsPrefLanguages.setSummary(available ? mCurrentLanguage.name : null);
     mTtsPrefLanguages.setValue(available ? mCurrentLanguage.internalCode : null);
     mTtsPrefStreetNames.setVisible(enabled && available && TtsPlayer.isEnabled());
-    mTtsVolume.setVisible(enabled && available && TtsPlayer.isEnabled());
+    mTtsVolume.setVisible(!rox && enabled && available && TtsPlayer.isEnabled());
     mTtsVoiceTest.setVisible(enabled && available && TtsPlayer.isEnabled());
 
     if (available)
@@ -328,6 +338,11 @@ public class VoiceInstructionsSettingsFragment extends BaseXmlSettingsFragment
 
   private void updateGoogleTtsInfoSummary(@StringRes int textResId)
   {
+    if (Config.TTS.useRoxVoice())
+    {
+      mTtsLangInfo.setSummary(R.string.pref_tts_rox_summary);
+      return;
+    }
     final String gpText = "Google Play";
     final String text = getString(textResId);
     final int gpTextStart = text.indexOf(gpText);

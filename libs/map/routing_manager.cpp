@@ -578,6 +578,7 @@ void RoutingManager::RemoveRoute(bool deactivateFollowing)
       SetPointsFollowingMode(false /* enabled */);
   });
 
+  m_navigationScene.Remove(0);
   if (deactivateFollowing)
   {
     m_transitReadManager->BlockTransitSchemeMode(false /* isBlocked */);
@@ -764,7 +765,7 @@ MwmSet::MwmId RoutingManager::GetMwmId(routing::NumMwmId numMwmId) const
 
 bool RoutingManager::InsertRoute(RoutesResult const & result)
 {
-  if (!m_drapeEngine || result.m_routes.empty())
+  if (result.m_routes.empty())
     return false;
 
   // TODO: Now we always update whole route, so we need to remove previous one.
@@ -904,8 +905,10 @@ void RoutingManager::InsertSingleRoute(RouteBase const & route, bool isActive, d
 
     CollectRoadWarnings(segments, startPt, subroute->m_baseDistance, roadWarnings);
 
-    auto const subrouteId =
-        m_drapeEngine.SafeCallWithResult(&df::DrapeEngine::AddSubroute, df::SubrouteConstPtr(subroute.release()));
+    auto const subrouteId = df::DrapeEngine::NewSubrouteId();
+    df::SubrouteConstPtr routeShape(subroute.release());
+    m_drapeEngine.SafeCall(&df::DrapeEngine::AddSubrouteWithId, subrouteId, routeShape);
+    m_navigationScene.Add(subrouteId, routeShape);
 
     std::lock_guard<std::mutex> lock(m_drapeSubroutesMutex);
     m_drapeSubroutes.push_back(subrouteId);
@@ -1787,6 +1790,7 @@ void RoutingManager::OnExtrapolatedLocationUpdate(location::GpsInfo const & info
 
   auto routeMatchingInfo = GetRouteMatchingInfo(gpsInfo);
   m_drapeEngine.SafeCall(&df::DrapeEngine::SetGpsInfo, gpsInfo, m_routingSession.IsNavigable(), routeMatchingInfo);
+  m_navigationScene.SetGpsInfo(gpsInfo, m_routingSession.IsNavigable(), routeMatchingInfo);
 }
 
 void RoutingManager::DeleteSavedRoutePoints()

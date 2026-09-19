@@ -1,5 +1,7 @@
 #pragma once
 
+#include "drape_frontend/navigation_scene.hpp"
+
 #include "map/bookmark_manager.hpp"
 #include "map/extrapolation/extrapolator.hpp"
 #include "map/routing_mark.hpp"
@@ -258,6 +260,8 @@ public:
   {
     m_routingSession.SetTurnNotificationsUnits(units);
   }
+  df::NavigationScene & GetNavigationScene() { return m_navigationScene; }
+
   void SetDrapeEngine(ref_ptr<df::DrapeEngine> engine, bool is3dAllowed);
   /// \returns true if altitude information along |m_route| is available and
   /// false otherwise.
@@ -368,6 +372,7 @@ private:
   RouteRecommendCallback m_routeRecommendCallback;
   Callbacks m_callbacks;
   df::DrapeEngineSafePtr m_drapeEngine;
+  df::NavigationScene m_navigationScene;
   routing::RouterType m_currentRouterType = routing::RouterType::Count;
   bool m_loadAltitudes = false;
   routing::RoutingSession m_routingSession;

@@ -62,6 +62,8 @@ public:
     MapDataProvider const & m_model;
     TUpdateCurrentCountryFn m_updateCurrentCountryFn;
     ref_ptr<RequestedTiles> m_requestedTiles;
+    bool m_poiVisible = true;
+    bool m_trackTileHistory = false;
     bool m_allow3dBuildings;
     bool m_trafficEnabled;
     bool m_isolinesEnabled;

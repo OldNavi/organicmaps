@@ -59,6 +59,7 @@ android {
       enableSplit = false
     }
   }
+    flavorDimensions 'default'
 
   defaultConfig {
     versionCode = rootProject.ext.versionCode
@@ -66,6 +67,7 @@ android {
     println('Version: ' + versionName)
     println('VersionCode: ' + versionCode)
     applicationId rootProject.ext.appId
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     buildConfigField 'String', 'SUPPORT_MAIL', '"android@organicmaps.app"'
     // Should be customized in flavors.
     buildConfigField 'String', 'REVIEW_URL', '""'
@@ -76,9 +78,8 @@ android {
     ndk.debugSymbolLevel = 'full'
   }
 
-  flavorDimensions += 'default'
 
-  productFlavors {
+    productFlavors {
     // 01 is a historical artefact, sorry.
     final int HUAWEI_VERSION_CODE_BASE = 01_00_00_00_00
 
@@ -92,14 +93,14 @@ android {
     web {
       dimension 'default'
       applicationIdSuffix '.web'
-      versionName = android.defaultConfig.versionName + '-Web'
-      buildConfigField 'String', 'SUPPORT_MAIL', '"apk@organicmaps.app"'
+        versionName android.defaultConfig.versionName + '-Web'
+        buildConfigField 'String', 'SUPPORT_MAIL', '"apk@organicmaps.app"'
     }
 
     fdroid {
       dimension 'default'
-      versionName = android.defaultConfig.versionName + '-FDroid'
-      buildConfigField 'String', 'SUPPORT_MAIL', '"fdroid@organicmaps.app"'
+        versionName android.defaultConfig.versionName + '-FDroid'
+        buildConfigField 'String', 'SUPPORT_MAIL', '"fdroid@organicmaps.app"'
     }
 
     huawei {
@@ -109,7 +110,12 @@ android {
       buildConfigField 'String', 'SUPPORT_MAIL', '"huawei@organicmaps.app"'
       buildConfigField 'String', 'REVIEW_URL', '"appmarket://details?id=app.organicmaps"'
     }
-  }
+        auto {
+            dimension 'default'
+            applicationIdSuffix '.auto'
+            versionName android.defaultConfig.versionName + 'auto'
+        }
+    }
 
   playConfigs {
     googleRelease {
@@ -266,6 +272,8 @@ dependencies {
   implementation libs.devnullorthrow.mpandroidchart
 
   // Test Dependencies
+  androidTestImplementation libs.androidx.junit
+  androidTestImplementation libs.androidx.test.runner
   testImplementation libs.androidx.junit
   testImplementation libs.mockito.core
   testImplementation libs.mockito.inline
@@ -302,9 +310,17 @@ def allowedPermissions = [
     // app.organicmaps.(debug|beta|profileable)
     // app.organicmaps.web
     // app.organicmaps.web.(debug|beta|profileable)
-    ~/name='app\.organicmaps(\.web)?(\.debug|\.beta|\.profileable)?\.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'/
+    // app.organicmaps.auto and app.organicmaps.auto.(debug|beta|profileable)
+    ~/name='app\.organicmaps(\.web|\.auto)?(\.debug|\.beta|\.profileable)?\.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'/
 ]
 registerCheckApkPermissionsTasks(project, allowedPermissions)
+androidComponents.onVariants(androidComponents.selector().withFlavor('default', 'auto')) { variant ->
+  tasks.named("check${variant.name.capitalize()}ApkPermissions").configure { task ->
+    task.allowedPermissions.add(java.util.regex.Pattern.compile(
+        "name='android.permission.ACCESS_BACKGROUND_LOCATION'"))
+  }
+}
+
 
 
 androidComponents {

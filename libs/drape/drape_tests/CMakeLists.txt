@@ -4,6 +4,7 @@ set(DRAPE_TESTABLE_SRC_PREFIXED  ${DRAPE_TESTABLE_SRC})
 list(TRANSFORM DRAPE_TESTABLE_SRC_PREFIXED PREPEND "../")
 
 set(SRC
+  render_context_tests.cpp
   ${DRAPE_TESTABLE_SRC_PREFIXED}
   attribute_provides_tests.cpp
   batcher_tests.cpp

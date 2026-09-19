@@ -76,6 +76,11 @@ public final class Config
     return mFlavor.equals("fdroid");
   }
 
+  public static boolean isAuto()
+  {
+    return mFlavor.equals("auto");
+  }
+
   private static int getInt(String key, int def)
   {
     return nativeGetInt(key, def);
@@ -484,6 +489,7 @@ public final class Config
       String LANGUAGE = "TtsLanguage";
       String VOLUME = "TtsVolume";
       String STREETS = "TtsStreetNames";
+      String ROX = "TtsRoxVoice";
     }
 
     public interface Defaults
@@ -516,6 +522,20 @@ public final class Config
     public static void setLanguage(@NonNull final String language)
     {
       setString(Keys.LANGUAGE, language);
+    }
+
+    public static boolean hasVoiceBackendSelection()
+    {
+      return nativeHasConfigValue(Keys.ROX);
+    }
+
+    public static boolean useRoxVoice()
+    {
+      return getBool(Keys.ROX, false);
+    }
+    public static void setUseRoxVoice(boolean enabled)
+    {
+      setBool(Keys.ROX, enabled);
     }
 
     public static float getVolume()

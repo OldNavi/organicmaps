@@ -222,7 +222,6 @@ std::string DebugPrint(SystemProgram p)
 
 MetalProgramPool::MetalProgramPool(id<MTLDevice> device) : m_device(device)
 {
-  ProgramParams::Init();
 
   NSString * libPath = [[NSBundle mainBundle] pathForResource:@"shaders_metal" ofType:@"metallib"];
   NSError * error = nil;
@@ -237,7 +236,6 @@ MetalProgramPool::MetalProgramPool(id<MTLDevice> device) : m_device(device)
 
 MetalProgramPool::~MetalProgramPool()
 {
-  ProgramParams::Destroy();
 }
 
 drape_ptr<dp::GpuProgram> MetalProgramPool::GetSystemProgram(SystemProgram program)

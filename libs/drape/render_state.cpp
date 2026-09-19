@@ -207,7 +207,7 @@ bool RenderState::operator!=(RenderState const & other) const
   return !operator==(other);
 }
 
-std::vector<glConst> TextureState::m_usedTextureTypes;
+thread_local std::vector<glConst> TextureState::m_usedTextureTypes;
 
 void TextureState::ApplyTextures(ref_ptr<GraphicsContext> context, RenderState const & state,
                                  ref_ptr<GpuProgram> program)

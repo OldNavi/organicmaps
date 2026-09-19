@@ -99,6 +99,7 @@ public class RoutingController
 
   private BuildState mBuildState = BuildState.NONE;
   private State mState = State.NONE;
+  private boolean mStartAfterBuild;
   @Nullable
   private PendingPoiPick mPendingPoiPick;
   // Cached computeCanPickMyPosition() of the armed pick. Filled on the first ask, so arming a pick does not call into
@@ -188,8 +189,15 @@ public class RoutingController
     if (mLastResultCode == ResultCodes.NO_ERROR || mLastResultCode == ResultCodes.HAS_WARNINGS)
     {
       updatePlan();
+      MapObject startPoint = getStartPoint();
+      boolean startNow = mStartAfterBuild && mLastResultCode == ResultCodes.NO_ERROR && isPlanning() && isBuilt()
+                      && startPoint != null && startPoint.isMyPosition();
+      mStartAfterBuild = false;
+      if (startNow)
+        start();
       return;
     }
+    mStartAfterBuild = false;
 
     if (mLastResultCode == ResultCodes.CANCELLED)
     {
@@ -437,7 +445,14 @@ public class RoutingController
 
   public void prepare(final @Nullable MapObject startPoint, final @Nullable MapObject endPoint, Router routerType)
   {
+    prepare(startPoint, endPoint, routerType, false);
+  }
+
+  public void prepare(final @Nullable MapObject startPoint, final @Nullable MapObject endPoint, Router routerType,
+                      boolean startGuidance)
+  {
     cancel();
+    mStartAfterBuild = startGuidance;
     setState(State.PREPARE);
 
     mLastRouterType = routerType;
@@ -447,6 +462,11 @@ public class RoutingController
       setPointsInternal(startPoint, endPoint);
 
     startPlanning(startPoint, endPoint);
+  }
+
+  public void cancelPendingAutoStart()
+  {
+    mStartAfterBuild = false;
   }
 
   public void start()
@@ -468,6 +488,7 @@ public class RoutingController
   }
   public void replaceStop(@NonNull MapObject mapObject)
   {
+    mStartAfterBuild = false;
     final PendingPoiPick pick = requirePendingPoiPick();
     if (!pick.isReplacement())
       throw new IllegalStateException("A route point replacement was not requested");
@@ -634,6 +655,7 @@ public class RoutingController
 
   public boolean cancel(boolean deleteSavedRoute)
   {
+    mStartAfterBuild = false;
     if (isPlanning())
     {
       Logger.d(TAG, "cancel: planning");
@@ -1003,6 +1025,7 @@ public class RoutingController
   @SuppressWarnings("Duplicates")
   public boolean setEndPoint(@Nullable MapObject point)
   {
+    mStartAfterBuild = false;
     final boolean result = setEndPointInternal(point);
     finalizePendingPoiPick();
     return result;

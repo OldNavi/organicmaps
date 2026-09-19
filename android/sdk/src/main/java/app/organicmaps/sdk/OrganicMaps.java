@@ -18,6 +18,7 @@ import app.organicmaps.sdk.maplayer.traffic.TrafficManager;
 import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.search.SearchEngine;
 import app.organicmaps.sdk.settings.StoragePathManager;
+import app.organicmaps.sdk.sound.RoxVoiceDefaults;
 import app.organicmaps.sdk.sound.TtsPlayer;
 import app.organicmaps.sdk.util.Config;
 import app.organicmaps.sdk.util.ConnectionState;
@@ -108,6 +109,11 @@ public final class OrganicMaps implements DefaultLifecycleObserver
     nativeSetSettingsDir(settingsPath);
 
     Config.init(mPreferences, mFlavor, applicationId, versionCode, mVersionName);
+    if (RoxVoiceDefaults.shouldSelect(mFlavor, Config.TTS.hasVoiceBackendSelection()))
+    {
+      Config.TTS.setUseRoxVoice(true);
+      Config.TTS.setEnabled(true);
+    }
     OsmOAuth.init(mPreferences);
     SharedPropertiesUtils.init(mPreferences);
     LogsManager.INSTANCE.initFileLogging(mContext, mPreferences);

@@ -153,6 +153,7 @@ public class MwmApplication extends Application implements Application.ActivityL
     ThemeSwitcher.INSTANCE.initialize(this);
     return mOrganicMaps.init(() -> {
       ThemeSwitcher.INSTANCE.synchronizeApplicationTheme();
+      app.organicmaps.cluster.NavigationProvider.initialize(this);
       ProcessLifecycleOwner.get().getLifecycle().addObserver(mProcessLifecycleObserver);
       if (onComplete != null)
         onComplete.run();
@@ -246,7 +247,9 @@ public class MwmApplication extends Application implements Application.ActivityL
    */
   private void stopLocationInBackgroundIfUnused()
   {
-    if (!mDisplayManager.isDeviceDisplayUsed())
+    if (app.organicmaps.cluster.ClusterDisplayService.isConnected())
+      Logger.i(LOCATION_TAG, "Cluster maps are active, keeping location in the background");
+    else if (!mDisplayManager.isDeviceDisplayUsed())
       Logger.i(LOCATION_TAG, "Android Auto is active, keeping location in the background");
     else if (RoutingController.get().isNavigating())
       Logger.i(LOCATION_TAG, "Navigation is in progress, keeping location in the background");

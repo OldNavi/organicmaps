@@ -247,12 +247,10 @@ VulkanProgramPool::VulkanProgramPool(ref_ptr<dp::GraphicsContext> context)
       m_programData[i].m_textureBindings[t.m_name] = t.m_index;
   }
 
-  ProgramParams::Init();
 }
 
 VulkanProgramPool::~VulkanProgramPool()
 {
-  ProgramParams::Destroy();
 }
 
 void VulkanProgramPool::Destroy(ref_ptr<dp::GraphicsContext> context)

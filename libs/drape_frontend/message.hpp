@@ -60,6 +60,8 @@ public:
     Allow3dMode,
     Allow3dBuildings,
     SetMapLangIndex,
+    SetPoiVisibility,
+    SetClusterCamera,
     EnablePerspective,
     FlushCirclesPack,
     CacheCirclesPack,

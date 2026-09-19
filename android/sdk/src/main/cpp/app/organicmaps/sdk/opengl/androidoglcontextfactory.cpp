@@ -53,6 +53,8 @@ bool IsSupportedRGB8(EGLDisplay display)
 }
 
 size_t constexpr kGLThreadsCount = 2;
+std::mutex g_displayMutex;
+bool g_displayInitialized = false;
 }  // namespace
 
 AndroidOGLContextFactory::AndroidOGLContextFactory(JNIEnv * env, jobject jsurface)
@@ -74,20 +76,24 @@ AndroidOGLContextFactory::AndroidOGLContextFactory(JNIEnv * env, jobject jsurfac
     return;
   }
 
-  EGLint version[2] = {0};
-  if (!eglInitialize(m_display, &version[0], &version[1]))
   {
-    CHECK_EGL_CALL();
-    return;
+    std::lock_guard lock(g_displayMutex);
+    EGLint version[2] = {0};
+    if (!g_displayInitialized && !eglInitialize(m_display, &version[0], &version[1]))
+    {
+      CHECK_EGL_CALL();
+      return;
+    }
+    g_displayInitialized = true;
   }
 
-  CHECK(gl3stubInit(), ("Could not initialize OpenGL ES3"));
+  static std::once_flag glInitialized;
+  std::call_once(glInitialized, [] { CHECK(gl3stubInit(), ("Could not initialize OpenGL ES3")); });
 
   SetSurface(env, jsurface);
 
   if (!CreatePixelbufferSurface())
   {
-    CHECK_EGL(eglTerminate(m_display));
     return;
   }
 }
@@ -115,11 +121,9 @@ AndroidOGLContextFactory::~AndroidOGLContextFactory()
     m_pixelbufferSurface = EGL_NO_SURFACE;
   }
 
-  if (m_display != EGL_NO_DISPLAY)
-  {
-    eglTerminate(m_display);
-    CHECK_EGL_CALL();
-  }
+  // EGL_DEFAULT_DISPLAY is also used by Android HWUI. Terminating it when our last
+  // map closes invalidates the UI's contexts and makes newly opened presentations black.
+  // Keep the display initialized for the process lifetime; surfaces/contexts are released above.
 }
 
 void AndroidOGLContextFactory::SetSurface(JNIEnv * env, jobject jsurface)
@@ -136,7 +140,6 @@ void AndroidOGLContextFactory::SetSurface(JNIEnv * env, jobject jsurface)
 
   if (!CreateWindowSurface())
   {
-    CHECK_EGL(eglTerminate(m_display));
     return;
   }
 

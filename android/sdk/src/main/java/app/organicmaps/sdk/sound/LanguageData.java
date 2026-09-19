@@ -22,6 +22,16 @@ public class LanguageData
   public final String internalCode;
   public final boolean downloaded;
 
+  LanguageData(String line, String name)
+  {
+    this.name = name;
+    String[] codes = line.split(":");
+    String[] localeParts = codes[0].split("-");
+    internalCode = codes.length > 1 ? codes[1] : localeParts[0];
+    locale = new Locale(localeParts[0], localeParts.length > 1 ? localeParts[1] : "");
+    downloaded = true;
+  }
+
   LanguageData(String line, String name, TextToSpeech tts) throws NotAvailableException, IllegalArgumentException
   {
     this.name = name;

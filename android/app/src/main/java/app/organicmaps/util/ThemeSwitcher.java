@@ -143,8 +143,7 @@ public enum ThemeSwitcher
     // For the Android Auto theme switcher, please consult the app.organicmaps.car.util.ThemeUtils module.
     if (MwmApplication.from(mContext).getDisplayManager().isCarDisplayUsed())
       return;
-    // If rendering is not active we can mark map style, because all graphics
-    // will be recreated after rendering activation.
+    // Marking also queues a refresh: a configuration change may retain the old map graphics.
     if (isRendererActive)
       MapStyle.set(style);
     else

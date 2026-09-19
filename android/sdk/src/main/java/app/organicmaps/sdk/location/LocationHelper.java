@@ -63,6 +63,14 @@ public class LocationHelper implements BaseLocationProvider.Listener
   private long mInterval;
   private boolean mInFirstRun;
   private boolean mActive;
+  private boolean mExternalNavigationActive;
+
+  public void setExternalNavigationActive(boolean active)
+  {
+    mExternalNavigationActive = active;
+    if (isActive() && LocationUtils.checkLocationPermission(mContext))
+      restartWithNewMode();
+  }
   private final Handler mHandler;
   private final Runnable mLocationTimeoutRunnable = this::notifyLocationUpdateTimeout;
 
@@ -332,7 +340,7 @@ public class LocationHelper implements BaseLocationProvider.Listener
 
   private long calcLocationUpdatesInterval()
   {
-    if (RoutingController.get().isNavigating())
+    if (RoutingController.get().isNavigating() || mExternalNavigationActive)
       return INTERVAL_NAVIGATION_MS;
 
     if (TrackRecorder.nativeIsTrackRecordingEnabled())

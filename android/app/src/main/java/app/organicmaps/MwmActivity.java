@@ -264,6 +264,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
     if (intent == null || mIntentConsumed)
       return;
     mIntentConsumed = true;
+    app.organicmaps.intent.NavigationCommandProcessor.cancelPendingRequests();
 
     if (intent.getBooleanExtra(EXTRA_START_TRACK_RECORDING, false))
     {
@@ -308,6 +309,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     final IntentProcessor[] mIntentProcessors = {
         new Factory.GoggleAssistanceIntentProcessor(),
+        new app.organicmaps.intent.NavigationCommandProcessor(),
         new Factory.UrlProcessor(),
         new Factory.KmzKmlProcessor(),
     };

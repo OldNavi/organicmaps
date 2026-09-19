@@ -959,4 +959,16 @@
     <string name="choose_point_on_map_hint">Перемещайте и масштабируйте карту, чтобы установить крестик</string>
     <!-- Track recording notification button: stops the recording and saves the recorded track. -->
     <string name="track_recording_stop_and_save">Остановить и сохранить</string>
+    <!-- Use the built-in ROX voice for navigation instructions. -->
+    <string name="pref_tts_rox_title">Штатный голос ROX</string>
+    <!-- Voice and volume of the built-in ROX speech service are configured by the car. -->
+    <string name="pref_tts_rox_summary">Голос и громкость задаются в настройках автомобиля.</string>
+    <!-- Name of the saved place used by the external automotive home command. -->
+    <string name="voice_navigation_home_name">Дом</string>
+    <!-- Name of the saved place used by the external automotive work command. -->
+    <string name="voice_navigation_work_name">Работа</string>
+    <!-- An external navigation command needs one unambiguous saved place. -->
+    <string name="voice_navigation_saved_place_missing">Метка не найдена или есть несколько меток с таким названием.</string>
+    <!-- Do not silently turn an along-route search into an unrestricted search. -->
+    <string name="voice_navigation_along_route_unavailable">Поиск вдоль маршрута не поддерживается.</string>
 </resources>

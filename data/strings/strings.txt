@@ -45324,3 +45324,45 @@ uk = Зупинити та зберегти
 vi = Dừng và lưu
 zh-Hans = 停止并保存
 zh-Hant = 停止並儲存
+
+[pref_tts_rox_title]
+comment = Use the built-in ROX voice for navigation instructions.
+tags = android-app
+en = Built-in ROX voice
+ru = Штатный голос ROX
+uk = Штатний голос ROX
+
+[pref_tts_rox_summary]
+comment = Voice and volume of the built-in ROX speech service are configured by the car.
+tags = android-app
+en = Voice and volume are controlled in the car settings.
+ru = Голос и громкость задаются в настройках автомобиля.
+uk = Голос і гучність задаються в налаштуваннях автомобіля.
+
+[voice_navigation_home_name]
+comment = Name of the saved place used by the external automotive home command.
+tags = android-app
+en = Home
+ru = Дом
+uk = Дім
+
+[voice_navigation_work_name]
+comment = Name of the saved place used by the external automotive work command.
+tags = android-app
+en = Work
+ru = Работа
+uk = Робота
+
+[voice_navigation_saved_place_missing]
+comment = An external navigation command needs one unambiguous saved place.
+tags = android-app
+en = Saved place not found or its name is ambiguous.
+ru = Метка не найдена или есть несколько меток с таким названием.
+uk = Мітку не знайдено або є кілька міток із такою назвою.
+
+[voice_navigation_along_route_unavailable]
+comment = Do not silently turn an along-route search into an unrestricted search.
+tags = android-app
+en = Search along the route is not supported.
+ru = Поиск вдоль маршрута не поддерживается.
+uk = Пошук уздовж маршруту не підтримується.

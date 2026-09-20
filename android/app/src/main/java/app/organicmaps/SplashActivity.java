@@ -60,8 +60,11 @@ public class SplashActivity extends AppCompatActivity
   {
     super.onCreate(savedInstanceState);
     UiThread.cancelDelayedTasks(mInitCoreDelayedTask);
-    setContentView(R.layout.activity_splash);
-    adjustBrandingInfoPadding();
+    if (getResources().getBoolean(R.bool.show_startup_splash))
+    {
+      setContentView(R.layout.activity_splash);
+      adjustBrandingInfoPadding();
+    }
 
     // https://github.com/organicmaps/organicmaps/issues/11938
     if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2)
@@ -97,7 +100,7 @@ public class SplashActivity extends AppCompatActivity
       return;
     }
 
-    UiThread.runLater(mInitCoreDelayedTask, DELAY);
+    UiThread.runLater(mInitCoreDelayedTask, getResources().getBoolean(R.bool.show_startup_splash) ? DELAY : 0);
   }
 
   @Override

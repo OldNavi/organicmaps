@@ -204,7 +204,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   private DisplayManager mDisplayManager;
 
   private boolean mRemoveDisplayListener = true;
-  private static int mLastUiMode = Configuration.UI_MODE_TYPE_UNDEFINED;
+  private int mLastUiMode;
 
   public static Intent createShowMapIntent(@NonNull Context context, @Nullable String countryId)
   {
@@ -446,18 +446,24 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     super.onConfigurationChanged(newConfig);
 
-    final int newType = newConfig.uiMode & Configuration.UI_MODE_TYPE_MASK;
-    final int oldType = mLastUiMode & Configuration.UI_MODE_TYPE_MASK;
-
+    final boolean recreateForConfig = shouldRecreateForUiMode(mLastUiMode, newConfig.uiMode);
     mLastUiMode = newConfig.uiMode;
+
+    if (recreateForConfig)
+      recreate();
+  }
+
+  static boolean shouldRecreateForUiMode(int oldMode, int newMode)
+  {
+    final int newType = newMode & Configuration.UI_MODE_TYPE_MASK;
+    final int oldType = oldMode & Configuration.UI_MODE_TYPE_MASK;
 
     final boolean carModeChanged =
         newType != oldType && (newType == Configuration.UI_MODE_TYPE_CAR || oldType == Configuration.UI_MODE_TYPE_CAR);
 
-    if (carModeChanged)
-      return;
-
-    recreate();
+    final boolean nightModeChanged =
+        (oldMode & Configuration.UI_MODE_NIGHT_MASK) != (newMode & Configuration.UI_MODE_NIGHT_MASK);
+    return !carModeChanged || nightModeChanged;
   }
 
   /**
@@ -495,6 +501,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   protected void onSafeCreate(@Nullable Bundle savedInstanceState)
   {
     super.onSafeCreate(savedInstanceState);
+    mLastUiMode = getResources().getConfiguration().uiMode;
 
     mIntentConsumed = isIntentConsumed(savedInstanceState, getIntent());
 

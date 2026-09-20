@@ -3,6 +3,7 @@ package app.organicmaps.sdk.sound;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.NonNull;
@@ -13,12 +14,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
-/** Uses the same stock VoiceManager API as RoxAssistant, without packaging the car's SDK. */
+/** Loads the stock TTS SDK and speaks on the car's navigation channel. */
 public final class RoxVoice implements AutoCloseable
 {
   public static final String SDK_PACKAGE = "com.roxmotor.launcherapp";
-  private static final String SDK_CLASS = "com.roxmotor.voicemanager.VoiceManager";
-  private static final String LISTENER_CLASS = "com.roxmotor.voicemanager.interf.listener.OnVoiceStatusListener";
+  private static final String SERVICE_PACKAGE = "com.roxmotor.ttsservice";
+  private static final String SDK_CLASS = "com.roxmotor.ttsmanager.TtsManager";
+  private static final String LISTENER_CLASS = "com.roxmotor.ttsmanager.IStatusListener";
+  private static final String TTS_LISTENER_CLASS = "com.roxmotor.ttsmanager.ITtsStatusListener";
+  private static final int STATE_READY = 3; // Stock StateCode.READY.
+  private static final int USAGE = AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE;
   private static final ExecutorService sWorker =
       Executors.newSingleThreadExecutor(task -> new Thread(task, "RoxNavigationVoice"));
   private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -27,28 +32,36 @@ public final class RoxVoice implements AutoCloseable
   private volatile boolean mReady;
   private Object mManager;
   private Object mListener;
-  private Class<?> mListenerType;
+  private Object mTtsListener;
+  private Method mRegisterTtsListener;
   private Method mSpeak;
   private Method mStop;
-  private String mUtteranceId;
+  private boolean mInitialized;
+  private final Runnable mInitTimeout = () ->
+  {
+    if (!mReady && !mClosed)
+      stateChanged(false);
+  };
 
   public RoxVoice(Context context, Consumer<Boolean> listener)
   {
     mStateListener = listener;
     Context application = context.getApplicationContext();
     sWorker.execute(() -> initialize(application));
-    mMain.postDelayed(() -> {
-      if (!mReady && !mClosed)
-        stateChanged(false);
-    }, 15000);
+    mMain.postDelayed(mInitTimeout, 15000);
   }
 
   public static boolean isAvailable(Context context)
   {
     try
     {
-      ApplicationInfo info = context.getPackageManager().getApplicationInfo(SDK_PACKAGE, 0);
-      return (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+      for (String name : new String[] {SDK_PACKAGE, SERVICE_PACKAGE})
+      {
+        ApplicationInfo info = context.getPackageManager().getApplicationInfo(name, 0);
+        if ((info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) == 0)
+          return false;
+      }
+      return true;
     }
     catch (PackageManager.NameNotFoundException e)
     {
@@ -58,52 +71,92 @@ public final class RoxVoice implements AutoCloseable
 
   private void initialize(Context context)
   {
+    if (mClosed)
+      return;
     try
     {
       if (!isAvailable(context))
-        throw new IllegalStateException("Stock ROX launcher is unavailable");
+        throw new IllegalStateException("Stock ROX launcher or TTS service is unavailable");
       Context stock =
           context.createPackageContext(SDK_PACKAGE, Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
       ClassLoader loader = stock.getClassLoader();
       Class<?> type = loader.loadClass(SDK_CLASS);
-      mListenerType = loader.loadClass(LISTENER_CLASS);
+      Class<?> listenerType = loader.loadClass(LISTENER_CLASS);
+      Class<?> ttsListenerType = loader.loadClass(TTS_LISTENER_CLASS);
       mManager = type.getMethod("getInstance").invoke(null);
-      mSpeak = type.getMethod("speak", String.class);
-      mStop = type.getMethod("stopSpeak", String.class);
-      type.getMethod("init", Context.class).invoke(mManager, context);
-      mListener = Proxy.newProxyInstance(loader, new Class<?>[] {mListenerType}, (proxy, method, args) -> {
+      mSpeak = type.getMethod("speak", String.class, int.class);
+      mStop = type.getMethod("stop", int.class);
+      mRegisterTtsListener = type.getMethod("registerTtsStatusListener", ttsListenerType);
+      mListener = Proxy.newProxyInstance(loader, new Class<?>[] {listenerType}, (proxy, method, args) -> {
         if (method.getDeclaringClass() == Object.class)
-          return switch (method.getName())
-          {
-            case "hashCode" -> System.identityHashCode(proxy);
-            case "equals" -> proxy == args[0];
-            default -> "OrganicMapsVoiceStatus";
-          };
-        if ("onServerStatus".equals(method.getName()) && args != null && args.length > 0)
+          return proxyObjectMethod(proxy, method, args);
+        if ("onStateChanged".equals(method.getName()))
+          sWorker.execute(() -> onServiceState((Integer) args[0]));
+        else if ("onError".equals(method.getName()))
+          sWorker.execute(() -> {
+            Logger.e("RoxVoice", "Stock TTS service error: " + args[0]);
+            stateChanged(false);
+          });
+        return null;
+      });
+      mTtsListener = Proxy.newProxyInstance(loader, new Class<?>[] {ttsListenerType}, (proxy, method, args) -> {
+        if (method.getDeclaringClass() == Object.class)
+          return proxyObjectMethod(proxy, method, args);
+        if (!mClosed && "onTtsStatus".equals(method.getName()))
         {
-          String state = String.valueOf(args[0]);
-          stateChanged("SERVER_STATUS_READY".equals(state) || "SERVER_STATUS_INIT_SUCCESS".equals(state));
+          // A rejected utterance (e.g. lost audio focus) does not disconnect the service.
+          String status = String.valueOf(args[0]);
+          if ("VOICE_STATUS_TTS_PLAY_ERROR".equals(status))
+            Logger.e("RoxVoice", "Stock navigation TTS playback failed");
+          else
+            Logger.d("RoxVoice", "Navigation TTS: " + status);
         }
         return null;
       });
-      type.getMethod("registerStatusListener", mListenerType).invoke(mManager, mListener);
-      // A previously initialized SDK may not repeat its READY callback.
-      Object state = type.getMethod("getVoiceStatus").invoke(mManager);
-      if (state instanceof String)
-      {
-        try
-        {
-          new org.json.JSONObject((String) state);
-          stateChanged(true);
-        }
-        catch (org.json.JSONException ignored)
-        { /* Await the SDK readiness callback. */
-        }
-      }
+      type.getMethod("registerStatusListener", listenerType).invoke(mManager, mListener);
+      // Register before init: onServiceConnected may report READY immediately.
+      Object result = type.getMethod("init", Context.class).invoke(mManager, context);
+      mInitialized = true;
+      if (!Integer.valueOf(0).equals(result))
+        throw new IllegalStateException("Stock TtsManager init failed: " + result);
     }
     catch (ReflectiveOperationException | PackageManager.NameNotFoundException | RuntimeException | LinkageError e)
     {
-      Logger.e("RoxVoice", "Cannot initialize stock VoiceManager", e);
+      Logger.e("RoxVoice", "Cannot initialize stock TtsManager", e);
+      stateChanged(false);
+    }
+  }
+
+  private static Object proxyObjectMethod(Object proxy, Method method, Object[] args)
+  {
+    return switch (method.getName())
+    {
+      case "hashCode" -> System.identityHashCode(proxy);
+      case "equals" -> proxy == args[0];
+      default -> "OrganicMapsTtsStatus";
+    };
+  }
+
+  private void onServiceState(int state)
+  {
+    if (mClosed)
+      return;
+    if (state != STATE_READY)
+    {
+      stateChanged(false);
+      return;
+    }
+    try
+    {
+      Object result = mRegisterTtsListener.invoke(mManager, mTtsListener);
+      if (!Integer.valueOf(0).equals(result))
+        throw new IllegalStateException("Cannot register TTS callback: " + result);
+      mMain.removeCallbacks(mInitTimeout);
+      stateChanged(true);
+    }
+    catch (ReflectiveOperationException | RuntimeException e)
+    {
+      Logger.e("RoxVoice", "Cannot connect navigation TTS callbacks", e);
       stateChanged(false);
     }
   }
@@ -134,10 +187,8 @@ public final class RoxVoice implements AutoCloseable
       try
       {
         stopInternal();
-        Object id = mSpeak.invoke(mManager, text);
-        if (!(id instanceof String) || ((String) id).isEmpty() || "-1".equals(id))
-          throw new IllegalStateException("Stock VoiceManager rejected speech");
-        mUtteranceId = (String) id;
+        // The stock SDK queues speech asynchronously and returns null even on success.
+        mSpeak.invoke(mManager, text, USAGE);
       }
       catch (ReflectiveOperationException | RuntimeException e)
       {
@@ -149,12 +200,9 @@ public final class RoxVoice implements AutoCloseable
 
   private void stopInternal() throws ReflectiveOperationException
   {
-    if (mUtteranceId != null)
-    {
-      // Never pass an empty ID: stopping other car announcements is not our responsibility.
-      mStop.invoke(mManager, mUtteranceId);
-      mUtteranceId = null;
-    }
+    // TtsManager supplies our package name; never stop another app or another channel.
+    if (mInitialized)
+      mStop.invoke(mManager, USAGE);
   }
 
   public void stop()
@@ -166,7 +214,7 @@ public final class RoxVoice implements AutoCloseable
       {
         stopInternal();
       }
-      catch (ReflectiveOperationException e)
+      catch (ReflectiveOperationException | RuntimeException e)
       {
         Logger.e("RoxVoice", "Cannot stop own speech", e);
       }
@@ -180,20 +228,34 @@ public final class RoxVoice implements AutoCloseable
       return;
     mClosed = true;
     mReady = false;
+    mMain.removeCallbacks(mInitTimeout);
     sWorker.execute(() -> {
       if (mManager == null)
         return;
       try
       {
         stopInternal();
-        if (mListener != null)
-          mManager.getClass().getMethod("unregisterStatusListener", mListenerType).invoke(mManager, mListener);
-        mManager.getClass().getMethod("uninit").invoke(mManager);
       }
-      catch (ReflectiveOperationException e)
+      catch (ReflectiveOperationException | RuntimeException e)
       {
-        Logger.e("RoxVoice", "Cannot release stock VoiceManager", e);
+        Logger.e("RoxVoice", "Cannot stop navigation TTS on close", e);
       }
+      release("unregisterTtsStatusListener");
+      release("unRegisterStatusListener");
+      if (mInitialized)
+        release("unInit");
     });
+  }
+
+  private void release(String method)
+  {
+    try
+    {
+      mManager.getClass().getMethod(method).invoke(mManager);
+    }
+    catch (ReflectiveOperationException | RuntimeException e)
+    {
+      Logger.e("RoxVoice", "Cannot release stock TtsManager: " + method, e);
+    }
   }
 }

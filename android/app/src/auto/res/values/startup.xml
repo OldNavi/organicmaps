@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+  <bool name="show_startup_splash">false</bool>
+  <!-- Keep the startup router for permissions, core initialization and intent forwarding. -->
+  <style name="MwmTheme.Splash" parent="MwmTheme">
+    <item name="android:windowIsTranslucent">true</item>
+    <item name="android:windowBackground">@android:color/transparent</item>
+    <item name="android:windowDisablePreview">true</item>
+    <item name="android:windowAnimationStyle">@null</item>
+    <item name="android:backgroundDimEnabled">false</item>
+    <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@android:color/transparent</item>
+    <item name="android:windowSplashScreenBackground" tools:targetApi="31">@android:color/transparent</item>
+  </style>
+</resources>

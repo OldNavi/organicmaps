@@ -63,11 +63,20 @@ public:
   {
     std::lock_guard lock(m_mutex);
     if (id == 0)
+    {
+      // Zero means "all" in this scene, but RemoveSubroute(id, false) removes one ID.
+      // Keep the cluster's fixed-position following mode when cancelling the route.
+      for (auto const & [routeId, route] : m_routes)
+        for (auto * engine : m_engines)
+          engine->RemoveSubroute(routeId, false);
       m_routes.clear();
+    }
     else
+    {
       m_routes.erase(id);
-    for (auto * engine : m_engines)
-      engine->RemoveSubroute(id, false);
+      for (auto * engine : m_engines)
+        engine->RemoveSubroute(id, false);
+    }
   }
   void SetGpsInfo(location::GpsInfo const & gps, bool navigable, location::RouteMatchingInfo const & matching)
   {

@@ -22,6 +22,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.sdk.cluster.ClusterMap;
 import app.organicmaps.sdk.location.ClusterTestLocation;
+import app.organicmaps.sdk.routing.RouteMarkType;
 import app.organicmaps.sdk.util.Config;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -1053,6 +1054,67 @@ public class ClusterRenderingTest
   }
 
   @Test
+  public void cancellingRouteClearsEveryClusterWithoutMovingCamera() throws Exception
+  {
+    MwmApplication app =
+        (MwmApplication) InstrumentationRegistry.getInstrumentation().getTargetContext().getApplicationContext();
+    Router[] originalRouter = new Router[1];
+    try (Output first = new Output(app, 768, 432, 160); Output second = new Output(app, 640, 360, 160))
+    {
+      showUri(app, first, "16", "0", "tilt=0&anchor=0.5,0.5");
+      showUri(app, second, "16", "0", "tilt=0&anchor=0.5,0.5");
+      main(() -> {
+        app.getLocationHelper().stop();
+        originalRouter[0] = Router.getLastUsed();
+        Framework.nativeCloseRouting();
+        Router.set(Router.Ruler); // A real rendered route without regional map dependencies.
+        ClusterTestLocation.setCoreLocation(0, 0, 0);
+      });
+      awaitStableImage(first);
+      awaitStableImage(second);
+      int[] firstEmpty = first.imageColors.get().clone();
+      int[] secondEmpty = second.imageColors.get().clone();
+      for (boolean close : new boolean[] {false, true})
+      {
+        long before = first.checksum.get();
+        long secondBefore = second.checksum.get();
+        main(() -> {
+          Framework.nativeCloseRouting();
+          Framework.nativeAddRoutePoint("Start", "", RouteMarkType.Start, 0, false, 0, -0.002, false);
+          Framework.nativeAddRoutePoint("Finish", "", RouteMarkType.Finish, 0, false, 0, 0.002, false);
+          Framework.nativeBuildRoute();
+        });
+        awaitChanged(first, before);
+        awaitStableImage(first);
+        awaitStableImage(second);
+        assertNotEquals("Route must be rendered before cancellation", before, first.checksum.get());
+        assertNotEquals("Route must reach the second cluster", secondBefore, second.checksum.get());
+        main(() -> {
+          if (close)
+            Framework.nativeCloseRouting();
+          else
+            Framework.nativeRemoveRoute();
+        });
+        awaitStableImage(first);
+        awaitStableImage(second);
+        assertImageEquals(first, firstEmpty);
+        assertImageEquals(second, secondEmpty);
+      }
+      command(app, "hide_cluster", first, 16);
+      command(app, "hide_cluster", second, 16);
+    }
+    finally
+    {
+      main(() -> {
+        Framework.nativeCloseRouting();
+        if (originalRouter[0] != null)
+          Router.set(originalRouter[0]);
+      });
+    }
+  }
+
+  @Test
+  @SdkSuppress(minSdkVersion = 29)
   public void threeMapsSurviveThemeChangesAndOneClusterDisconnect() throws Exception
   {
     MwmApplication app =

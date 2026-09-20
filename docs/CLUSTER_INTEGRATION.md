@@ -124,6 +124,7 @@ Camera options accepted by both query parameters and `ContentResolver.call()` ex
 | Parameter | Default | Values |
 | --- | --- | --- |
 | `tilt` | `auto` | `auto` or an angle from 0 to 55 degrees; 0 is a top-down view |
+| `scale` | `1.0` | DPI multiplier from 0.5 to 3.0; fractional values are accepted |
 | `anchor` | `0.5,0.75` | `x,y` fractions of the visible map, each from 0 to 1 |
 | `anchor_x`, `anchor_y` | `0.5`, `0.75` | Alternative to the compact `anchor` parameter |
 
@@ -132,8 +133,17 @@ Do not combine `anchor` with `anchor_x`/`anchor_y`. Coordinates start at the top
 points upwards while the map follows position and bearing. Fixed tilt is retained during speed-based autozoom; `tilt=auto` restores the scale-dependent perspective. Omitting options on a
 repeated request restores their defaults, so include every non-default option on each update.
 
+`scale` multiplies the renderer's DPI-derived visual scale once, scaling labels, icons, roads and
+the position marker together. It is applied after OM's minimum-DPI normalization, so 1.5 really
+means 1.5 times the default size, within the renderer's supported visual-scale range (1–4).
+It does not multiply the font scale a second time. The existing font-size
+preference also applies to cluster labels; renderer visual-scale limits still apply. A changed
+scale refreshes that display's graphics resources; unchanged values do not restart rendering.
+Organic Maps defaults to `1.0`; RoxPremium explicitly sends `1.5` for its 160-DPI virtual display.
+
 ```
 /show_cluster?displayId=2&zoom=15&tilt=45&anchor=0.5,0.85
+/show_cluster?displayId=2&zoom=18&tilt=35&anchor=0.5,0.85&scale=1.5
 /show_cluster?displayId=2&zoom=auto&tilt=0&anchor_x=0.5&anchor_y=0.75&poi=1
 ```
 

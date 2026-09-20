@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <memory>
+#include <unordered_set>
 
 namespace dp
 {
@@ -133,6 +134,8 @@ private:
   uint64_t m_pendingScenarioViewportRevision = 0;
 #endif
   drape_ptr<RouteBuilder> m_routeBuilder;
+  // Logical route lifetime survives graphics resource recreation.
+  std::unordered_set<dp::DrapeID> m_activeSubroutes;
   drape_ptr<TransitSchemeBuilder> m_transitBuilder;
   drape_ptr<TrafficGenerator> m_trafficGenerator;
   drape_ptr<UserMarkGenerator> m_userMarkGenerator;

@@ -26,7 +26,10 @@ import androidx.core.app.ServiceCompat;
 import androidx.core.content.ContextCompat;
 import app.organicmaps.MwmActivity;
 import app.organicmaps.MwmApplication;
+import app.organicmaps.sdk.cluster.ClusterCamera;
 import app.organicmaps.sdk.cluster.ClusterMap;
+import app.organicmaps.sdk.cluster.ClusterScale;
+import app.organicmaps.sdk.cluster.ClusterZoom;
 import app.organicmaps.sdk.location.TrackRecorder;
 import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.util.log.Logger;
@@ -140,12 +143,12 @@ public final class ClusterDisplayService extends Service implements DisplayManag
       stopIfUnused();
       return START_NOT_STICKY;
     }
-    int zoom = intent.getIntExtra("zoom", app.organicmaps.sdk.cluster.ClusterZoom.DEFAULT);
+    int zoom = intent.getIntExtra("zoom", ClusterZoom.DEFAULT);
+    double scale = ClusterScale.parse(intent.getDoubleExtra("scale", ClusterScale.DEFAULT));
     boolean poiVisible = intent.getBooleanExtra("poi", false);
     boolean buildings3d = intent.getBooleanExtra("3d", false);
-    var camera = new app.organicmaps.sdk.cluster.ClusterCamera(
-        intent.getDoubleExtra("tilt", app.organicmaps.sdk.cluster.ClusterCamera.AUTO_TILT),
-        intent.getDoubleExtra("anchor_x", 0.5), intent.getDoubleExtra("anchor_y", 0.75));
+    var camera = new ClusterCamera(intent.getDoubleExtra("tilt", ClusterCamera.AUTO_TILT),
+                                   intent.getDoubleExtra("anchor_x", 0.5), intent.getDoubleExtra("anchor_y", 0.75));
     try
     {
       var request = mSessions.connect(uid, displayId, zoom);
@@ -181,7 +184,7 @@ public final class ClusterDisplayService extends Service implements DisplayManag
       Runnable show = () ->
       {
         if (!mDestroyed && mSessions.isCurrent(request))
-          show(displayId, uid, zoom, poiVisible, buildings3d, camera);
+          show(displayId, uid, zoom, poiVisible, buildings3d, camera, scale);
       };
       if (!app.getOrganicMaps().arePlatformAndCoreInitialized())
       {
@@ -201,8 +204,8 @@ public final class ClusterDisplayService extends Service implements DisplayManag
     return START_NOT_STICKY;
   }
 
-  private void show(int displayId, int uid, int zoom, boolean poiVisible, boolean buildings3d,
-                    app.organicmaps.sdk.cluster.ClusterCamera camera)
+  private void show(int displayId, int uid, int zoom, boolean poiVisible, boolean buildings3d, ClusterCamera camera,
+                    double scale)
   {
     Display display = mDisplays.getDisplay(displayId);
     if (display == null || displayId == Display.DEFAULT_DISPLAY)
@@ -220,6 +223,7 @@ public final class ClusterDisplayService extends Service implements DisplayManag
         previous.map.set3dBuildings(buildings3d);
         previous.map.setPoiVisible(poiVisible);
         previous.map.setCamera(zoom, camera);
+        previous.map.setScale(scale);
       }
       return;
     }
@@ -228,6 +232,7 @@ public final class ClusterDisplayService extends Service implements DisplayManag
     map.set3dBuildings(buildings3d);
     map.setPoiVisible(poiVisible);
     map.setCamera(zoom, camera);
+    map.setScale(scale);
     map.setOnUnsupported(() -> {
       Connection connection = mConnections.get(displayId);
       if (connection != null && connection.map == map)

@@ -680,7 +680,7 @@ void DrapeEngine::SetClusterCamera(int zoom, double tiltDegrees, m2::PointD cons
   CHECK(anchor.x >= 0.0 && anchor.x <= 1.0 && anchor.y >= 0.0 && anchor.y <= 1.0, (anchor));
   m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread,
                                   make_unique_dp<SetClusterCameraMessage>(zoom, tiltDegrees, anchor),
-                                  MessagePriority::Normal);
+                                  MessagePriority::HighLatest);
 }
 
 void DrapeEngine::SetCluster3dBuildings(bool enabled)

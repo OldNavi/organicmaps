@@ -136,8 +136,8 @@ repeated request restores their defaults, so include every non-default option on
 `scale` multiplies the renderer's DPI-derived visual scale once, scaling labels, icons, roads and
 the position marker together. It is applied after OM's minimum-DPI normalization, so 1.5 really
 means 1.5 times the default size, within the renderer's supported visual-scale range (1–4).
-It does not multiply the font scale a second time. The existing font-size
-preference also applies to cluster labels; renderer visual-scale limits still apply. A changed
+The primary map's large-font preference does not affect cluster labels. The Framework's base
+font-scale factor is retained separately from the per-display scale. A changed
 scale refreshes that display's graphics resources; unchanged values do not restart rendering.
 Organic Maps defaults to `1.0`; RoxPremium explicitly sends `1.5` for its 160-DPI virtual display.
 

@@ -169,7 +169,11 @@ are not implemented. The automotive color adaptation is described in
 [data/styles/auto/README.md](../data/styles/auto/README.md).
 
 Android theme changes refresh retained geometry and textures for both OpenGL and Vulkan,
-including when the activity detaches its surface for a configuration change. Marking a style
+including service-only operation: `MwmApplication.onConfigurationChanged()` updates the effective
+theme, and a cluster synchronizes it before creating its renderer. System mode uses the latest
+Application `uiMode`, not a possibly stale Presentation context. Explicit light/dark preferences
+and scheduled-theme callbacks use the same path and do not require the main Activity.
+This also covers activity surface detachment during a configuration change. Marking a style
 while the primary renderer is suspended queues a refresh for resume; it cannot merely change
 the global palette because existing tiles may survive. This prevents old-theme roads/areas
 from remaining until a pan or zoom loads replacement tiles.

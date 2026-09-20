@@ -46,15 +46,21 @@ JNIEXPORT jobject Java_app_organicmaps_sdk_cluster_RoadInfo_nativeRead(JNIEnv * 
 }
 
 JNIEXPORT jlong Java_app_organicmaps_sdk_cluster_ClusterMap_nativeCreate(JNIEnv * env, jclass, jobject surface,
-                                                                         jint dpi, jint zoom, jboolean showPoi,
-                                                                         jboolean buildings3d, jdouble tilt,
-                                                                         jdouble anchorX, jdouble anchorY)
+                                                                         jint dpi, jdouble scale, jint zoom,
+                                                                         jboolean showPoi, jboolean buildings3d,
+                                                                         jdouble tilt, jdouble anchorX, jdouble anchorY)
 {
-  return g_framework->CreateNavigationView(env, surface, dpi, zoom, showPoi, buildings3d, tilt, anchorX, anchorY);
+  return g_framework->CreateNavigationView(env, surface, dpi, scale, zoom, showPoi, buildings3d, tilt, anchorX,
+                                           anchorY);
 }
 JNIEXPORT void Java_app_organicmaps_sdk_cluster_ClusterMap_nativeDestroy(JNIEnv *, jclass, jlong handle)
 {
   g_framework->DestroyNavigationView(handle);
+}
+JNIEXPORT void Java_app_organicmaps_sdk_cluster_ClusterMap_nativeSetScale(JNIEnv *, jclass, jlong handle, jint dpi,
+                                                                          jdouble scale)
+{
+  g_framework->SetNavigationViewScale(handle, dpi, scale);
 }
 JNIEXPORT void Java_app_organicmaps_sdk_cluster_ClusterMap_nativeResize(JNIEnv *, jclass, jlong handle, jint width,
                                                                         jint height)

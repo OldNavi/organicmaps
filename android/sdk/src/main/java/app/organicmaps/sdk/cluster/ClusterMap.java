@@ -12,6 +12,7 @@ public final class ClusterMap extends SurfaceView implements SurfaceHolder.Callb
   private long mHandle;
   private int mZoom = ClusterZoom.DEFAULT;
   private ClusterCamera mCamera = ClusterCamera.DEFAULT;
+  private double mScale = ClusterScale.DEFAULT;
   private boolean mPoiVisible;
   private boolean mBuildings3d;
   private Runnable mOnUnsupported = () -> {};
@@ -56,10 +57,26 @@ public final class ClusterMap extends SurfaceView implements SurfaceHolder.Callb
   {
     if (!ClusterZoom.isValid(zoom))
       throw new IllegalArgumentException("Cluster zoom must be auto (0) or between 1 and 20");
+    if (mZoom == zoom && mCamera.tilt == camera.tilt && mCamera.anchorX == camera.anchorX
+        && mCamera.anchorY == camera.anchorY)
+      return;
     mZoom = zoom;
     mCamera = camera;
     if (mHandle != 0)
       nativeSetCamera(mHandle, zoom, camera.tilt, camera.anchorX, camera.anchorY);
+  }
+
+  public void setScale(double scale)
+  {
+    scale = ClusterScale.parse(scale);
+    if (mScale == scale)
+      return;
+    mScale = scale;
+    if (mHandle != 0)
+    {
+      nativeSetScale(mHandle, getResources().getDisplayMetrics().densityDpi, mScale);
+      nativeSetCamera(mHandle, mZoom, mCamera.tilt, mCamera.anchorX, mCamera.anchorY);
+    }
   }
 
   /** Last zoom actually applied by the renderer; zero while the surface is unavailable. */
@@ -89,8 +106,8 @@ public final class ClusterMap extends SurfaceView implements SurfaceHolder.Callb
   @Override
   public void surfaceCreated(@NonNull SurfaceHolder holder)
   {
-    mHandle = nativeCreate(holder.getSurface(), getResources().getDisplayMetrics().densityDpi, mZoom, mPoiVisible,
-                           mBuildings3d, mCamera.tilt, mCamera.anchorX, mCamera.anchorY);
+    mHandle = nativeCreate(holder.getSurface(), getResources().getDisplayMetrics().densityDpi, mScale, mZoom,
+                           mPoiVisible, mBuildings3d, mCamera.tilt, mCamera.anchorX, mCamera.anchorY);
     if (mHandle == 0)
       post(mOnUnsupported);
   }
@@ -116,11 +133,12 @@ public final class ClusterMap extends SurfaceView implements SurfaceHolder.Callb
     mHandle = 0;
   }
 
-  private static native long nativeCreate(Surface surface, int dpi, int zoom, boolean showPoi, boolean buildings3d,
-                                          double tilt, double anchorX, double anchorY);
+  private static native long nativeCreate(Surface surface, int dpi, double scale, int zoom, boolean showPoi,
+                                          boolean buildings3d, double tilt, double anchorX, double anchorY);
   private static native void nativeDestroy(long handle);
   private static native void nativeResize(long handle, int width, int height);
   private static native void nativeSetCamera(long handle, int zoom, double tilt, double anchorX, double anchorY);
+  private static native void nativeSetScale(long handle, int dpi, double scale);
   private static native double nativeGetCurrentTilt(long handle);
   private static native long[] nativeGetTileStats(long handle);
   private static native void nativeSetPoiVisible(long handle, boolean visible);

@@ -114,6 +114,7 @@ android {
             dimension 'default'
             applicationIdSuffix '.auto'
             versionName android.defaultConfig.versionName + 'auto'
+            resValue "string", "app_name", "Organic Maps Automotive"
         }
     }
 

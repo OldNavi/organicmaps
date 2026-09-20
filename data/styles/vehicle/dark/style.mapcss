@@ -7,6 +7,7 @@
 @import("../include/Roads_label.mapcss");
 @import("../include/Icons.mapcss");
 @import("../include/Subways.mapcss");
+@import("../../auto/dark-roads.mapcss");
 
 
 colors
@@ -17,12 +18,12 @@ colors
   MyPositionAccuracy-opacity: 0.06;
   Selection-color: #FFFFFF;
   Selection-opacity: 0.64;
-  Route-color: #80E600;
-  RouteOutline-color: #4B9700;
-  RouteTrafficG0-color: #5E0F0D;
-  RouteTrafficG1-color: #7F1311;
-  RouteTrafficG2-color: #7F1311;
-  RouteTrafficG3-color: #9E8216;
+  Route-color: #82EA0E;
+  RouteOutline-color: #308B0A;
+  RouteTrafficG0-color: #932100;
+  RouteTrafficG1-color: #FF5413;
+  RouteTrafficG2-color: #FF5413;
+  RouteTrafficG3-color: #FFFF41;
   RouteTrafficG3-opacity: 0.0;
   RoutePedestrian-color: #FFB94B;
   RoutePedestrian-opacity: 0.7;
@@ -58,15 +59,15 @@ colors
   TrackCarSpeed-color: #FFCA28;
   TrackPlaneSpeed-color: #FFF5A0;
   TrackUnknownDistance-color: #969696;
-  TrafficG0-color: #4C120F;
-  TrafficG1-color: #731816;
-  TrafficG2-color: #731816;
-  TrafficG3-color: #8C7012;
+  TrafficG0-color: #932100;
+  TrafficG1-color: #FF5413;
+  TrafficG2-color: #FF5413;
+  TrafficG3-color: #FFFF41;
   TrafficG3-opacity: 0.0;
-  TrafficG4-color: #376222;
-  TrafficG5-color: #376222;
-  TrafficTempBlock-color: #232323;
-  TrafficUnknown-color: #000000;
+  TrafficG4-color: #82EA0E;
+  TrafficG5-color: #82EA0E;
+  TrafficTempBlock-color: #1A1A1A;
+  TrafficUnknown-color: #A0A0A0;
   TrafficArrowLight-color: #AAAAAA;
   TrafficArrowDark-color: #1E1E1E;
   TrafficOutline-color: #383838;

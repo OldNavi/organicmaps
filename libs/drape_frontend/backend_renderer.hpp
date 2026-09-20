@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <memory>
+#include <unordered_set>
 
 namespace dp
 {
@@ -128,6 +129,8 @@ private:
   drape_ptr<BatchersPool<TileKey, TileKeyStrictComparator>> m_batchersPool;
   drape_ptr<ReadManager> m_readManager;
   drape_ptr<RouteBuilder> m_routeBuilder;
+  // Logical route lifetime survives graphics resource recreation.
+  std::unordered_set<dp::DrapeID> m_activeSubroutes;
   drape_ptr<TransitSchemeBuilder> m_transitBuilder;
   drape_ptr<TrafficGenerator> m_trafficGenerator;
   drape_ptr<UserMarkGenerator> m_userMarkGenerator;

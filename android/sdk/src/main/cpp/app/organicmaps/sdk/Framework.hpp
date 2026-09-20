@@ -89,11 +89,12 @@ public:
   bool CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi, bool firstLaunch, bool launchByDeepLink,
                          uint32_t appVersionCode, bool isCustomROM, bool isAuto);
   bool IsDrapeEngineCreated() const;
-  int64_t CreateNavigationView(JNIEnv * env, jobject surface, int dpi, int zoom, bool showPoi, bool buildings3d,
-                               double tilt, double anchorX, double anchorY);
+  int64_t CreateNavigationView(JNIEnv * env, jobject surface, int dpi, double scale, int zoom, bool showPoi,
+                               bool buildings3d, double tilt, double anchorX, double anchorY);
   void DestroyNavigationView(int64_t id);
   void ResizeNavigationView(int64_t id, int width, int height);
   void SetNavigationViewCamera(int64_t id, int zoom, double tilt, double anchorX, double anchorY);
+  void SetNavigationViewScale(int64_t id, int dpi, double scale);
   double GetNavigationViewTilt(int64_t id) const;
   std::array<uint32_t, 4> GetNavigationViewTileStats(int64_t id) const;
   void SetNavigationViewPoiVisible(int64_t id, bool visible);

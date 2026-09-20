@@ -1896,15 +1896,17 @@ drape_ptr<df::DrapeEngine> Framework::CreateNavigationRenderer(ref_ptr<dp::Graph
   hints.m_isPassiveNavigation = true;
   hints.m_maxFps = 20;
   hints.m_showPoi = showPoi;
+  double const fontsScaleFactor = (LoadLargeFontsSize() ? kLargeFontsScaleFactor : 1.0) * m_fontScaleFactor;
   df::MapDataProvider provider([this](auto const & fn, m2::RectD const & rect, int scale)
   { m_featuresFetcher.ForEachFeatureID(rect, fn, scale); }, [this](auto const & fn, std::vector<FeatureID> const & ids)
   { m_featuresFetcher.ReadFeatures(fn, ids); }, [this](std::string_view name) { return IsCountryLoadedByName(name); },
                                [](m2::PointD const &, int) {}, [](df::TileKey const &, dp::BackgroundMode)
   { return false; }, [](df::TileKey const &, dp::BackgroundMode) {});
   df::DrapeEngine::Params params(dp::ApiVersion::OpenGLES3, factory, dp::Viewport(0, 0, width, height), provider, hints,
-                                 visualScale, 1.0, {}, [](location::EMyPositionMode, bool) {}, allow3dBuildings, false,
-                                 false, true, false, {}, false, false, false, dp::BackgroundMode::Default, 1.0f,
-                                 std::nullopt, [](std::list<df::OverlayShowEvent> &&) {}, [] {}, {});
+                                 visualScale, fontsScaleFactor, {}, [](location::EMyPositionMode, bool) {},
+                                 allow3dBuildings, false, false, true, false, {}, false, false, false,
+                                 dp::BackgroundMode::Default, 1.0f, std::nullopt,
+                                 [](std::list<df::OverlayShowEvent> &&) {}, [] {}, {});
   auto engine = make_unique_dp<df::DrapeEngine>(std::move(params));
   engine->SetVisibleViewport(m2::RectD(0, 0, width, height));
   engine->Allow3dMode(true, allow3dBuildings);

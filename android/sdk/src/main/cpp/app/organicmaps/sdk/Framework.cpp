@@ -59,6 +59,7 @@
 
 #include "ge0/url_generator.hpp"
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <string>
@@ -268,7 +269,7 @@ Framework::~Framework()
     DestroyNavigationView(m_navigationViews.begin()->first);
 }
 
-int64_t Framework::CreateNavigationView(JNIEnv * env, jobject surface, int dpi, int zoom, bool showPoi,
+int64_t Framework::CreateNavigationView(JNIEnv * env, jobject surface, int dpi, double scale, int zoom, bool showPoi,
                                         bool buildings3d, double tilt, double anchorX, double anchorY)
 {
   auto factory = make_unique_dp<AndroidOGLContextFactory>(env, surface);
@@ -278,8 +279,9 @@ int64_t Framework::CreateNavigationView(JNIEnv * env, jobject surface, int dpi, 
   int const height = factory->GetHeight();
   NavigationView view;
   view.m_factory = make_unique_dp<dp::ThreadSafeFactory>(factory.release());
-  view.m_engine =
-      m_work.CreateNavigationRenderer(make_ref(view.m_factory), width, height, df::DPI2VS(dpi), showPoi, buildings3d);
+  view.m_engine = m_work.CreateNavigationRenderer(make_ref(view.m_factory), width, height,
+                                                  std::clamp(df::DPI2VS(dpi) * scale, 1.0, df::kMaxVisualScale),
+                                                  showPoi, buildings3d);
   int const initialZoom = zoom == 0 ? 16 : zoom;
   view.m_engine->SetModelViewCenter(mercator::FromLatLon(0.0, 0.0), initialZoom, false, false);
   view.m_engine->SetClusterCamera(zoom, tilt, {anchorX, anchorY});
@@ -320,6 +322,14 @@ void Framework::SetNavigationView3dBuildings(int64_t id, bool enabled)
   auto const it = m_navigationViews.find(id);
   if (it != m_navigationViews.end())
     it->second.m_engine->SetCluster3dBuildings(enabled);
+}
+
+void Framework::SetNavigationViewScale(int64_t id, int dpi, double scale)
+{
+  auto const it = m_navigationViews.find(id);
+  if (it != m_navigationViews.end())
+    it->second.m_engine->UpdateVisualScale(std::clamp(df::DPI2VS(dpi) * scale, 1.0, df::kMaxVisualScale),
+                                           true /* needStopRendering */);
 }
 
 void Framework::SetNavigationViewPoiVisible(int64_t id, bool visible)

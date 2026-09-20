@@ -323,6 +323,10 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   case Message::Type::AddSubroute:
   {
     ref_ptr<AddSubrouteMessage> msg = message;
+    if (msg->GetRecacheId() < 0)
+      m_activeSubroutes.insert(msg->GetSubrouteId());
+    else if (!m_activeSubroutes.contains(msg->GetSubrouteId()))
+      break;  // A style refresh queued by FR must not resurrect a cancelled route.
     CHECK(m_context != nullptr, ());
     m_routeBuilder->Build(m_context, msg->GetSubrouteId(), msg->GetSubroute(), m_texMng, msg->GetRecacheId());
     break;
@@ -339,7 +343,11 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   case Message::Type::RemoveSubroute:
   {
     ref_ptr<RemoveSubrouteMessage> msg = message;
-    m_routeBuilder->ClearRouteCache();
+    if (msg->NeedDeactivateFollowing())
+      m_activeSubroutes.clear();
+    else
+      m_activeSubroutes.erase(msg->GetSegmentId());
+    m_routeBuilder->ClearRouteCache(msg->NeedDeactivateFollowing() ? dp::DrapeID() : msg->GetSegmentId());
     // We have to resend the message to FR, because it guaranties that
     // RemoveSubroute will be processed after FlushSubrouteMessage.
     m_commutator->PostMessage(

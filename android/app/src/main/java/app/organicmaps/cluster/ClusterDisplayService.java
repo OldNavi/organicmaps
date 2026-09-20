@@ -7,7 +7,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
-import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.os.Handler;
@@ -216,6 +215,8 @@ public final class ClusterDisplayService extends Service implements DisplayManag
       return;
     }
     Connection previous = mConnections.get(displayId);
+    // Apply the effective theme before a renderer is created, including a service-only cold start.
+    ThemeSwitcher.INSTANCE.synchronizeApplicationTheme();
     if (previous != null)
     {
       if (previous.uid == uid)
@@ -296,15 +297,6 @@ public final class ClusterDisplayService extends Service implements DisplayManag
     // A newer show command may already be queued by ActivityManager.
     if (mSessions.isEmpty() && mLastStartId != 0)
       stopSelfResult(mLastStartId);
-  }
-
-  @Override
-  public void onConfigurationChanged(Configuration config)
-  {
-    super.onConfigurationChanged(config);
-    if (!mConnections.isEmpty())
-      ThemeSwitcher.INSTANCE.synchronizeMapStyle(mConnections.values().iterator().next().presentation.getContext(),
-                                                 true);
   }
 
   @Override

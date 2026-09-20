@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import android.app.Presentation;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -868,6 +869,102 @@ public class ClusterRenderingTest
       if (originalStyle[0] != null)
         main(() -> MapStyle.mark(originalStyle[0]));
     }
+  }
+
+  @Test
+  public void clustersFollowUiModeWithoutMainActivity() throws Exception
+  {
+    MwmApplication app =
+        (MwmApplication) InstrumentationRegistry.getInstrumentation().getTargetContext().getApplicationContext();
+    Configuration originalConfig = new Configuration(app.getResources().getConfiguration());
+    Config.UiTheme[] originalTheme = new Config.UiTheme[1];
+    MapStyle[] originalStyle = new MapStyle[1];
+    CountDownLatch initialized = new CountDownLatch(1);
+    main(() -> {
+      try
+      {
+        if (!app.initOrganicMaps(initialized::countDown))
+          initialized.countDown();
+      }
+      catch (IOException e)
+      {
+        throw new AssertionError(e);
+      }
+    });
+    assertTrue(initialized.await(30, TimeUnit.SECONDS));
+    boolean initiallyDark =
+        (originalConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+    try (Output first = new Output(app, 768, 432, 160); Output second = new Output(app, 768, 432, 160))
+    {
+      main(() -> {
+        assertFalse("Test must start without a primary map renderer", Map.isEngineCreated());
+        originalTheme[0] = Config.UiTheme.getUiThemePreference();
+        originalStyle[0] = MapStyle.get();
+        Config.UiTheme.setUiThemePreference(Config.UiTheme.SYSTEM);
+        // Emulate a style saved in the opposite theme before a service-only start.
+        MapStyle.mark(initiallyDark ? MapStyle.Clear : MapStyle.Dark);
+      });
+      showUri(app, first, "16", "0", "tilt=0");
+      showUri(app, second, "16", "0", "tilt=0");
+      awaitFrames(first, 3);
+      awaitFrames(second, 3);
+      main(() -> {
+        app.getLocationHelper().stop();
+        ClusterTestLocation.setCoreLocation(0, 0, 0);
+        assertEquals("First cluster must use current system theme", initiallyDark, isDarkMapStyle());
+        assertFalse(Map.isEngineCreated());
+      });
+      awaitStableImage(first);
+      awaitStableImage(second);
+      for (boolean dark : new boolean[] {!initiallyDark, initiallyDark})
+      {
+        long firstBefore = first.checksum.get(), secondBefore = second.checksum.get();
+        Configuration config = new Configuration(originalConfig);
+        config.uiMode = (config.uiMode & ~Configuration.UI_MODE_NIGHT_MASK)
+                      | (dark ? Configuration.UI_MODE_NIGHT_YES : Configuration.UI_MODE_NIGHT_NO);
+        // Deliver the Application callback, without creating or resuming an Activity.
+        main(() -> app.onConfigurationChanged(config));
+        awaitChanged(first, firstBefore);
+        awaitChanged(second, secondBefore);
+        awaitStableImage(first);
+        awaitStableImage(second);
+        main(() -> {
+          assertEquals(dark, isDarkMapStyle());
+          assertFalse(Map.isEngineCreated());
+        });
+        first.save(app, "cluster-system-theme-" + dark + ".png");
+      }
+      main(() -> {
+        Config.UiTheme.setUiThemePreference(Config.UiTheme.LIGHT);
+        Configuration config = new Configuration(originalConfig);
+        config.uiMode = (config.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | Configuration.UI_MODE_NIGHT_YES;
+        app.onConfigurationChanged(config);
+        assertFalse("Explicit day theme must remain day", isDarkMapStyle());
+        Config.UiTheme.setUiThemePreference(Config.UiTheme.DARK);
+        config.uiMode = (config.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | Configuration.UI_MODE_NIGHT_NO;
+        app.onConfigurationChanged(config);
+        assertTrue("Explicit night theme must remain night", isDarkMapStyle());
+      });
+      command(app, "hide_cluster", first, 16);
+      command(app, "hide_cluster", second, 16);
+    }
+    finally
+    {
+      main(() -> {
+        if (originalTheme[0] != null)
+        {
+          Config.UiTheme.setUiThemePreference(originalTheme[0]);
+          app.onConfigurationChanged(originalConfig);
+          MapStyle.mark(originalStyle[0]);
+        }
+      });
+    }
+  }
+
+  private static boolean isDarkMapStyle()
+  {
+    return MapStyle.get() == MapStyle.Dark || MapStyle.get() == MapStyle.VehicleDark
+ || MapStyle.get() == MapStyle.OutdoorsDark;
   }
 
   @Test

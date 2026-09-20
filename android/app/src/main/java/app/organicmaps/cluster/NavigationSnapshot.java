@@ -1,6 +1,7 @@
 package app.organicmaps.cluster;
 
 import androidx.annotation.Nullable;
+import app.organicmaps.sdk.cluster.RoadInfo;
 import app.organicmaps.sdk.routing.CarDirection;
 import app.organicmaps.sdk.routing.LaneWay;
 import app.organicmaps.sdk.routing.RoutingInfo;
@@ -13,12 +14,27 @@ final class NavigationSnapshot
   final RoutingInfo info;
   final double[] camera;
   final double[] metrics;
+  final RoadInfo roadInfo;
+  final long fixTimeNanos;
 
   NavigationSnapshot(@Nullable RoutingInfo routingInfo, double[] cameraInfo, double[] routeMetrics)
+  {
+    this(routingInfo, cameraInfo, routeMetrics, RoadInfo.EMPTY, 0);
+  }
+
+  NavigationSnapshot(@Nullable RoutingInfo routingInfo, double[] cameraInfo, double[] routeMetrics, RoadInfo roadInfo,
+                     long fixTimeNanos)
   {
     info = routingInfo;
     camera = cameraInfo.clone();
     metrics = routeMetrics.clone();
+    this.roadInfo = roadInfo;
+    this.fixTimeNanos = fixTimeNanos;
+  }
+
+  long fixAgeMillis(long nowNanos)
+  {
+    return fixTimeNanos <= 0 || fixTimeNanos > nowNanos ? Long.MAX_VALUE : (nowNanos - fixTimeNanos) / 1_000_000;
   }
 
   static double speedLimitMps(double limitMps)

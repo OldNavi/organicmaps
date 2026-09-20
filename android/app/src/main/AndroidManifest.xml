@@ -89,6 +89,7 @@
     <service
         android:name=".cluster.NavigationReadyService"
         android:exported="true"
+        android:foregroundServiceType="location"
         android:permission="android.permission.ACCESS_FINE_LOCATION" />
     <provider
         android:name=".cluster.NavigationProvider"

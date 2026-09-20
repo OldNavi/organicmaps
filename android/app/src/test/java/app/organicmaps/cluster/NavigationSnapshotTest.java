@@ -11,6 +11,19 @@ import org.junit.Test;
 public class NavigationSnapshotTest
 {
   @Test
+  public void ordinaryDrivingKeepsRouteEmptyAndTracksOriginalFixAge()
+  {
+    var road =
+        new app.organicmaps.sdk.cluster.RoadInfo(true, 50.0 / 3.6, "Road", new double[] {100, 40.0 / 3.6, 55, 37, 1});
+    var snapshot = new NavigationSnapshot(null, road.camera, new double[3], road, 10_000_000_000L);
+    assertNull(snapshot.info);
+    assertEquals(50.0 / 3.6, snapshot.roadInfo.speedLimitMps, 0.001);
+    assertEquals(6000, snapshot.fixAgeMillis(16_000_000_000L));
+    assertEquals(Long.MAX_VALUE, snapshot.fixAgeMillis(9_000_000_000L));
+    assertEquals(Long.MAX_VALUE, NavigationSnapshot.EMPTY.fixAgeMillis(16_000_000_000L));
+    assertEquals(100, snapshot.cameraRow()[0]);
+  }
+  @Test
   public void allManeuversMatchThePremiumProtocol()
   {
     Set<String> accepted =

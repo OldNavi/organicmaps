@@ -237,13 +237,22 @@ enables voice instructions. A saved manual backend choice is preserved on later 
 other flavors do not perform this automatic selection.
 
 Voice instructions settings have an optional **Built-in ROX voice** switch on devices with the
-stock launcher package. It uses the same `VoiceManager.init/registerStatusListener/speak/stopSpeak`
-API as RoxVoiceManager/RoxAssistant, loaded from the installed `com.roxmotor.launcherapp` SDK.
+stock launcher and TTS service packages. It loads `com.roxmotor.ttsmanager.TtsManager` from
+the installed `com.roxmotor.launcherapp` SDK and binds to `com.roxmotor.ttsservice`.
+`speak(text, AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)` selects navigation usage 12
+for both audio focus and playback. The old `VoiceManager.speak(text)` path selected assistant
+usage 16 in the stock service.
 No car SDK binaries or system UID are added to Organic Maps. The app's choice does not change
 Android's default TTS engine or the vehicle's voice/volume settings. Route instructions use the
 system locale supported by Organic Maps; the existing Android TTS language is retained when
-switching back. The existing voice-test button exercises speech on demand. Stop requests contain
-only the utterance ID returned for Organic Maps, never an empty global stop ID.
+switching back. The existing voice-test button exercises speech on demand. `stop(12)` is scoped
+by the SDK to the Organic Maps package. The service manages audio focus itself.
+
+The connection listener is registered before `init`; after each `READY` callback the adapter
+registers the TTS status listener again. `speak` returns null even on success in the asynchronous
+2.0.0 SDK, so its return value is not used as an utterance ID. Playback errors are reported via
+TTS callbacks without marking the service disconnected. Closing the adapter stops its speech,
+removes both listeners and calls `unInit`.
 
 Availability depends on the installed ROX firmware/SDK. Readiness failures remain visible in the
 voice settings and users can switch back to Android TTS. A connection/readiness test alone does
@@ -350,7 +359,9 @@ POI image-comparison test passed on `autoDebug` with package `app.organicmaps.au
   The Minsk fixture is temporarily registered as `000001/Belarus_Minsk Region.mwm` because
   the app requires a catalog region name. The test injects coordinates into its own native core,
   leaves Android GPS untouched, and the fixture is removed after the run.
-- `RoxVoiceIntegrationTest`: stock SDK connection/readiness and app backend selection/restoration, without speaking or changing car settings.
+- `RoxVoiceIntegrationTest`: stock SDK connection/readiness and app backend selection/restoration.
+  The opt-in `speaksOnNavigationChannel` case (`-e roxSpeak true`) speaks a test phrase and checks
+  actual AudioTrack playback attributes for navigation usage 12; other cases do not speak.
 - The opt-in `LocationManager` test validates real incoming fixes and the fixed marker on rendered frames; see [manual commands](MOCK_LOCATION.md).
 
 Run device tests only on a test vehicle/head unit with location permission granted to the debug app.

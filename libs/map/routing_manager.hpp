@@ -40,6 +40,7 @@ class CountryInfoGetter;
 namespace routing
 {
 class NumMwmIds;
+class RoadInfoReader;
 }
 
 class DataSource;
@@ -62,6 +63,7 @@ struct RoutePointInfo
 class RoutingManager final
 {
 public:
+  std::unique_ptr<routing::RoadInfoReader> CreateRoadInfoReader();
   class Delegate
   {
   public:

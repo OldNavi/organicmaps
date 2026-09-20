@@ -334,8 +334,8 @@ public final class ClusterDisplayService extends Service implements DisplayManag
     var app = MwmApplication.from(this);
     app.getLocationHelper().setExternalNavigationActive(false);
     if (app.getOrganicMaps().arePlatformAndCoreInitialized() && app.getTopActivity() == null
-        && !app.getDisplayManager().isCarDisplayUsed() && !RoutingController.get().isNavigating()
-        && !TrackRecorder.nativeIsTrackRecordingEnabled())
+        && !app.getLocationHelper().hasExternalNavigation() && !app.getDisplayManager().isCarDisplayUsed()
+        && !RoutingController.get().isNavigating() && !TrackRecorder.nativeIsTrackRecordingEnabled())
       app.getLocationHelper().stop();
     super.onDestroy();
   }

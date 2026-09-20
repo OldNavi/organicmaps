@@ -20,6 +20,7 @@ import android.view.inspector.WindowInspector;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 import app.organicmaps.MwmApplication;
+import app.organicmaps.sdk.cluster.ClusterCamera;
 import app.organicmaps.sdk.cluster.ClusterMap;
 import app.organicmaps.sdk.location.ClusterTestLocation;
 import app.organicmaps.sdk.routing.RouteMarkType;
@@ -587,6 +588,93 @@ public class ClusterRenderingTest
 
   @Test
   @SdkSuppress(minSdkVersion = 29)
+  public void latestCameraRequestDoesNotWaitForOldTileWork() throws Exception
+  {
+    MwmApplication app =
+        (MwmApplication) InstrumentationRegistry.getInstrumentation().getTargetContext().getApplicationContext();
+    try (Output first = new Output(app, 1920, 720, 160); Output second = new Output(app, 1280, 480, 160))
+    {
+      showUri(app, first, "16", "1", "tilt=55&anchor=0.5,0.85");
+      showUri(app, second, "17", "1", "tilt=45&anchor=0.5,0.85");
+      ClusterMap map = awaitZoom(first.id(), 16);
+      ClusterMap other = awaitZoom(second.id(), 17);
+      main(() -> {
+        app.getLocationHelper().stop();
+        ClusterTestLocation.setCoreLocation(55.85, 38.44, 0);
+      });
+      awaitRenderedZoom(map, 16);
+      long start = SystemClock.elapsedRealtime();
+      main(() -> {
+        for (int i = 0; i < 1000; ++i)
+          map.setCamera(14 + i % 6, new ClusterCamera(i % 56, 0.5, 0.85));
+        map.setCamera(18, new ClusterCamera(35, 0.5, 0.85));
+      });
+      awaitRenderedZoom(map, 18);
+      awaitTilt(map, 35);
+      long elapsed = SystemClock.elapsedRealtime() - start;
+      System.out.println("Latest cluster camera applied in " + elapsed + " ms");
+      assertTrue("Camera waited for obsolete work: " + elapsed + " ms", elapsed < 2000);
+      awaitRenderedZoom(other, 17);
+      awaitTilt(other, 45);
+      awaitTiles(map);
+      awaitStableImage(first);
+      first.save(app, "cluster-labels-160dpi.png");
+      command(app, "hide_cluster", first, 18);
+      command(app, "hide_cluster", second, 17);
+    }
+  }
+
+  @Test
+  @SdkSuppress(minSdkVersion = 29)
+  public void scaleChangesOnlyTheRequestedDisplayAndDefaultsToOne() throws Exception
+  {
+    MwmApplication app =
+        (MwmApplication) InstrumentationRegistry.getInstrumentation().getTargetContext().getApplicationContext();
+    try (Output first = new Output(app, 1280, 480, 160); Output second = new Output(app, 1280, 480, 160))
+    {
+      showUri(app, first, "17", "0", "tilt=0&anchor=0.5,0.85");
+      showUri(app, second, "17", "0", "tilt=0&anchor=0.5,0.85");
+      awaitFrames(first, 3);
+      awaitFrames(second, 3);
+      ClusterMap map = awaitZoom(first.id(), 17);
+      main(() -> {
+        app.getLocationHelper().stop();
+        ClusterTestLocation.setCoreLocation(55.85, 38.44, 0);
+      });
+      awaitStableImage(first);
+      awaitStableImage(second);
+      int normalArrow = arrowPixels(first);
+      int[] unchanged = second.imageColors.get().clone();
+      first.save(app, "cluster-scale-1.png");
+      showUri(app, first, "17", "0", "tilt=0&anchor=0.5,0.85&scale=1.5");
+      Thread.sleep(1000);
+      awaitRenderedZoom(map, 17);
+      awaitStableImage(first);
+      assertTrue("DPI scaling must enlarge the cursor", arrowPixels(first) > normalArrow * 1.5);
+      first.save(app, "cluster-scale-1.5.png");
+      assertImageEquals(second, unchanged);
+      showUri(app, first, "17", "0", "tilt=0&anchor=0.5,0.85");
+      Thread.sleep(1000);
+      awaitRenderedZoom(map, 17);
+      awaitStableImage(first);
+      assertEquals("Omitting scale must restore 1.0", normalArrow, arrowPixels(first), normalArrow * 0.1);
+      command(app, "hide_cluster", first, 17);
+      command(app, "hide_cluster", second, 17);
+    }
+  }
+
+  private static int arrowPixels(Output output)
+  {
+    int count = 0;
+    for (int color : output.imageColors.get())
+      if (((color >> 16) & 255) > 210 && ((color >> 8) & 255) > 175 && (color & 255) < 80)
+        ++count;
+    assertTrue("Position arrow must be rendered", count > 20);
+    return count;
+  }
+
+  @Test
+  @SdkSuppress(minSdkVersion = 29)
   public void highTiltDrivingPerformance() throws Exception
   {
     MwmApplication app =
@@ -1059,23 +1147,38 @@ public class ClusterRenderingTest
     MwmApplication app =
         (MwmApplication) InstrumentationRegistry.getInstrumentation().getTargetContext().getApplicationContext();
     Router[] originalRouter = new Router[1];
+    MapStyle[] originalStyle = new MapStyle[1];
     try (Output first = new Output(app, 768, 432, 160); Output second = new Output(app, 640, 360, 160))
     {
       showUri(app, first, "16", "0", "tilt=0&anchor=0.5,0.5");
       showUri(app, second, "16", "0", "tilt=0&anchor=0.5,0.5");
+      awaitFrames(first, 3);
+      awaitFrames(second, 3);
       main(() -> {
         app.getLocationHelper().stop();
         originalRouter[0] = Router.getLastUsed();
+        originalStyle[0] = MapStyle.get();
         Framework.nativeCloseRouting();
         Router.set(Router.Ruler); // A real rendered route without regional map dependencies.
         ClusterTestLocation.setCoreLocation(0, 0, 0);
       });
-      awaitStableImage(first);
-      awaitStableImage(second);
-      int[] firstEmpty = first.imageColors.get().clone();
-      int[] secondEmpty = second.imageColors.get().clone();
-      for (boolean close : new boolean[] {false, true})
+      MapStyle[] styles = {MapStyle.VehicleDark, MapStyle.Dark};
+      int[][] firstEmpty = new int[2][], secondEmpty = new int[2][];
+      for (int i = 0; i < styles.length; ++i)
       {
+        MapStyle style = styles[i];
+        main(() -> MapStyle.set(style));
+        awaitStableImage(first);
+        awaitStableImage(second);
+        firstEmpty[i] = first.imageColors.get().clone();
+        secondEmpty[i] = second.imageColors.get().clone();
+        first.save(app, "cancel-empty-" + i + ".png");
+      }
+      for (int attempt = 0; attempt < 4; ++attempt)
+      {
+        main(() -> MapStyle.set(MapStyle.VehicleDark));
+        awaitStableImage(first);
+        awaitStableImage(second);
         long before = first.checksum.get();
         long secondBefore = second.checksum.get();
         main(() -> {
@@ -1089,16 +1192,24 @@ public class ClusterRenderingTest
         awaitStableImage(second);
         assertNotEquals("Route must be rendered before cancellation", before, first.checksum.get());
         assertNotEquals("Route must reach the second cluster", secondBefore, second.checksum.get());
+        int[] firstRoute = first.imageColors.get().clone();
+        int[] secondRoute = second.imageColors.get().clone();
+        first.save(app, "cancel-route.png");
+        boolean close = attempt % 2 == 0;
         main(() -> {
           if (close)
             Framework.nativeCloseRouting();
           else
             Framework.nativeRemoveRoute();
+          // The Activity switches vehicle -> default style when navigation is cancelled.
+          // This races the route removal queued on the resource thread.
+          MapStyle.set(MapStyle.Dark);
         });
         awaitStableImage(first);
         awaitStableImage(second);
-        assertImageEquals(first, firstEmpty);
-        assertImageEquals(second, secondEmpty);
+        first.save(app, "cancel-after.png");
+        assertRoutePixelsCleared(first, firstEmpty[0], firstRoute, firstEmpty[1]);
+        assertRoutePixelsCleared(second, secondEmpty[0], secondRoute, secondEmpty[1]);
       }
       command(app, "hide_cluster", first, 16);
       command(app, "hide_cluster", second, 16);
@@ -1109,8 +1220,38 @@ public class ClusterRenderingTest
         Framework.nativeCloseRouting();
         if (originalRouter[0] != null)
           Router.set(originalRouter[0]);
+        if (originalStyle[0] != null)
+          MapStyle.mark(originalStyle[0]);
       });
     }
+  }
+
+  private static boolean differentColor(int a, int b)
+  {
+    return Math.abs(((a >> 16) & 255) - ((b >> 16) & 255)) > 8 || Math.abs(((a >> 8) & 255) - ((b >> 8) & 255)) > 8
+ || Math.abs((a & 255) - (b & 255)) > 8;
+  }
+
+  private static void assertRoutePixelsCleared(Output output, int[] before, int[] route, int[] after)
+  {
+    int changed = 0, stale = 0;
+    int[] actual = output.imageColors.get();
+    int width = output.reader.getWidth() / 2, height = output.reader.getHeight() / 2;
+    for (int i = 0; i < before.length; ++i)
+    {
+      // The position marker legitimately changes appearance when routing ends. Check the
+      // route on both sides of the fixed central marker, not its lighting/outline pixels.
+      if (Math.abs(i % width - width / 2) < width / 16 && Math.abs(i / width - height / 2) < height / 8)
+        continue;
+      if (differentColor(before[i], route[i]))
+      {
+        ++changed;
+        if (differentColor(after[i], actual[i]))
+          ++stale;
+      }
+    }
+    assertTrue("Test route must cover enough pixels", changed > 30);
+    assertTrue("Stale route pixels on display " + output.id() + ": " + stale + "/" + changed, stale < changed / 20);
   }
 
   @Test

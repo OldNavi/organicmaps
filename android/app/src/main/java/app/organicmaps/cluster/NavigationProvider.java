@@ -19,6 +19,7 @@ import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.cluster.ClusterCamera;
 import app.organicmaps.sdk.cluster.ClusterFlag;
 import app.organicmaps.sdk.cluster.ClusterMap;
+import app.organicmaps.sdk.cluster.ClusterScale;
 import app.organicmaps.sdk.cluster.ClusterZoom;
 import app.organicmaps.sdk.cluster.RoadInfo;
 import app.organicmaps.sdk.routing.RoutingController;
@@ -106,6 +107,7 @@ public final class NavigationProvider extends ContentProvider
       args.putInt("displayId", Integer.parseInt(uri.getQueryParameter("displayId")));
       String zoom = uri.getQueryParameter("zoom");
       args.putInt("zoom", ClusterZoom.parse(zoom));
+      args.putDouble("scale", ClusterScale.parse(uri.getQueryParameter("scale")));
       args.putBoolean("poi", ClusterFlag.parse("poi", uri.getQueryParameter("poi")));
       args.putBoolean("3d", ClusterFlag.parse("3d", uri.getQueryParameter("3d")));
       for (String key : new String[] {"tilt", "anchor", "anchor_x", "anchor_y"})
@@ -276,6 +278,7 @@ public final class NavigationProvider extends ContentProvider
     int uid = Binder.getCallingUid();
     int displayId = args.getInt("displayId", -1);
     int zoom = ClusterZoom.parse(args.get("zoom"));
+    double scale = ClusterScale.parse(args.get("scale"));
     boolean poiVisible = ClusterFlag.parse("poi", args.get("poi"));
     boolean buildings3d = ClusterFlag.parse("3d", args.get("3d"));
     ClusterCamera camera =
@@ -287,6 +290,7 @@ public final class NavigationProvider extends ContentProvider
                         .putExtra("displayId", displayId)
                         .putExtra("uid", uid)
                         .putExtra("zoom", zoom)
+                        .putExtra("scale", scale)
                         .putExtra("poi", poiVisible)
                         .putExtra("3d", buildings3d)
                         .putExtra("tilt", camera.tilt)

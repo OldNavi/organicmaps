@@ -35,12 +35,44 @@ and `distance=Integer.MAX_VALUE`, so older Premium clients do not show a camera 
 
 Maneuver and lane names match the existing Premium contract. City/region, destination pictograms,
 and unavailable destination-sign content are not invented. Road shields have a neutral background.
-Off-route speed limits are not currently available through this provider. There is no Yandex traffic
+Without guidance, matched-road limits and cameras are provided by the road-info worker described below. There is no Yandex traffic
 feed or Yandex POI/search API in this integration.
 
-The optional exported `app.organicmaps.cluster.NavigationReadyService` initializes the native core
-for a bound host without opening the main Activity. It requires the same location permission. A
+The exported `app.organicmaps.cluster.NavigationReadyService` initializes the native core
+and owns a location session for a bound host without opening the main Activity. It requires the same location permission. A
 successful binding does not mean map downloads or GPS acquisition have completed.
+
+## Driving without a route
+
+Real GPS fixes feed a separate native road-info reader on one worker thread. It matches
+position and heading against car-accessible road geometry, requires consecutive matching
+fixes, rejects ambiguous nearby roads, and reads numeric directional/conditional maxspeed
+from the downloaded map. Routing cost speeds and unknown/unlimited values are not presented
+as legal numeric limits. Fresh stationary fixes retain the approach direction.
+
+The nearest camera is searched up to 2 km ahead, following road geometry and stopping at an
+ambiguous junction. Distance follows the road instead of a straight-line radius. This uses
+existing MWM camera data and country exclusions. The existing camera format reader ignores
+camera enforcement direction because of data quality, so this is not a guarantee of which
+lane/direction a camera enforces. No online camera feed is added.
+
+Without a route, `/guidance` keeps `state=none` and empty route/ETA fields, but can report
+`speed_limit` and `current_road`; `/speed_camera` can contain a camera ahead. Guidance adds
+`speed_limit_valid`, `road_matched`, and `fix_age_ms`. Distances/speeds keep their existing
+metre and m/s units. A snapshot expires after 5 seconds without a fresh GPS fix and observers
+are notified of expiry. A provider query never refreshes the original measurement time.
+During active guidance, route-based information takes precedence.
+
+Binding `NavigationReadyService` now owns a foreground location session, allowing Premium
+to consume road information with no map window and no route. Unbinding the last client
+releases that session; other cluster/navigation/track-recording owners retain their GPS.
+Read-only queries alone do not start a location session. Location permission is required.
+
+Validation: four native ARM64 tests cover direction/ambiguity, distance along a bend,
+branch ambiguity and a camera behind a reverse-moving vehicle. A device integration test
+on the downloaded Moscow map reported 30 km/h on Bolshoy Gnezdnikovsky Lane with no route
+and confirmed that the provider clears the limit after GPS expiry. No system mock provider
+or vehicle-control commands are involved in that test.
 
 ## Map connections
 

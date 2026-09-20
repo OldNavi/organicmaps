@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -158,6 +159,13 @@ public class MwmApplication extends Application implements Application.ActivityL
       if (onComplete != null)
         onComplete.run();
     });
+  }
+
+  @Override
+  public void onConfigurationChanged(@NonNull Configuration newConfig)
+  {
+    super.onConfigurationChanged(newConfig);
+    ThemeSwitcher.INSTANCE.onConfigurationChanged(newConfig);
   }
 
   private final LifecycleObserver mProcessLifecycleObserver = new DefaultLifecycleObserver() {

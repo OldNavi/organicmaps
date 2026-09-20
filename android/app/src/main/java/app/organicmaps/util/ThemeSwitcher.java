@@ -3,10 +3,12 @@ package app.organicmaps.util;
 import android.annotation.SuppressLint;
 import android.app.UiModeManager;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiContext;
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AppCompatDelegate;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.downloader.DownloaderStatusIcon;
@@ -28,12 +30,23 @@ public enum ThemeSwitcher
 
   @Nullable
   private Config.UiTheme mLatestTheme = null;
+  private int mSystemUiMode;
 
   public void initialize(@NonNull Context context)
   {
-    mContext = context;
+    if (mSynchronizedThemeController != null)
+      return;
+    mContext = context.getApplicationContext();
+    mSystemUiMode = mContext.getResources().getConfiguration().uiMode;
     mSynchronizedThemeController =
-        new SynchronizedThemeController(MwmApplication.from(context).getLocationHelper(), this::setTheme);
+        new SynchronizedThemeController(MwmApplication.from(mContext).getLocationHelper(), this::setTheme);
+  }
+
+  public void onConfigurationChanged(@NonNull Configuration config)
+  {
+    mSystemUiMode = config.uiMode;
+    if (mContext != null && MwmApplication.from(mContext).getOrganicMaps().arePlatformAndCoreInitialized())
+      synchronizeApplicationTheme();
   }
 
   /**
@@ -41,9 +54,8 @@ public enum ThemeSwitcher
    * device settings, and navigation state. Call this method whenever any of
    * these conditions change to maintain proper theme consistency.
    *
-   * <p><b>Note:</b> This method does not affect map styling. Map appearance
-   * requires separate synchronization via {@link #synchronizeMapStyle(Context, boolean)} when
-   * map-related theme changes occur.
+   * <p>Also refreshes map styling without requiring an Activity or an active primary renderer.
+   * Routing/layer changes can additionally synchronize through {@link #synchronizeMapStyle(Context, boolean)}.
    */
   @androidx.annotation.UiThread
   public void synchronizeApplicationTheme()
@@ -75,9 +87,8 @@ public enum ThemeSwitcher
    *   <li>Outdoor map layer availability</li>
    * </ul>
    *
-   * <p><b>Important:</b> This method must be called on the UI thread and only
-   * when the map is rendered and visible on the screen. Incorrect parameters or calling this
-   * method at the wrong time will cause UI freezing.</p>
+   * <p>This method must be called on the UI thread. Pass false when the primary renderer is
+   * absent or paused; retained graphics and active clusters are refreshed without resuming it.</p>
    *
    * @param context The activity context currently displaying the map
    * @param isRendererActive Whether the OpenGL renderer is currently active
@@ -88,9 +99,13 @@ public enum ThemeSwitcher
   @androidx.annotation.UiThread
   public void synchronizeMapStyle(@UiContext @NonNull Context context, boolean isRendererActive)
   {
-    var isDarkMode = ThemeUtils.isDarkTheme(context);
-    var mapStyle = calculateMapStyle(isDarkMode);
+    boolean dark = mLatestTheme == null ? ThemeUtils.isDarkTheme(context) : isDarkTheme(mLatestTheme, mSystemUiMode);
+    applyMapStyle(dark, isRendererActive);
+  }
 
+  private void applyMapStyle(boolean dark, boolean isRendererActive)
+  {
+    var mapStyle = calculateMapStyle(dark);
     if (MapStyle.get() != mapStyle)
       setMapStyle(mapStyle, isRendererActive);
   }
@@ -125,6 +140,16 @@ public enum ThemeSwitcher
       DownloaderStatusIcon.clearCache();
     }
     mLatestTheme = theme;
+    if (MwmApplication.from(mContext).getOrganicMaps().arePlatformAndCoreInitialized())
+      applyMapStyle(isDarkTheme(theme, mSystemUiMode), false /* isRendererActive */);
+  }
+
+  @VisibleForTesting
+  static boolean isDarkTheme(@NonNull Config.UiTheme effectiveTheme, int systemUiMode)
+  {
+    return effectiveTheme == Config.UiTheme.DARK
+ || (effectiveTheme == Config.UiTheme.SYSTEM
+     && (systemUiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES);
   }
 
   private MapStyle calculateMapStyle(boolean dark)

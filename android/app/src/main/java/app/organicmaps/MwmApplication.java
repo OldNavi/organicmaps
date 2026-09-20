@@ -247,7 +247,7 @@ public class MwmApplication extends Application implements Application.ActivityL
    */
   private void stopLocationInBackgroundIfUnused()
   {
-    if (app.organicmaps.cluster.ClusterDisplayService.isConnected())
+    if (getLocationHelper().hasExternalNavigation())
       Logger.i(LOCATION_TAG, "Cluster maps are active, keeping location in the background");
     else if (!mDisplayManager.isDeviceDisplayUsed())
       Logger.i(LOCATION_TAG, "Android Auto is active, keeping location in the background");

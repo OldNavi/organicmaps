@@ -5,6 +5,7 @@
 #include "routing/absent_regions_finder.hpp"
 #include "routing/checkpoint_predictor.hpp"
 #include "routing/index_router.hpp"
+#include "routing/road_info.hpp"
 #include "routing/route.hpp"
 #include "routing/routing_callbacks.hpp"
 #include "routing/ruler_router.hpp"
@@ -482,6 +483,12 @@ void RoutingManager::OnRoutePointPassed(RouteMarkType type, size_t intermediateI
 void RoutingManager::OnLocationUpdate(location::GpsInfo const & info)
 {
   m_extrapolator.OnLocationUpdate(info);
+}
+
+std::unique_ptr<routing::RoadInfoReader> RoutingManager::CreateRoadInfoReader()
+{
+  return std::make_unique<routing::RoadInfoReader>(m_callbacks.m_dataSourceGetter(),
+                                                   m_callbacks.m_countryParentNameGetterFn);
 }
 
 RouterType RoutingManager::GetBestRouter(m2::PointD const & startPoint, m2::PointD const & finalPoint) const

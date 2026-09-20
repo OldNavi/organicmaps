@@ -20,6 +20,7 @@ import app.organicmaps.sdk.cluster.ClusterCamera;
 import app.organicmaps.sdk.cluster.ClusterFlag;
 import app.organicmaps.sdk.cluster.ClusterMap;
 import app.organicmaps.sdk.cluster.ClusterZoom;
+import app.organicmaps.sdk.cluster.RoadInfo;
 import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.routing.RoutingInfo;
 import java.util.Arrays;
@@ -36,6 +37,12 @@ public final class NavigationProvider extends ContentProvider
   private static volatile NavigationSnapshot sSnapshot = NavigationSnapshot.EMPTY;
   private static boolean sInitialized;
   private static long sPublishedAt;
+  private static RoadInfo sRoadInfo = RoadInfo.EMPTY;
+  private static long sRoadFixNanos;
+  private static long sFixNanos;
+  private static RoadInfoMonitor sRoadMonitor;
+  private static final android.os.Handler MAIN = new android.os.Handler(android.os.Looper.getMainLooper());
+  private static Runnable sExpired;
 
   public static void initialize(MwmApplication app)
   {
@@ -43,21 +50,40 @@ public final class NavigationProvider extends ContentProvider
       return;
     sInitialized = true;
     VoiceSavedPlaces.initialize(app);
-    app.getLocationHelper().addListener(location -> publish(app, false));
+    sRoadMonitor = new RoadInfoMonitor((info, fixNanos) -> {
+      sRoadInfo = info;
+      sRoadFixNanos = fixNanos;
+      publish(app, true);
+    });
+    sExpired = () -> publish(app, true);
+    app.getLocationHelper().addListener(location -> onLocation(app, location));
     RoutingController.get().addNavigationStateListener(active -> publish(app, true));
     publish(app, true);
+  }
+
+  static void onLocation(MwmApplication app, android.location.Location location)
+  {
+    sFixNanos = location.getElapsedRealtimeNanos();
+    MAIN.removeCallbacks(sExpired);
+    long age = Math.max(0, (android.os.SystemClock.elapsedRealtimeNanos() - sFixNanos) / 1_000_000);
+    MAIN.postDelayed(sExpired, Math.max(0, RoadInfoMonitor.MAX_FIX_AGE_MS + 1 - age));
+    if (!RoutingController.get().isNavigating())
+      sRoadMonitor.update(location);
+    // LocationHelper delivers listeners before forwarding the same fix to native routing.
+    MAIN.post(() -> publish(app, false));
   }
 
   private static void publish(Context context, boolean force)
   {
     boolean navigating = RoutingController.get().isNavigating();
     long now = android.os.SystemClock.elapsedRealtime();
-    if (!force && ((!navigating && sSnapshot.info == null) || now - sPublishedAt < 250))
+    if (!force && now - sPublishedAt < 250)
       return;
     sPublishedAt = now;
     RoutingInfo info = navigating ? Framework.nativeGetRouteFollowingInfo() : null;
-    sSnapshot = new NavigationSnapshot(info, navigating ? ClusterMap.nativeGetCameraAhead() : new double[0],
-                                       navigating ? ClusterMap.nativeGetRouteMetrics() : new double[3]);
+    sSnapshot = new NavigationSnapshot(info, navigating ? ClusterMap.nativeGetCameraAhead() : sRoadInfo.camera,
+                                       navigating ? ClusterMap.nativeGetRouteMetrics() : new double[3],
+                                       navigating ? RoadInfo.EMPTY : sRoadInfo, navigating ? sFixNanos : sRoadFixNanos);
     for (String path : DATA_PATHS)
       context.getContentResolver().notifyChange(Uri.withAppendedPath(CONTENT_URI, path), null);
   }
@@ -88,6 +114,9 @@ public final class NavigationProvider extends ContentProvider
       return cursor(new String[] {"accepted"}, new Object[] {1});
     }
     NavigationSnapshot snapshot = sSnapshot;
+    long fixAge = snapshot.fixAgeMillis(android.os.SystemClock.elapsedRealtimeNanos());
+    if (fixAge > RoadInfoMonitor.MAX_FIX_AGE_MS)
+      snapshot = NavigationSnapshot.EMPTY;
     RoutingInfo info = snapshot.info;
     MatrixCursor result;
     switch (path == null ? "" : path)
@@ -104,20 +133,24 @@ public final class NavigationProvider extends ContentProvider
     }
     case "/api_version": result = cursor(new String[] {"version"}, new Object[] {1}); break;
     case "/guidance":
-      result = cursor(new String[] {"state", "speed_limit", "distance_left", "distance_total", "distance_unit",
-                                    "display_distance_left", "display_distance_unit", "time_left", "display_time_left",
-                                    "current_road", "overview", "current_city", "current_region"},
-                      info == null
-                          ? new Object[] {"none", 0.0, 0, 0, "m", "", "m", 0, "", "", "none", "", ""}
-                          : new Object[] {"active", NavigationSnapshot.speedLimitMps(info.speedLimitMps),
-                                          (int) Math.round(snapshot.metrics[0]), (int) Math.round(snapshot.metrics[1]),
-                                          "m", info.distToTarget.mDistanceStr,
-                                          NavigationSnapshot.unit(info.distToTarget), info.totalTimeInSeconds,
-                                          app.organicmaps.util.Utils
-                                              .formatRoutingTime(providerContext(), info.totalTimeInSeconds,
-                                                                 app.organicmaps.R.dimen.text_size_routing_number)
-                                              .toString(),
-                                          info.currentStreet, "none", "", ""});
+      result = cursor(
+          new String[] {"state", "speed_limit", "distance_left", "distance_total", "distance_unit",
+                        "display_distance_left", "display_distance_unit", "time_left", "display_time_left",
+                        "current_road", "overview", "current_city", "current_region", "speed_limit_valid", "fix_age_ms",
+                        "road_matched"},
+          info == null
+              ? new Object[] {"none", snapshot.roadInfo.speedLimitMps, 0, 0, "m", "", "m", 0, "",
+                              snapshot.roadInfo.road, "none", "", "", snapshot.roadInfo.speedLimitMps > 0 ? 1 : 0,
+                              fixAge, snapshot.roadInfo.matched ? 1 : 0}
+              : new Object[] {"active", NavigationSnapshot.speedLimitMps(info.speedLimitMps),
+                              (int) Math.round(snapshot.metrics[0]), (int) Math.round(snapshot.metrics[1]), "m",
+                              info.distToTarget.mDistanceStr, NavigationSnapshot.unit(info.distToTarget),
+                              info.totalTimeInSeconds,
+                              app.organicmaps.util.Utils
+                                  .formatRoutingTime(providerContext(), info.totalTimeInSeconds,
+                                                     app.organicmaps.R.dimen.text_size_routing_number)
+                                  .toString(),
+                              info.currentStreet, "none", "", "", info.speedLimitMps > 0 ? 1 : 0, fixAge, 1});
       break;
     case "/maneuver":
       result = new MatrixCursor(new String[] {"action", "distance", "distance_unit", "display_distance",

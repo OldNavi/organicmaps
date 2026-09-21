@@ -386,6 +386,7 @@ private:
   extrapolation::Extrapolator m_extrapolator;
 
   std::vector<dp::DrapeID> m_drapeSubroutes;
+  uint64_t m_routeAltMarksGeneration = 0;
   mutable std::mutex m_drapeSubroutesMutex;
 
   std::unique_ptr<location::GpsInfo> m_gpsInfoCache;

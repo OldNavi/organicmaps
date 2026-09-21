@@ -8,9 +8,11 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import androidx.test.platform.app.InstrumentationRegistry;
 import app.organicmaps.BuildConfig;
 import app.organicmaps.R;
@@ -22,6 +24,37 @@ import org.junit.Test;
 
 public class MapSpeedViewTest
 {
+  @Test
+  public void rightEdgeMatchesZoomOnCompactAndWideScreens()
+  {
+    InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+      Context base = InstrumentationRegistry.getInstrumentation().getTargetContext();
+      for (int[] size : new int[][] {{360, 800}, {800, 360}, {1440, 810}})
+      {
+        Configuration config = new Configuration(base.getResources().getConfiguration());
+        config.screenWidthDp = size[0];
+        config.screenHeightDp = size[1];
+        config.smallestScreenWidthDp = Math.min(size[0], size[1]);
+        config.orientation =
+            size[0] > size[1] ? Configuration.ORIENTATION_LANDSCAPE : Configuration.ORIENTATION_PORTRAIT;
+        Context context = new ContextThemeWrapper(base.createConfigurationContext(config), R.style.MwmTheme);
+        ViewGroup root =
+            (ViewGroup) LayoutInflater.from(context).inflate(R.layout.map_buttons_layout_regular, null, false);
+        float density = context.getResources().getDisplayMetrics().density;
+        int width = Math.round(size[0] * density), height = Math.round(size[1] * density);
+        root.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                     View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+        root.layout(0, 0, width, height);
+        View zoom = root.findViewById(R.id.nav_zoom_out);
+        Rect zoomBounds = new Rect();
+        zoom.getDrawingRect(zoomBounds);
+        root.offsetDescendantRectToMyCoords(zoom, zoomBounds);
+        assertEquals("Speed/zoom right edges on " + size[0] + "x" + size[1], zoomBounds.right,
+                     root.findViewById(R.id.map_speed).getRight());
+      }
+    });
+  }
+
   @Test
   public void circlesRemainReadableInBothThemesAndClearTheTurnPanel()
   {

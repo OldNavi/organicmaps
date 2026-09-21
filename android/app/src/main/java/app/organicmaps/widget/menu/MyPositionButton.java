@@ -31,6 +31,8 @@ public class MyPositionButton
   private static final SparseArray<Drawable> mIcons = new SparseArray<>(); // Location mode -> Button icon
 
   private final int mFollowPaddingShift;
+  private boolean mAnimationEnabled = true;
+  private int mMode;
 
   public MyPositionButton(@NonNull View button, @NonNull View.OnClickListener listener)
   {
@@ -44,6 +46,7 @@ public class MyPositionButton
 
   public void update(int mode)
   {
+    mMode = mode;
     Drawable image = mIcons.get(mode);
     @AttrRes
     int colorAttr = R.attr.iconTint;
@@ -81,7 +84,7 @@ public class MyPositionButton
     ImageViewCompat.setImageTintList(mButton, ColorStateList.valueOf(ThemeUtils.getColor(context, colorAttr)));
     updatePadding(mode);
 
-    if (mode == LocationState.PENDING_POSITION)
+    if (mode == LocationState.PENDING_POSITION && mAnimationEnabled)
     {
       final RotateAnimation rotate =
           new RotateAnimation(0, 360, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
@@ -92,6 +95,17 @@ public class MyPositionButton
 
       mButton.startAnimation(rotate);
     }
+    else
+      mButton.clearAnimation();
+  }
+
+  public void setAnimationEnabled(boolean enabled)
+  {
+    if (mAnimationEnabled == enabled)
+      return;
+    mAnimationEnabled = enabled;
+    if (enabled)
+      update(mMode);
     else
       mButton.clearAnimation();
   }

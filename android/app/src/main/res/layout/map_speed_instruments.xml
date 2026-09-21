@@ -4,27 +4,22 @@
   xmlns:tools="http://schemas.android.com/tools">
   <app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView
     android:id="@+id/map_speed_value"
-    style="@style/MwmWidget.SpeedLimit.MapInstrument"
+    style="@style/MwmWidget.SpeedLimit.MapInstrument.CurrentSpeed"
     android:layout_width="@dimen/map_speed_circle_size"
     android:layout_height="@dimen/map_speed_circle_size"
     android:elevation="@dimen/nav_elevation"
-    app:speedLimitBackgroundColor="?cardBackground"
-    app:speedLimitBorderColor="?android:attr/textColorHint"
-    app:speedLimitTextColor="?android:attr/textColorPrimary"
     app:speedLimitShowUnknown="true"
     app:speedLimitShowZero="true"
     app:speedLimitEditModeSpeedLimit="60" />
   <app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView
     android:id="@+id/map_speed_limit"
-    style="@style/MwmWidget.SpeedLimit.MapInstrument"
+    style="@style/MwmWidget.SpeedLimit.MapInstrument.Limit"
     android:layout_width="@dimen/map_speed_circle_size"
     android:layout_height="@dimen/map_speed_circle_size"
     android:layout_marginStart="-8dp"
     android:elevation="@dimen/nav_elevation"
     android:translationZ="1dp"
     app:speedLimitShowUnknown="true"
-    app:speedLimitBackgroundColor="@android:color/white"
-    app:speedLimitTextColor="@android:color/black"
     app:speedLimitEditModeSpeedLimit="90"
     tools:visibility="visible" />
 </merge>

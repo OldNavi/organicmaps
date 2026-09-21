@@ -56,12 +56,10 @@ public final class MapSpeedView extends LinearLayout
     if (mSpeed.getCurrentTextColor() != color)
       mSpeed.setTextColor(color);
     int formattedLimit = limit > 0 ? StringUtils.nativeFormatSpeed(limit) : 0;
-    // An unknown limit must not look like a restriction to zero.
-    mLimit.setVisibility(formattedLimit > 0 ? VISIBLE : GONE);
     if (mLimit.getSpeedLimit() != formattedLimit || mLimit.isAlert() != exceeded)
     {
       mLimit.setSpeedLimit(formattedLimit, exceeded);
-      mLimit.setContentDescription(formattedLimit > 0 ? formattedLimit + " " + formatted.second : null);
+      mLimit.setContentDescription(formattedLimit > 0 ? formattedLimit + " " + formatted.second : "—");
     }
     // Read only caches. This also expires stale data when GNSS/VHAL stops sending events.
     mHandler.postDelayed(mRefresh, 250);

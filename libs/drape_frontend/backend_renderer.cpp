@@ -324,11 +324,20 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   {
     ref_ptr<AddSubrouteMessage> msg = message;
     if (msg->GetRecacheId() < 0)
-      m_activeSubroutes.insert(msg->GetSubrouteId());
+      m_activeSubroutes[msg->GetSubrouteId()] = msg->GetSubroute();
     else if (!m_activeSubroutes.contains(msg->GetSubrouteId()))
       break;  // A style refresh queued by FR must not resurrect a cancelled route.
     CHECK(m_context != nullptr, ());
     m_routeBuilder->Build(m_context, msg->GetSubrouteId(), msg->GetSubroute(), m_texMng, msg->GetRecacheId());
+    break;
+  }
+
+  case Message::Type::RecacheSubroutes:
+  {
+    ref_ptr<RecacheSubroutesMessage> const msg = message;
+    CHECK(m_context != nullptr, ());
+    for (auto const & [id, subroute] : m_activeSubroutes)
+      m_routeBuilder->Build(m_context, id, subroute, m_texMng, msg->GetRecacheId());
     break;
   }
 

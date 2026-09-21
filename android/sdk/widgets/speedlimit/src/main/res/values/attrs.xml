@@ -6,6 +6,7 @@
     <attr name="speedLimitAlertColor" format="color" />
     <attr name="speedLimitTextColor" format="color" />
     <attr name="speedLimitTextAlertColor" format="color" />
+    <attr name="speedLimitShowUnknown" format="boolean" />
     <!-- These values are used only in edit mode -->
     <attr name="speedLimitEditModeSpeedLimit" format="integer" />
     <attr name="speedLimitEditModeAlert" format="boolean" />

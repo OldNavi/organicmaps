@@ -156,7 +156,7 @@ public class DownloaderService extends Service implements MapManager.StorageCall
       return;
     }
 
-    mNotifier.notifyProgress(countryId, (int) bytesTotal, (int) bytesDownloaded);
+    mNotifier.notifyProgress(countryId, bytesTotal, bytesDownloaded);
   }
 
   @Override

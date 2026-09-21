@@ -642,6 +642,17 @@ private:
   int const m_recacheId;
 };
 
+class RecacheSubroutesMessage : public Message
+{
+public:
+  explicit RecacheSubroutesMessage(int recacheId) : m_recacheId(recacheId) {}
+  Type GetType() const override { return Type::RecacheSubroutes; }
+  int GetRecacheId() const { return m_recacheId; }
+
+private:
+  int const m_recacheId;
+};
+
 class PrepareSubrouteArrowsMessage : public Message
 {
 public:

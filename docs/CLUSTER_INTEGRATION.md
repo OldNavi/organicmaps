@@ -180,14 +180,17 @@ Camera options accepted by both query parameters and `ContentResolver.call()` ex
 
 | Parameter | Default | Values |
 | --- | --- | --- |
-| `tilt` | `auto` | `auto` or an angle from 0 to 55 degrees; 0 is a top-down view |
+| `tilt` | `auto` | With fixed zoom: `auto` or an angle from 0 to 55 degrees; 0 is a top-down view. Ignored with auto zoom. |
 | `scale` | `1.0` | DPI multiplier from 0.5 to 3.0; fractional values are accepted |
 | `anchor` | `0.5,0.75` | `x,y` fractions of the visible map, each from 0 to 1 |
 | `anchor_x`, `anchor_y` | `0.5`, `0.75` | Alternative to the compact `anchor` parameter |
 
 Do not combine `anchor` with `anchor_x`/`anchor_y`. Coordinates start at the top-left corner:
 `anchor_y=0.85` puts the marker lower on the screen. The arrow remains fixed at the anchor and
-points upwards while the map follows position and bearing. Fixed tilt is retained during speed-based autozoom; `tilt=auto` restores the scale-dependent perspective. Omitting options on a
+points upwards while the map follows position and bearing. With `zoom=auto`, `zoom=0`, or omitted zoom,
+perspective is always scale-dependent, using the same automatic camera projection as the primary map.
+A numeric `tilt` only applies with fixed zoom; `tilt=auto` also enables automatic perspective with fixed zoom.
+Omitting options on a
 repeated request restores their defaults, so include every non-default option on each update.
 
 `scale` multiplies the renderer's DPI-derived visual scale once, scaling labels, icons, roads and
@@ -201,7 +204,7 @@ Organic Maps defaults to `1.0`; RoxPremium explicitly sends `1.5` for its 160-DP
 ```
 /show_cluster?displayId=2&zoom=15&tilt=45&anchor=0.5,0.85
 /show_cluster?displayId=2&zoom=18&tilt=35&anchor=0.5,0.85&scale=1.5
-/show_cluster?displayId=2&zoom=auto&tilt=0&anchor_x=0.5&anchor_y=0.75&poi=1
+/show_cluster?displayId=2&zoom=auto&anchor_x=0.5&anchor_y=0.75&poi=1
 ```
 
 POI icons and POI names are hidden by default on each cluster display. Add `poi=1` to
@@ -417,10 +420,12 @@ POI image-comparison test passed on `autoDebug` with package `app.organicmaps.au
   cells, stable LOD, preserved key identity and invalidation of coalesced/re-entered cells.
 - `firstRequestAppliesCameraWhenGpsAlreadyExists`: the first request at zoom 18, tilt 5 and
   anchor 0.5,0.85 with a cached GPS fix, plus immediate speed-based autozoom on a new display.
+- `autoZoomUsesAutomaticPerspectiveDespiteManualTilt`: scale-dependent angles at different speeds,
+  ignoring a supplied manual tilt for auto/zero/omitted zoom, restoring fixed tilt and preserving anchor.
 - `buildingsAreFlatByDefaultAndCanBeEnabledIndependently`: image comparison of flat/3D buildings,
   live `3d=1` updates, omission/zero resetting the flag and an unchanged second display/tilt.
 - `cameraTiltAndAnchorAreAppliedIndependentlyAndResetToDefaults`: actual native angles 0/30/45/55,
-  marker positions on displays with different DPI, fixed tilt with autozoom/GPS bearing changes,
+  marker positions on displays with different DPI, fixed tilt with fixed zoom/GPS bearing changes,
   screen-up arrow orientation away from the centre, and return to automatic tilt/default anchor.
 - `RoxVoiceDefaultsTest` and the ROX device check cover persist-property detection, Aptiv
   precedence, auto-only selection and preservation of a saved voice-backend choice.

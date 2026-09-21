@@ -331,6 +331,30 @@ public class ClusterRenderingTest
     assertEquals("Marker anchor y", y, marker[1], 0.065);
   }
 
+  private static double awaitMatchingAutoTilt(ClusterMap map, ClusterMap reference) throws InterruptedException
+  {
+    double[] tilt = new double[2];
+    double previous = -1;
+    long stableSince = SystemClock.elapsedRealtime();
+    long deadline = stableSince + 15000;
+    do
+    {
+      main(() -> {
+        tilt[0] = map.getCurrentTilt();
+        tilt[1] = reference.getCurrentTilt();
+      });
+      long now = SystemClock.elapsedRealtime();
+      if (Math.abs(tilt[0] - tilt[1]) > 0.05 || Math.abs(tilt[1] - previous) > 0.05)
+        stableSince = now;
+      else if (now - stableSince >= 500)
+        return tilt[1];
+      previous = tilt[1];
+      Thread.sleep(50);
+    }
+    while (SystemClock.elapsedRealtime() < deadline);
+    throw new AssertionError("Automatic perspectives did not converge: " + tilt[0] + ", " + tilt[1]);
+  }
+
   private static void assertArrowPointsUp(Output output, double x, double y)
   {
     int[] colors = output.imageColors.get();
@@ -398,7 +422,7 @@ public class ClusterRenderingTest
       awaitRenderedZoom(original, 15);
       awaitTilt(original, 55);
       awaitAnchor(first, 0.65, 0.8);
-      showUri(app, first, "auto", null, "tilt=30&anchor_x=0.65&anchor_y=0.8");
+      showUri(app, first, "16", null, "tilt=30&anchor_x=0.65&anchor_y=0.8");
       main(() -> ClusterTestLocation.setCoreLocation(55.7555, 37.62, 90));
       Thread.sleep(1500);
       awaitTilt(original, 30);
@@ -424,6 +448,48 @@ public class ClusterRenderingTest
     {
       if (originalStyle[0] != null)
         main(() -> MapStyle.mark(originalStyle[0]));
+    }
+  }
+
+  @Test
+  @SdkSuppress(minSdkVersion = 29)
+  public void autoZoomUsesAutomaticPerspectiveDespiteManualTilt() throws Exception
+  {
+    MwmApplication app =
+        (MwmApplication) InstrumentationRegistry.getInstrumentation().getTargetContext().getApplicationContext();
+    try (Output first = new Output(app, 768, 432, 160); Output reference = new Output(app, 768, 432, 160))
+    {
+      showUri(app, first, "auto", null, "tilt=0&anchor=0.65,0.8");
+      showUri(app, reference, "auto", null, "tilt=auto");
+      awaitFrames(first, 3);
+      awaitFrames(reference, 3);
+      ClusterMap map = awaitZoom(first.id(), 0);
+      ClusterMap automatic = awaitZoom(reference.id(), 0);
+      main(() -> {
+        app.getLocationHelper().stop();
+        ClusterTestLocation.setCoreLocation(55.7552, 37.6196, 90, 5);
+      });
+      double slowTilt = awaitMatchingAutoTilt(map, automatic);
+      assertTrue("Automatic perspective stayed flat", slowTilt > 1);
+      awaitAnchor(first, 0.65, 0.8);
+
+      main(() -> ClusterTestLocation.setCoreLocation(55.7555, 37.62, 90, 35));
+      double fastTilt = awaitMatchingAutoTilt(map, automatic);
+      assertTrue("Perspective must change with speed-based zoom", fastTilt < slowTilt - 1);
+
+      showUri(app, first, "18", null, "tilt=25&anchor=0.65,0.8");
+      awaitRenderedZoom(map, 18);
+      awaitTilt(map, 25);
+      awaitTilt(automatic, fastTilt);
+      for (String zoom : new String[] {"auto", "0", null})
+      {
+        showUri(app, first, zoom, null, "tilt=55&anchor=0.65,0.8");
+        assertSame(map, awaitZoom(first.id(), 0));
+        awaitTilt(map, fastTilt);
+        awaitAnchor(first, 0.65, 0.8);
+      }
+      command(app, "hide_cluster", first, 0);
+      command(app, "hide_cluster", reference, 0);
     }
   }
 
@@ -481,7 +547,7 @@ public class ClusterRenderingTest
       }
       while (SystemClock.elapsedRealtime() < deadline);
       assertNotEquals("Initial autozoom was blocked at its seed level", 16.0, zoom[0], 0.1);
-      awaitTilt(map, 5);
+      main(() -> assertTrue("Auto zoom retained the supplied manual tilt", Math.abs(map.getCurrentTilt() - 5) > 1));
       awaitAnchor(automatic, 0.5, 0.85);
       command(app, "hide_cluster", automatic, 0);
     }

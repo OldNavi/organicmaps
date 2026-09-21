@@ -16,6 +16,7 @@ set(SRC
   cumulative_restriction_test.cpp
   edge_estimator_tests.cpp
   fake_graph_test.cpp
+  fastest_route_tests.cpp
   followed_polyline_test.cpp
   guides_tests.cpp
   index_graph_test.cpp

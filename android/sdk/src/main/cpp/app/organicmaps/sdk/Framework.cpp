@@ -1364,6 +1364,11 @@ JNIEXPORT void Java_app_organicmaps_sdk_Framework_nativeFollowRoute(JNIEnv * env
   frm()->GetRoutingManager().FollowRoute();
 }
 
+JNIEXPORT void Java_app_organicmaps_sdk_Framework_nativeSelectFastestRoute(JNIEnv * env, jclass)
+{
+  frm()->GetRoutingManager().SelectFastestRoute();
+}
+
 JNIEXPORT void Java_app_organicmaps_sdk_Framework_nativeDisableFollowing(JNIEnv * env, jclass)
 {
   frm()->GetRoutingManager().DisableFollowMode();

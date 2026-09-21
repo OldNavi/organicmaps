@@ -181,7 +181,13 @@ public class RoutingController
                       && startPoint != null && startPoint.isMyPosition();
       mStartAfterBuild = false;
       if (startNow)
-        start();
+      {
+        // Selecting an alternative emits another routing event. Consume auto-start first, and
+        // retain the normal warning/confirmation flow if the fastest route introduces warnings.
+        Framework.nativeSelectFastestRoute();
+        if (mLastResultCode == ResultCodes.NO_ERROR && isPlanning() && isBuilt())
+          start();
+      }
       return;
     }
     mStartAfterBuild = false;

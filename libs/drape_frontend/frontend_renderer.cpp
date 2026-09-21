@@ -1848,16 +1848,26 @@ void FrontendRenderer::RenderEmptyFrame()
 void FrontendRenderer::RenderFrame()
 {
   TRACE_SECTION("[drape] RenderFrame");
-  DrapeMeasurerGuard drapeMeasurerGuard;
+
+  auto const retryUnavailableSurface = [this]()
+  {
+    m_frameData.m_forceFullRedrawNextFrame = true;
+    m_frameData.m_inactiveFramesCounter = 0;
+    // An overlay Activity can pause presentation while retaining the map surface. OpenGL Validate()
+    // (or Vulkan BeginRendering()) then fails before Present() and the FPS limiter: without this wait,
+    // the render loop spins at full CPU. Retry at 20 Hz; the 50 ms bound keeps pause/destroy handshakes
+    // responsive because CheckRenderingEnabled() runs immediately after this RenderFrame returns.
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  };
 
   CHECK(m_context != nullptr, ());
   if (!m_context->Validate())
   {
-    m_frameData.m_forceFullRedrawNextFrame = true;
-    m_frameData.m_inactiveFramesCounter = 0;
+    retryUnavailableSurface();
     return;
   }
 
+  DrapeMeasurerGuard drapeMeasurerGuard;
   auto & scaleFpsHelper = gui::DrapeGui::Instance().GetScaleFpsHelper();
   auto const frameStart = std::chrono::steady_clock::now();
   m_frameData.m_timer.Reset();
@@ -1878,7 +1888,10 @@ void FrontendRenderer::RenderFrame()
     return;
 
   if (!m_context->BeginRendering())
+  {
+    retryUnavailableSurface();
     return;
+  }
 
   // Check for a frame is active.
   bool isActiveFrame = modelViewChanged || viewportChanged || needActiveFrame || m_frameData.m_forceFullRedrawNextFrame;

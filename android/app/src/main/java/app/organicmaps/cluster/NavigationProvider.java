@@ -10,6 +10,7 @@ import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.SystemClock;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -22,6 +23,7 @@ import app.organicmaps.sdk.cluster.ClusterMap;
 import app.organicmaps.sdk.cluster.ClusterScale;
 import app.organicmaps.sdk.cluster.ClusterZoom;
 import app.organicmaps.sdk.cluster.RoadInfo;
+import app.organicmaps.sdk.location.LocationHelper;
 import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.routing.RoutingInfo;
 import java.util.Arrays;
@@ -44,6 +46,14 @@ public final class NavigationProvider extends ContentProvider
   private static RoadInfoMonitor sRoadMonitor;
   private static final android.os.Handler MAIN = new android.os.Handler(android.os.Looper.getMainLooper());
   private static Runnable sExpired;
+  private static boolean sSpeedNotificationPending;
+  private static long sSpeedPublishedAt;
+
+  /** Shares the already matched road with the main map; no provider query or extra map read. */
+  public static double getCurrentSpeedLimitMps()
+  {
+    return sSnapshot.currentSpeedLimitMps(SystemClock.elapsedRealtimeNanos());
+  }
 
   public static void initialize(MwmApplication app)
   {
@@ -58,6 +68,17 @@ public final class NavigationProvider extends ContentProvider
     });
     sExpired = () -> publish(app, true);
     app.getLocationHelper().addListener(location -> onLocation(app, location));
+    app.getLocationHelper().addDisplaySpeedListener(() -> {
+      if (sSpeedNotificationPending)
+        return;
+      sSpeedNotificationPending = true;
+      MAIN.postDelayed(() -> {
+        sSpeedNotificationPending = false;
+        sSpeedPublishedAt = SystemClock.elapsedRealtime();
+        for (String path : new String[] {"speed", "guidance"})
+          app.getContentResolver().notifyChange(Uri.withAppendedPath(CONTENT_URI, path), null);
+      }, Math.max(0, 250 - (SystemClock.elapsedRealtime() - sSpeedPublishedAt)));
+    });
     RoutingController.get().addNavigationStateListener(active -> publish(app, true));
     publish(app, true);
   }
@@ -120,6 +141,11 @@ public final class NavigationProvider extends ContentProvider
     if (fixAge > RoadInfoMonitor.MAX_FIX_AGE_MS)
       snapshot = NavigationSnapshot.EMPTY;
     RoutingInfo info = snapshot.info;
+    LocationHelper.DisplaySpeed speed = MwmApplication.from(providerContext()).getLocationHelper().getDisplaySpeed();
+    Object speedValue = speed == null ? null : speed.speedMps();
+    int speedValid = speed == null ? 0 : 1;
+    String speedSource = speed == null ? "none" : speed.source();
+    long speedAge = speed == null ? -1 : (SystemClock.elapsedRealtimeNanos() - speed.timestampNanos()) / 1_000_000L;
     MatrixCursor result;
     switch (path == null ? "" : path)
     {
@@ -134,25 +160,68 @@ public final class NavigationProvider extends ContentProvider
       break;
     }
     case "/api_version": result = cursor(new String[] {"version"}, new Object[] {1}); break;
+    case "/speed":
+      result = cursor(new String[] {"speed", "speed_valid", "speed_source", "speed_unit", "speed_age_ms"},
+                      new Object[] {speedValue, speedValid, speedSource, "m/s", speedAge});
+      break;
     case "/guidance":
-      result = cursor(
-          new String[] {"state", "speed_limit", "distance_left", "distance_total", "distance_unit",
-                        "display_distance_left", "display_distance_unit", "time_left", "display_time_left",
-                        "current_road", "overview", "current_city", "current_region", "speed_limit_valid", "fix_age_ms",
-                        "road_matched"},
-          info == null
-              ? new Object[] {"none", snapshot.roadInfo.speedLimitMps, 0, 0, "m", "", "m", 0, "",
-                              snapshot.roadInfo.road, "none", "", "", snapshot.roadInfo.speedLimitMps > 0 ? 1 : 0,
-                              fixAge, snapshot.roadInfo.matched ? 1 : 0}
-              : new Object[] {"active", NavigationSnapshot.speedLimitMps(info.speedLimitMps),
-                              (int) Math.round(snapshot.metrics[0]), (int) Math.round(snapshot.metrics[1]), "m",
-                              info.distToTarget.mDistanceStr, NavigationSnapshot.unit(info.distToTarget),
-                              info.totalTimeInSeconds,
-                              app.organicmaps.util.Utils
-                                  .formatRoutingTime(providerContext(), info.totalTimeInSeconds,
-                                                     app.organicmaps.R.dimen.text_size_routing_number)
-                                  .toString(),
-                              info.currentStreet, "none", "", "", info.speedLimitMps > 0 ? 1 : 0, fixAge, 1});
+      result =
+          cursor(new String[] {"state",
+                               "speed_limit",
+                               "distance_left",
+                               "distance_total",
+                               "distance_unit",
+                               "display_distance_left",
+                               "display_distance_unit",
+                               "time_left",
+                               "display_time_left",
+                               "current_road",
+                               "overview",
+                               "current_city",
+                               "current_region",
+                               "speed_limit_valid",
+                               "fix_age_ms",
+                               "road_matched",
+                               "speed",
+                               "speed_valid",
+                               "speed_source",
+                               "speed_unit",
+                               "speed_age_ms"},
+                 info == null ? new Object[] {"none",      snapshot.roadInfo.speedLimitMps,
+                                              0,           0,
+                                              "m",         "",
+                                              "m",         0,
+                                              "",          snapshot.roadInfo.road,
+                                              "none",      "",
+                                              "",          snapshot.roadInfo.speedLimitMps > 0 ? 1 : 0,
+                                              fixAge,      snapshot.roadInfo.matched ? 1 : 0,
+                                              speedValue,  speedValid,
+                                              speedSource, "m/s",
+                                              speedAge}
+                              : new Object[] {"active",
+                                              NavigationSnapshot.speedLimitMps(info.speedLimitMps),
+                                              (int) Math.round(snapshot.metrics[0]),
+                                              (int) Math.round(snapshot.metrics[1]),
+                                              "m",
+                                              info.distToTarget.mDistanceStr,
+                                              NavigationSnapshot.unit(info.distToTarget),
+                                              info.totalTimeInSeconds,
+                                              app.organicmaps.util.Utils
+                                                  .formatRoutingTime(providerContext(), info.totalTimeInSeconds,
+                                                                     app.organicmaps.R.dimen.text_size_routing_number)
+                                                  .toString(),
+                                              info.currentStreet,
+                                              "none",
+                                              "",
+                                              "",
+                                              info.speedLimitMps > 0 ? 1 : 0,
+                                              fixAge,
+                                              1,
+                                              speedValue,
+                                              speedValid,
+                                              speedSource,
+                                              "m/s",
+                                              speedAge});
       break;
     case "/maneuver":
       result = new MatrixCursor(new String[] {"action", "distance", "distance_unit", "display_distance",

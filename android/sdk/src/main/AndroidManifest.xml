@@ -7,6 +7,13 @@
     <package android:name="com.roxmotor.ttsservice" />
   </queries>
 
+  <uses-permission android:name="android.car.permission.CAR_SPEED" />
+  <uses-permission android:name="android.car.permission.CAR_VENDOR_EXTENSION" />
+  <uses-feature android:name="android.hardware.type.automotive" android:required="false" />
+  <application>
+    <uses-library android:name="android.car" android:required="false" />
+  </application>
+
   <!-- Requiring "android.hardware.touchscreen" here breaks DeX mode -->
   <uses-feature
       android:glEsVersion="0x00030000"

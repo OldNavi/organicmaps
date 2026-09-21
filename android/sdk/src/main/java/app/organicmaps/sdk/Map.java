@@ -58,6 +58,8 @@ public final class Map
   private LocationHelper mLocationHelper;
 
   private int mCurrentCompassOffsetX;
+  @Nullable
+  private int[] mCompassPosition;
   private int mCurrentCompassOffsetY;
   private int mBottomWidgetOffsetX;
   private int mBottomWidgetOffsetY;
@@ -101,11 +103,22 @@ public final class Map
     final int navPadding = Utils.dimen(context, R.dimen.nav_frame_padding);
     final int marginX = Utils.dimen(context, R.dimen.margin_compass) + navPadding;
     final int marginY = Utils.dimen(context, R.dimen.margin_compass_top) + navPadding;
-    nativeSetupWidget(WIDGET_COMPASS, mWidth - x - marginX, y + marginY, ANCHOR_CENTER);
+    nativeSetupWidget(WIDGET_COMPASS, mCompassPosition == null ? mWidth - x - marginX : mCompassPosition[0],
+                      mCompassPosition == null ? y + marginY : mCompassPosition[1], ANCHOR_CENTER);
     mCurrentCompassOffsetX = x;
     mCurrentCompassOffsetY = y;
     updateDebugInfoOffset(context);
     if (forceRedraw && mSurfaceCreated)
+      nativeApplyWidgets();
+  }
+
+  public void setCompassPosition(int x, int y)
+  {
+    if (mCompassPosition != null && mCompassPosition[0] == x && mCompassPosition[1] == y)
+      return;
+    mCompassPosition = new int[] {x, y};
+    nativeSetupWidget(WIDGET_COMPASS, x, y, ANCHOR_CENTER);
+    if (mSurfaceCreated)
       nativeApplyWidgets();
   }
 

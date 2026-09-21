@@ -68,6 +68,9 @@ public class MapButtonsController extends Fragment
   private float mContentHeight;
   private float mContentWidth;
 
+  @Nullable
+  private CompassPositionObserver mCompassPositionObserver;
+
   private MapButtonClickListener mMapButtonClickListener;
   private PlacePageViewModel mPlacePageViewModel;
   private RoutingPlanViewModel mRoutingPlanViewModel;
@@ -452,6 +455,12 @@ public class MapButtonsController extends Fragment
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState)
   {
     super.onViewCreated(view, savedInstanceState);
+    final MwmActivity activity = (MwmActivity) requireActivity();
+    final View gps = view.findViewById(R.id.my_position);
+    mCompassPositionObserver = new CompassPositionObserver(view, () -> {
+      if (gps.getWidth() > 0)
+        activity.positionCompassNearGps(gps);
+    });
     // FragmentStateManager requests insets for the frame before onViewCreated(), but the dispatch
     // itself only happens on the next layout pass — so a listener attached here still receives it.
     // Attaching in onResume() is too late: the dispatch has already run and nothing re-requests
@@ -459,6 +468,17 @@ public class MapButtonsController extends Fragment
     ViewCompat.setOnApplyWindowInsetsListener(
         view, WindowInsetUtils.PaddingInsetsListener.allSides(WindowInsetsCompat.Type.systemBars()
                                                               | WindowInsetsCompat.Type.displayCutout()));
+  }
+
+  @Override
+  public void onDestroyView()
+  {
+    if (mCompassPositionObserver != null)
+    {
+      mCompassPositionObserver.close();
+      mCompassPositionObserver = null;
+    }
+    super.onDestroyView();
   }
 
   @Override

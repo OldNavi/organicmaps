@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sensor_config>
+  <device type="car">
+    <car_variant name="default">
+      <sensors>
+        <speed>
+          <enabled>true</enabled>
+          <privileged>false</privileged>
+          <type>vhal</type>
+          <!-- PERF_VEHICLE_SPEED, signed meters/second. -->
+          <property_id>0x11600207</property_id>
+          <area_id>0</area_id>
+          <value_index>0</value_index>
+          <multiplier>1.0</multiplier>
+          <sampling_rate_hz>10</sampling_rate_hz>
+        </speed>
+        <speedMCU>
+          <enabled>true</enabled>
+          <privileged>false</privileged>
+          <type>vhal</type>
+          <!-- PERF_VEHICLE_SPEED_DISPLAY; vendor cluster properties override this per vehicle. -->
+          <property_id>0x11600208</property_id>
+          <multiplier>1.0</multiplier>
+          <sampling_rate_hz>10</sampling_rate_hz>
+        </speedMCU>
+        <gyroscope>
+          <enabled>true</enabled>
+          <privileged>false</privileged>
+          <type>android_sensor</type>
+          <!-- Sensor.TYPE_GYROSCOPE, angular velocity in radians/second. -->
+          <sensor_type>4</sensor_type>
+          <value_index>2</value_index>
+          <multiplier>1.0</multiplier>
+          <sampling_rate_hz>50</sampling_rate_hz>
+        </gyroscope>
+        <accelerometer>
+          <enabled>true</enabled>
+          <privileged>false</privileged>
+          <type>android_sensor</type>
+          <!-- Sensor.TYPE_ACCELEROMETER, acceleration including gravity in meters/second squared. -->
+          <sensor_type>1</sensor_type>
+          <value_index>0</value_index>
+          <multiplier>1.0</multiplier>
+          <sampling_rate_hz>50</sampling_rate_hz>
+        </accelerometer>
+        <magnetometer>
+          <enabled>true</enabled>
+          <privileged>false</privileged>
+          <type>android_sensor</type>
+          <!-- Sensor.TYPE_MAGNETIC_FIELD, microtesla. -->
+          <sensor_type>2</sensor_type>
+          <multiplier>1.0</multiplier>
+          <sampling_rate_hz>25</sampling_rate_hz>
+        </magnetometer>
+      </sensors>
+    </car_variant>
+    <!-- Family detection follows Weather. Unspecified fields inherit this device type's default. -->
+    <car_variant name="rox" family="rox">
+      <sensors>
+        <speedMCU>
+          <enabled>true</enabled>
+          <privileged>true</privileged>
+          <!-- Instrument-cluster MCU speed: Integer, km/h. -->
+          <property_id>0x21408CAE</property_id>
+          <poll_interval_ms>1000</poll_interval_ms>
+          <multiplier>0.2777777777777778</multiplier>
+        </speedMCU>
+        <!-- Verified on ROX BMA2x2/BMG160: HAL uses Unix nanoseconds and always reports accuracy 0. -->
+        <accelerometer>
+          <timestamp_clock>unix</timestamp_clock>
+          <min_accuracy>0</min_accuracy>
+        </accelerometer>
+        <gyroscope>
+          <timestamp_clock>unix</timestamp_clock>
+          <min_accuracy>0</min_accuracy>
+        </gyroscope>
+      </sensors>
+    </car_variant>
+    <car_variant name="aptiv" family="aptiv"><sensors /></car_variant>
+    <car_variant name="sahara" family="sahara"><sensors /></car_variant>
+  </device>
+  <device type="phone">
+    <car_variant name="default">
+      <sensors>
+        <!-- No extra speed source on phones: the existing GNSS speed remains authoritative. -->
+        <speed>
+          <enabled>false</enabled>
+          <privileged>false</privileged>
+          <type>vhal</type>
+          <property_id>0x11600207</property_id>
+        </speed>
+        <speedMCU>
+          <enabled>false</enabled>
+          <privileged>false</privileged>
+          <type>vhal</type>
+          <!-- PERF_VEHICLE_SPEED_DISPLAY; vendor cluster properties override this per vehicle. -->
+          <property_id>0x11600208</property_id>
+          <multiplier>1.0</multiplier>
+          <sampling_rate_hz>10</sampling_rate_hz>
+        </speedMCU>
+        <gyroscope>
+          <enabled>true</enabled>
+          <privileged>false</privileged>
+          <type>android_sensor</type>
+          <sensor_type>4</sensor_type>
+          <value_index>2</value_index>
+          <sampling_rate_hz>50</sampling_rate_hz>
+        </gyroscope>
+        <accelerometer>
+          <enabled>true</enabled>
+          <privileged>false</privileged>
+          <type>android_sensor</type>
+          <sensor_type>1</sensor_type>
+          <sampling_rate_hz>50</sampling_rate_hz>
+        </accelerometer>
+        <magnetometer>
+          <enabled>true</enabled>
+          <privileged>false</privileged>
+          <type>android_sensor</type>
+          <!-- Sensor.TYPE_MAGNETIC_FIELD, microtesla. -->
+          <sensor_type>2</sensor_type>
+          <multiplier>1.0</multiplier>
+          <sampling_rate_hz>25</sampling_rate_hz>
+        </magnetometer>
+      </sensors>
+    </car_variant>
+  </device>
+</sensor_config>

@@ -5,10 +5,13 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.SystemClock;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
+import app.organicmaps.sdk.sensors.MotionCompass;
+import app.organicmaps.sdk.sensors.MotionSensors;
 import app.organicmaps.sdk.util.log.Logger;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -19,6 +22,9 @@ public class SensorHelper implements SensorEventListener
 
   @NonNull
   private final SensorManager mSensorManager;
+  private final MotionSensors mMotionSensors;
+  private final MotionCompass mMotionCompass = new MotionCompass();
+  private long mLastMotionCompassUpdate;
   @Nullable
   private Sensor mRotationVectorSensor;
 
@@ -81,6 +87,35 @@ public class SensorHelper implements SensorEventListener
   public SensorHelper(@NonNull Context context)
   {
     mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+    mMotionSensors = new MotionSensors(context, new MotionSensors.Listener() {
+      @Override
+      public void onReading(String name, MotionSensors.Reading reading)
+      {
+        for (SensorListener listener : mListeners)
+          listener.onMotionSensorUpdated(name, reading);
+        double north = mMotionCompass.update(name, reading);
+        if (mRotationVectorSensor != null || Double.isNaN(north))
+          return;
+        long now = SystemClock.elapsedRealtimeNanos();
+        if (now - mLastMotionCompassUpdate < 50_000_000L)
+          return;
+        mLastMotionCompassUpdate = now;
+        mSavedNorth = LocationUtils.correctCompassAngle(mRotation, north);
+        for (SensorListener listener : mListeners)
+          listener.onCompassUpdated(mSavedNorth);
+      }
+      @Override
+      public void onUnavailable(String name)
+      {
+        mMotionCompass.reset();
+      }
+    });
+  }
+
+  @Nullable
+  public MotionSensors.Reading getMotionSensorReading(String name)
+  {
+    return mMotionSensors.get(name);
   }
 
   public double getSavedNorth()
@@ -121,6 +156,7 @@ public class SensorHelper implements SensorEventListener
 
   public void start()
   {
+    mMotionSensors.start();
     if (mRotationVectorSensor != null)
     {
       Logger.d(TAG, "Already started");
@@ -141,11 +177,16 @@ public class SensorHelper implements SensorEventListener
     }
 
     Logger.d(TAG);
-    mSensorManager.registerListener(this, mRotationVectorSensor, SensorManager.SENSOR_DELAY_UI);
+    if (!mSensorManager.registerListener(this, mRotationVectorSensor, SensorManager.SENSOR_DELAY_UI))
+      mRotationVectorSensor = null;
   }
 
   public void stop()
   {
+    mMotionSensors.close();
+    mMotionCompass.reset();
+    mLastMotionCompassUpdate = 0;
+    mSavedNorth = Double.NaN;
     if (mRotationVectorSensor == null)
       return;
     Logger.d(TAG);

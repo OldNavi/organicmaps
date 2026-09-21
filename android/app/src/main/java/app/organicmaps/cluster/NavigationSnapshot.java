@@ -42,6 +42,14 @@ final class NavigationSnapshot
     return Math.max(0.0, limitMps);
   }
 
+  double currentSpeedLimitMps(long nowNanos)
+  {
+    if (fixAgeMillis(nowNanos) > RoadInfoMonitor.MAX_FIX_AGE_MS)
+      return 0.0;
+    double limit = info != null ? info.speedLimitMps : roadInfo.matched ? roadInfo.speedLimitMps : 0.0;
+    return Double.isFinite(limit) ? speedLimitMps(limit) : 0.0;
+  }
+
   Object[] cameraRow()
   {
     if (camera.length != 5)

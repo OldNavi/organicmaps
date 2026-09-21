@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.view.PixelCopy;
+import android.view.View;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
@@ -20,11 +21,16 @@ import app.organicmaps.MwmActivity;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
 import app.organicmaps.SplashActivity;
+import app.organicmaps.sdk.ChoosePositionMode;
+import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.MapView;
+import app.organicmaps.sdk.Router;
 import app.organicmaps.sdk.bookmarks.data.BookmarkInfo;
+import app.organicmaps.sdk.bookmarks.data.MapObject;
 import app.organicmaps.sdk.bookmarks.data.ParcelablePointD;
 import app.organicmaps.sdk.location.ClusterTestLocation;
 import app.organicmaps.sdk.location.LocationState;
+import app.organicmaps.sdk.routing.RouteMarkType;
 import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.util.Config;
 import app.organicmaps.util.ThemeSwitcher;
@@ -39,6 +45,73 @@ import org.junit.Test;
 
 public class AutoGuidanceTest
 {
+  @Test
+  public void mapPointPickerCommitsReplacementAndCancelsWithoutAutoStart() throws Exception
+  {
+    var context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    context.startActivity(new Intent(context, SplashActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+    MwmActivity activity = awaitMap();
+    Thread.sleep(1000);
+    Field autoStart = RoutingController.class.getDeclaredField("mStartAfterBuild");
+    autoStart.setAccessible(true);
+    Router[] previousRouter = new Router[1];
+    try
+    {
+      main(() -> {
+        previousRouter[0] = Router.getLastUsed();
+        RoutingController controller = RoutingController.get();
+        controller.cancel();
+        controller.prepare(MapObject.createMapObject(MapObject.API_POINT, "Start", "", 55, 37), null, Router.Ruler);
+        controller.waitForPoiPick(RouteMarkType.Finish);
+        activity.showPositionChooserForRoutePoint();
+        View chooser = activity.findViewById(R.id.position_chooser);
+        assertEquals(ChoosePositionMode.Routing, ChoosePositionMode.get());
+        assertEquals(View.VISIBLE, chooser.getVisibility());
+        chooser.findViewById(R.id.done).performClick();
+        assertNotNull(controller.getEndPoint());
+        assertFalse(controller.isWaitingPoiPick());
+        assertEquals(ChoosePositionMode.None, ChoosePositionMode.get());
+      });
+      Thread.sleep(300);
+      main(() -> {
+        RoutingController controller = RoutingController.get();
+        controller.waitForPoiReplacement(RouteMarkType.Finish, 0);
+        activity.showPositionChooserForRoutePoint();
+        try
+        {
+          autoStart.setBoolean(controller, true);
+          activity.findViewById(R.id.position_chooser).findViewById(R.id.done).performClick();
+          assertFalse("Manual replacement must cancel a pending auto-start", autoStart.getBoolean(controller));
+        }
+        catch (IllegalAccessException e)
+        {
+          throw new AssertionError(e);
+        }
+        assertFalse(controller.isWaitingPoiPick());
+        assertEquals(ChoosePositionMode.None, ChoosePositionMode.get());
+        var finish = controller.getEndPoint();
+        assertNotNull(finish);
+        controller.waitForPoiReplacement(RouteMarkType.Finish, 0);
+        activity.showPositionChooserForRoutePoint();
+        assertTrue(activity.handleBackPress());
+        assertFalse(controller.isWaitingPoiPick());
+        assertEquals(ChoosePositionMode.None, ChoosePositionMode.get());
+        assertEquals(finish.getLat(), controller.getEndPoint().getLat(), 0);
+        assertEquals(finish.getLon(), controller.getEndPoint().getLon(), 0);
+      });
+    }
+    finally
+    {
+      main(() -> {
+        if (ChoosePositionMode.get() == ChoosePositionMode.Routing)
+          activity.handleBackPress();
+        RoutingController.get().cancel();
+        if (previousRouter[0] != null)
+          Router.set(previousRouter[0]);
+      });
+    }
+  }
+
   private static void main(Runnable task)
   {
     InstrumentationRegistry.getInstrumentation().runOnMainSync(task);

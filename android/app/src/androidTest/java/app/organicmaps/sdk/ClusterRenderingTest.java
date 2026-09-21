@@ -26,6 +26,7 @@ import app.organicmaps.sdk.cluster.ClusterMap;
 import app.organicmaps.sdk.location.ClusterTestLocation;
 import app.organicmaps.sdk.routing.RouteMarkType;
 import app.organicmaps.sdk.util.Config;
+import app.organicmaps.util.ThemeSwitcher;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
@@ -1371,12 +1372,17 @@ public class ClusterRenderingTest
     });
     assertTrue("Native initialization timed out", initialized.await(60, TimeUnit.SECONDS));
     MapStyle[] originalStyle = new MapStyle[1];
+    Config.UiTheme[] originalTheme = new Config.UiTheme[1];
     Presentation[] primary = new Presentation[1];
     try (Output mainOutput = new Output(app, 640, 360, 160); Output first = new Output(app, 512, 288, 240);
          Output second = new Output(app, 720, 320, 160))
     {
       main(() -> {
         originalStyle[0] = MapStyle.get();
+        originalTheme[0] = Config.UiTheme.getUiThemePreference();
+        // show_cluster synchronizes the configured theme; a bare MapStyle override gets replaced.
+        Config.UiTheme.setUiThemePreference(Config.UiTheme.LIGHT);
+        ThemeSwitcher.INSTANCE.synchronizeApplicationTheme();
         MapStyle.mark(MapStyle.Clear);
         Presentation window = new Presentation(app, mainOutput.display.getDisplay());
         MapView view = new MapView(window.getContext());
@@ -1395,7 +1401,10 @@ public class ClusterRenderingTest
       long mainLight = mainOutput.checksum.get();
       long firstLight = first.checksum.get();
       long secondLight = second.checksum.get();
-      main(() -> MapStyle.set(MapStyle.Dark));
+      main(() -> {
+        Config.UiTheme.setUiThemePreference(Config.UiTheme.DARK);
+        ThemeSwitcher.INSTANCE.synchronizeApplicationTheme();
+      });
       awaitChanged(mainOutput, mainLight);
       awaitChanged(first, firstLight);
       awaitChanged(second, secondLight);
@@ -1404,7 +1413,10 @@ public class ClusterRenderingTest
       Thread.sleep(500);
       long mainDark = mainOutput.checksum.get();
       long secondDark = second.checksum.get();
-      main(() -> MapStyle.set(MapStyle.Clear));
+      main(() -> {
+        Config.UiTheme.setUiThemePreference(Config.UiTheme.LIGHT);
+        ThemeSwitcher.INSTANCE.synchronizeApplicationTheme();
+      });
       awaitChanged(mainOutput, mainDark);
       awaitChanged(second, secondDark);
       command(app, "show_cluster", first, 18);
@@ -1420,6 +1432,11 @@ public class ClusterRenderingTest
       main(() -> {
         if (primary[0] != null)
           primary[0].dismiss();
+        if (originalTheme[0] != null)
+        {
+          Config.UiTheme.setUiThemePreference(originalTheme[0]);
+          ThemeSwitcher.INSTANCE.synchronizeApplicationTheme();
+        }
         if (originalStyle[0] != null)
           MapStyle.mark(originalStyle[0]);
       });

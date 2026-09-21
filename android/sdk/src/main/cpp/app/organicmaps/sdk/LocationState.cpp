@@ -49,11 +49,8 @@ JNIEXPORT void Java_app_organicmaps_sdk_location_LocationState_nativeOnLocationE
   g_framework->OnLocationError(errorCode);
 }
 
-JNIEXPORT void Java_app_organicmaps_sdk_location_LocationState_nativeLocationUpdated(JNIEnv * env, jclass clazz,
-                                                                                     jlong time, jdouble lat,
-                                                                                     jdouble lon, jfloat accuracyH,
-                                                                                     jdouble altitude, jfloat accuracyV,
-                                                                                     jfloat speed, jfloat bearing)
+static void UpdateLocation(jlong time, jdouble lat, jdouble lon, jfloat accuracyH, jdouble altitude, jfloat accuracyV,
+                           jfloat speed, jfloat bearing, double ageSeconds)
 {
   location::GpsInfo info;
   info.m_source = location::EAndroidNative;
@@ -77,7 +74,33 @@ JNIEXPORT void Java_app_organicmaps_sdk_location_LocationState_nativeLocationUpd
   if (speed >= 0)
     info.m_speed = speed;
 
-  g_framework->OnLocationUpdated(info);
+  g_framework->OnLocationUpdated(info, ageSeconds);
   GpsTracker::Instance().OnLocationUpdated(info);
+}
+
+JNIEXPORT void Java_app_organicmaps_sdk_location_LocationState_nativeLocationUpdated(JNIEnv *, jclass, jlong time,
+                                                                                     jdouble lat, jdouble lon,
+                                                                                     jfloat accuracyH, jdouble altitude,
+                                                                                     jfloat accuracyV, jfloat speed,
+                                                                                     jfloat bearing)
+{
+  UpdateLocation(time, lat, lon, accuracyH, altitude, accuracyV, speed, bearing, 0.0);
+}
+
+JNIEXPORT void Java_app_organicmaps_sdk_location_LocationState_nativeLocationUpdatedWithAge(
+    JNIEnv *, jclass, jlong time, jdouble lat, jdouble lon, jfloat accuracyH, jdouble altitude, jfloat accuracyV,
+    jfloat speed, jfloat bearing, jdouble ageSeconds)
+{
+  UpdateLocation(time, lat, lon, accuracyH, altitude, accuracyV, speed, bearing, ageSeconds);
+}
+
+JNIEXPORT void Java_app_organicmaps_sdk_location_LocationState_nativeVehicleSpeedUpdated(JNIEnv *, jclass,
+                                                                                         jdouble speedMps,
+                                                                                         jdouble ageSeconds,
+                                                                                         jboolean valid)
+{
+  // Sensor disconnects can race application/native initialization or teardown.
+  if (g_framework)
+    frm()->GetRoutingManager().OnVehicleSpeed(speedMps, ageSeconds, valid);
 }
 }  // extern "C"

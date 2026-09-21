@@ -207,7 +207,7 @@ void Framework::OnLocationError(TLocationError /*error*/)
     m_drapeEngine->LoseLocation();
 }
 
-void Framework::OnLocationUpdate(GpsInfo const & info)
+void Framework::OnLocationUpdate(GpsInfo const & info, double ageSeconds)
 {
 #ifdef FIXED_LOCATION
   GpsInfo rInfo(info);
@@ -231,7 +231,7 @@ void Framework::OnLocationUpdate(GpsInfo const & info)
   GpsInfo const & rInfo = info;
 #endif
 
-  m_routingManager.OnLocationUpdate(rInfo);
+  m_routingManager.OnLocationUpdate(rInfo, ageSeconds);
 }
 
 void Framework::OnCompassUpdate(CompassInfo const & info)

@@ -10,12 +10,14 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 import androidx.annotation.UiThread;
 import androidx.core.content.ContextCompat;
 import androidx.core.location.GnssStatusCompat;
+import androidx.core.location.LocationCompat;
 import androidx.core.location.LocationManagerCompat;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.Map;
@@ -45,6 +47,20 @@ public class LocationHelper implements BaseLocationProvider.Listener
   private final Context mContext;
   @NonNull
   private final SensorHelper mSensorHelper;
+  private final VehicleSpeedSource mVehicleSpeedSource;
+  private final VehicleSpeedSource mMcuSpeedSource;
+  private final ObserverList<Runnable> mDisplaySpeedListeners = new ObserverList<>();
+  @Nullable
+  private volatile DisplaySpeed mDisplaySpeed;
+  private final Runnable mDisplaySpeedExpiry = this::updateDisplaySpeed;
+
+  public record DisplaySpeed(double speedMps, String source, long timestampNanos, long maxAgeNanos)
+  {
+    public boolean isFresh(long now)
+    {
+      return timestampNanos > 0 && timestampNanos <= now && now - timestampNanos <= maxAgeNanos;
+    }
+  }
 
   private static final String TAG = LocationState.LOCATION_TAG;
 
@@ -53,6 +69,8 @@ public class LocationHelper implements BaseLocationProvider.Listener
 
   @Nullable
   private Location mSavedLocation;
+  @Nullable
+  private Location mRawLocation;
   private MapObject mMyPosition;
   @NonNull
   private final LocationProviderFactory mLocationProviderFactory = new LocationProviderFactory();
@@ -128,6 +146,8 @@ public class LocationHelper implements BaseLocationProvider.Listener
   {
     mContext = context;
     mSensorHelper = sensorHelper;
+    mVehicleSpeedSource = new VehicleSpeedSource(mContext, this::onVehicleSpeedChanged);
+    mMcuSpeedSource = new VehicleSpeedSource(mContext, "speedMCU", (speed, timestamp, valid) -> updateDisplaySpeed());
     mLocationProvider = mLocationProviderFactory.getProvider(mContext, this);
     mHandler = new Handler(Looper.getMainLooper());
   }
@@ -164,6 +184,102 @@ public class LocationHelper implements BaseLocationProvider.Listener
     return mSavedLocation;
   }
 
+  /** Immutable display-only snapshot, also safe to read from ContentProvider binder threads. */
+  @Nullable
+  public DisplaySpeed getDisplaySpeed()
+  {
+    DisplaySpeed speed = mDisplaySpeed;
+    return speed != null && speed.isFresh(SystemClock.elapsedRealtimeNanos()) ? speed : null;
+  }
+
+  @UiThread
+  public void addDisplaySpeedListener(Runnable listener)
+  {
+    mDisplaySpeedListeners.addObserver(listener);
+  }
+
+  private void startVehicleSpeedSources()
+  {
+    mVehicleSpeedSource.start();
+    mMcuSpeedSource.start();
+    updateDisplaySpeed();
+  }
+
+  private void stopVehicleSpeedSources()
+  {
+    mVehicleSpeedSource.stop();
+    mMcuSpeedSource.stop();
+  }
+
+  private void updateDisplaySpeed()
+  {
+    mHandler.removeCallbacks(mDisplaySpeedExpiry);
+    long now = SystemClock.elapsedRealtimeNanos();
+    boolean simulated = mLocationProvider instanceof RouteSimulationProvider
+                     || (mRawLocation != null && LocationCompat.isMock(mRawLocation));
+    mDisplaySpeed = mActive
+                      ? selectDisplaySpeed(simulated ? null : mMcuSpeedSource.getMeasurement(),
+                                           simulated ? null : mVehicleSpeedSource.getMeasurement(), mRawLocation, now)
+                      : null;
+    if (mDisplaySpeed != null)
+    {
+      long remaining = mDisplaySpeed.maxAgeNanos() - (now - mDisplaySpeed.timestampNanos());
+      mHandler.postDelayed(mDisplaySpeedExpiry, remaining / 1_000_000L + 1);
+    }
+    for (Runnable listener : mDisplaySpeedListeners)
+      listener.run();
+  }
+
+  @Nullable
+  static DisplaySpeed selectDisplaySpeed(@Nullable VehicleSpeedCache.Sample mcu,
+                                         @Nullable VehicleSpeedCache.Sample vehicle, @Nullable Location gnss, long now)
+  {
+    if (mcu != null)
+    {
+      DisplaySpeed speed =
+          new DisplaySpeed(Math.abs(mcu.speed), "speedMCU", mcu.timestamp, VehicleSpeedCache.MAX_AGE_NS);
+      if (speed.isFresh(now))
+        return speed;
+    }
+    if (vehicle != null)
+    {
+      DisplaySpeed speed =
+          new DisplaySpeed(Math.abs(vehicle.speed), "speed", vehicle.timestamp, VehicleSpeedCache.MAX_AGE_NS);
+      if (speed.isFresh(now))
+        return speed;
+    }
+    Double speed = selectCurrentSpeed(gnss, null, now);
+    return speed == null ? null : new DisplaySpeed(speed, "gnss", gnss.getElapsedRealtimeNanos(), 5_000_000_000L);
+  }
+
+  /** Kinematic speed for motion consumers; display instruments use getDisplaySpeed() instead. */
+  @Nullable
+  @UiThread
+  public Double getCurrentSpeedMetersPerSecond()
+  {
+    if (!mActive)
+      return null;
+    boolean simulated = mLocationProvider instanceof RouteSimulationProvider
+                     || (mRawLocation != null && LocationCompat.isMock(mRawLocation));
+    return selectCurrentSpeed(mRawLocation, simulated ? null : mVehicleSpeedSource.getSpeedMetersPerSecond(),
+                              SystemClock.elapsedRealtimeNanos());
+  }
+
+  @Nullable
+  static Double selectCurrentSpeed(@Nullable Location location, @Nullable Double vehicleSpeed, long nowNanos)
+  {
+    if (vehicleSpeed != null && Double.isFinite(vehicleSpeed))
+      return Math.abs(vehicleSpeed);
+    if (location == null || !location.hasSpeed())
+      return null;
+    long timestamp = location.getElapsedRealtimeNanos();
+    double speed = location.getSpeed();
+    if (timestamp <= 0 || timestamp > nowNanos || nowNanos - timestamp > 5_000_000_000L || !Double.isFinite(speed)
+        || speed < 0 || speed > VehicleSpeedCache.MAX_ABS_SPEED_MPS)
+      return null;
+    return speed;
+  }
+
   /**
    * Indicates about whether a location provider is polling location updates right now or not.
    */
@@ -194,11 +310,25 @@ public class LocationHelper implements BaseLocationProvider.Listener
     }
 
     final LocationCompatExtractor.Altitude altitude = LocationCompatExtractor.getAltitude(mSavedLocation);
-    LocationState.nativeLocationUpdated(
+    long elapsed = mSavedLocation.getElapsedRealtimeNanos();
+    double age = elapsed > 0 ? (SystemClock.elapsedRealtimeNanos() - elapsed) / 1_000_000_000.0 : Double.NaN;
+    LocationState.nativeLocationUpdatedWithAge(
         mSavedLocation.getTime(), mSavedLocation.getLatitude(), mSavedLocation.getLongitude(),
         mSavedLocation.getAccuracy(), altitude != null ? altitude.altitude() : 0,
         altitude != null ? altitude.accuracy() : -1, mSavedLocation.hasSpeed() ? mSavedLocation.getSpeed() : -1,
-        mSavedLocation.hasBearing() ? mSavedLocation.getBearing() : -1);
+        mSavedLocation.hasBearing() ? mSavedLocation.getBearing() : -1,
+        LocationCompat.isMock(mSavedLocation) ? Double.NaN : age);
+  }
+
+  private void onVehicleSpeedChanged(double speedMps, long timestampNanos, boolean valid)
+  {
+    if (valid
+        && (!mActive || mLocationProvider instanceof RouteSimulationProvider
+            || (mSavedLocation != null && LocationCompat.isMock(mSavedLocation))))
+      return;
+    double age = valid ? (SystemClock.elapsedRealtimeNanos() - timestampNanos) / 1_000_000_000.0 : 0.0;
+    LocationState.nativeVehicleSpeedUpdated(speedMps, age, valid);
+    updateDisplaySpeed();
   }
 
   private void notifyLocationUpdateTimeout()
@@ -242,8 +372,13 @@ public class LocationHelper implements BaseLocationProvider.Listener
       }
     }
 
-    mSavedLocation = location;
+    mRawLocation = new Location(location);
+    mSavedLocation =
+        mLocationProvider instanceof RouteSimulationProvider ? location : mVehicleSpeedSource.applyTo(location);
+    if (LocationCompat.isMock(location))
+      LocationState.nativeVehicleSpeedUpdated(0.0, 0.0, false);
     mMyPosition = null;
+    updateDisplaySpeed();
     notifyLocationUpdated();
   }
 
@@ -290,6 +425,7 @@ public class LocationHelper implements BaseLocationProvider.Listener
   @SuppressLint("MissingPermission")
   public void startNavigationSimulation(JunctionInfo[] points)
   {
+    stopVehicleSpeedSources();
     Logger.i(TAG);
     mOldLocationProvider = mLocationProvider;
     mLocationProvider.stop();
@@ -306,6 +442,7 @@ public class LocationHelper implements BaseLocationProvider.Listener
     if (mOldLocationProvider == null)
       throw new IllegalStateException("Should be called only after startNavigationSimulation()");
     mLocationProvider = mOldLocationProvider;
+    startVehicleSpeedSources();
     mActive = true;
     mLocationProvider.start(mInterval);
   }
@@ -399,6 +536,8 @@ public class LocationHelper implements BaseLocationProvider.Listener
     if (isActive())
     {
       Logger.d(TAG, "Already started");
+      if (!(mLocationProvider instanceof RouteSimulationProvider))
+        startVehicleSpeedSources();
       return;
     }
 
@@ -413,6 +552,7 @@ public class LocationHelper implements BaseLocationProvider.Listener
     Logger.i(TAG, "provider = " + mLocationProvider.getClass().getSimpleName() + " mInFirstRun = " + mInFirstRun
                       + " oldInterval = " + oldInterval + " interval = " + mInterval);
     mActive = true;
+    startVehicleSpeedSources();
     mLocationProvider.start(mInterval);
     mHandler.postDelayed(mLocationTimeoutRunnable, LOCATION_UPDATE_TIMEOUT_MS);
     subscribeToGnssStatusUpdates();
@@ -430,11 +570,13 @@ public class LocationHelper implements BaseLocationProvider.Listener
     }
 
     Logger.i(TAG);
+    stopVehicleSpeedSources();
     mLocationProvider.stop();
     unsubscribeFromGnssStatusUpdates();
     mSensorHelper.stop();
     mHandler.removeCallbacks(mLocationTimeoutRunnable);
     mActive = false;
+    updateDisplaySpeed();
   }
 
   /**
@@ -443,7 +585,11 @@ public class LocationHelper implements BaseLocationProvider.Listener
   public void resumeLocationInForeground()
   {
     if (isActive())
+    {
+      if (!(mLocationProvider instanceof RouteSimulationProvider))
+        startVehicleSpeedSources();
       return;
+    }
     else if (!Map.isEngineCreated())
     {
       // LocationState.nativeGetMode() is initialized only after drape creation.

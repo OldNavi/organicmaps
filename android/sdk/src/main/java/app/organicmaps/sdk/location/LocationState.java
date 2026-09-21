@@ -50,6 +50,9 @@ public final class LocationState
 
   static native void nativeLocationUpdated(long time, double lat, double lon, float accuracyH, double altitude,
                                            float accuracyV, float speed, float bearing);
+  static native void nativeLocationUpdatedWithAge(long time, double lat, double lon, float accuracyH, double altitude,
+                                                  float accuracyV, float speed, float bearing, double ageSeconds);
+  static native void nativeVehicleSpeedUpdated(double speedMps, double ageSeconds, boolean valid);
 
   private LocationState() {}
 

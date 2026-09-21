@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools">
+  <LinearLayout
+    android:layout_width="@dimen/map_speed_circle_size"
+    android:layout_height="@dimen/map_speed_circle_size"
+    android:background="@drawable/map_speed_background"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:elevation="@dimen/nav_elevation">
+    <TextView
+      android:id="@+id/map_speed_value"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center"
+      android:includeFontPadding="false"
+      android:maxLines="1"
+      android:textColor="?android:attr/textColorPrimary"
+      android:textSize="@dimen/map_speed_text_size"
+      android:fontFamily="sans-serif-medium"
+      app:autoSizeTextType="uniform"
+      app:autoSizeMinTextSize="18sp"
+      app:autoSizeMaxTextSize="@dimen/map_speed_text_size"
+      app:autoSizeStepGranularity="1sp"
+      tools:text="100" />
+    <TextView
+      android:id="@+id/map_speed_units"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:includeFontPadding="false"
+      android:textColor="?android:attr/textColorSecondary"
+      android:textSize="10sp"
+      tools:text="км/ч" />
+  </LinearLayout>
+  <app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView
+    android:id="@+id/map_speed_limit"
+    style="@style/MwmWidget.SpeedLimit"
+    android:layout_width="@dimen/map_speed_circle_size"
+    android:layout_height="@dimen/map_speed_circle_size"
+    android:layout_marginStart="@dimen/margin_half"
+    android:visibility="gone"
+    app:speedLimitBackgroundColor="@android:color/white"
+    app:speedLimitTextColor="@android:color/black"
+    app:speedLimitEditModeSpeedLimit="90"
+    tools:visibility="visible" />
+</merge>

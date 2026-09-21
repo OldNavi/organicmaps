@@ -1,6 +1,7 @@
 package app.organicmaps;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -23,6 +24,7 @@ public class CompassPlacementTest
   @Test
   public void compassHasSpaceAboveGpsAfterMapRotation() throws Exception
   {
+    assumeTrue("auto".equals(BuildConfig.FLAVOR));
     var instrumentation = InstrumentationRegistry.getInstrumentation();
     var context = instrumentation.getTargetContext();
     context.startActivity(new Intent(context, SplashActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));

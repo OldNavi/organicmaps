@@ -123,6 +123,8 @@ public class MapButtonsController extends Fragment
     final View myPosition = mFrame.findViewById(R.id.my_position);
     mNavMyPosition =
         new MyPositionButton(myPosition, (v) -> mMapButtonClickListener.onMapButtonClick(MapButtons.myPosition));
+    if ("auto".equals(BuildConfig.FLAVOR))
+      mNavMyPosition.setAnimationEnabled(isResumed());
 
     // Some buttons do not exist in navigation mode
     mToggleMapLayerButton = mFrame.findViewById(R.id.layers_button);
@@ -222,7 +224,7 @@ public class MapButtonsController extends Fragment
       mBlinkingAnimator.cancel();
       mBlinkingAnimator = null;
     }
-    if (show)
+    if (show && (!"auto".equals(BuildConfig.FLAVOR) || isResumed()))
     {
       Drawable drawable = button.getDrawable();
       mBlinkingAnimator = ObjectAnimator.ofArgb(drawable, "tint", 0xFF757575, 0xFFFF0000);
@@ -506,11 +508,33 @@ public class MapButtonsController extends Fragment
   public void onResume()
   {
     super.onResume();
+    if ("auto".equals(BuildConfig.FLAVOR))
+    {
+      if (mNavMyPosition != null)
+        mNavMyPosition.setAnimationEnabled(true);
+      if (mTrackRecordingStatusButton != null)
+        animateIconBlinking(TrackRecorder.nativeIsTrackRecordingEnabled(), mTrackRecordingStatusButton);
+    }
     if (mMapButtonsViewModel.getLayoutMode().getValue() == LayoutMode.navigation)
       mSearchWheel.onResume();
     updateMenuBadge();
     updateLayerButton();
     updateHelpButtonIcon();
+  }
+
+  @Override
+  public void onPause()
+  {
+    // A translucent launcher menu leaves these views attached. Stop cosmetic animations so HWUI
+    // does not keep submitting buffers for the paused map Activity behind that menu.
+    if ("auto".equals(BuildConfig.FLAVOR))
+    {
+      if (mNavMyPosition != null)
+        mNavMyPosition.setAnimationEnabled(false);
+      if (mTrackRecordingStatusButton != null)
+        animateIconBlinking(false, mTrackRecordingStatusButton);
+    }
+    super.onPause();
   }
 
   @Override

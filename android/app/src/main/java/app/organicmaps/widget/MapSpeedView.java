@@ -9,6 +9,10 @@ import android.view.View;
 import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ViewTreeLifecycleOwner;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
 import app.organicmaps.cluster.NavigationProvider;
@@ -16,13 +20,15 @@ import app.organicmaps.sdk.util.StringUtils;
 import app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView;
 
 /** Main-map instruments share the same cached road information as the cluster provider. */
-public final class MapSpeedView extends LinearLayout
+public final class MapSpeedView extends LinearLayout implements DefaultLifecycleObserver
 {
   private final Handler mHandler = new Handler(Looper.getMainLooper());
   private final Runnable mRefresh = this::refresh;
   private final SpeedLimitView mSpeed;
   private final SpeedLimitView mLimit;
   private boolean mReady;
+  @Nullable
+  private Lifecycle mLifecycle;
 
   public MapSpeedView(Context context, @Nullable AttributeSet attrs)
   {
@@ -39,7 +45,7 @@ public final class MapSpeedView extends LinearLayout
 
   private void refresh()
   {
-    if (!isAttachedToWindow() || getWindowVisibility() != VISIBLE || !isShown())
+    if (!canRefresh())
       return;
     var reading = MwmApplication.from(getContext()).getLocationHelper().getDisplaySpeed();
     Double speed = reading == null ? null : reading.speedMps();
@@ -62,12 +68,30 @@ public final class MapSpeedView extends LinearLayout
     mHandler.postDelayed(mRefresh, 250);
   }
 
+  private boolean canRefresh()
+  {
+    boolean resumed = mLifecycle == null || mLifecycle.getCurrentState().isAtLeast(Lifecycle.State.RESUMED);
+    return resumed && isAttachedToWindow() && getWindowVisibility() == VISIBLE && isShown();
+  }
+
+  @Override
+  public void onResume(@NonNull LifecycleOwner owner)
+  {
+    updateRefreshing();
+  }
+
+  @Override
+  public void onPause(@NonNull LifecycleOwner owner)
+  {
+    mHandler.removeCallbacks(mRefresh);
+  }
+
   private void updateRefreshing()
   {
     if (!mReady || isInEditMode())
       return;
     mHandler.removeCallbacks(mRefresh);
-    if (isAttachedToWindow() && getWindowVisibility() == VISIBLE && isShown())
+    if (canRefresh())
       mHandler.post(mRefresh);
   }
 
@@ -75,6 +99,12 @@ public final class MapSpeedView extends LinearLayout
   protected void onAttachedToWindow()
   {
     super.onAttachedToWindow();
+    LifecycleOwner owner = ViewTreeLifecycleOwner.get(this);
+    if (owner != null)
+    {
+      mLifecycle = owner.getLifecycle();
+      mLifecycle.addObserver(this);
+    }
     updateRefreshing();
   }
 
@@ -82,6 +112,11 @@ public final class MapSpeedView extends LinearLayout
   protected void onDetachedFromWindow()
   {
     mHandler.removeCallbacks(mRefresh);
+    if (mLifecycle != null)
+    {
+      mLifecycle.removeObserver(this);
+      mLifecycle = null;
+    }
     super.onDetachedFromWindow();
   }
 

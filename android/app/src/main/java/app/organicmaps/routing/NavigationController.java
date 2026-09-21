@@ -72,8 +72,6 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
 
     // Top frame
     mTopFrame = mFrame.findViewById(R.id.nav_top_frame);
-    mTopFrame.addOnLayoutChangeListener(
-        (v, l, t, r, b, ol, ot, or, ob) -> mMapButtonsViewModel.setTopHeaderHeight(computeNavContentHeight()));
     View turnFrame = mTopFrame.findViewById(R.id.nav_next_turn_frame);
     mNextTurnImage = turnFrame.findViewById(R.id.turn);
     mNextTurnDistance = turnFrame.findViewById(R.id.distance);
@@ -92,6 +90,12 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
     final View navigationBarBackground = mFrame.findViewById(R.id.nav_bottom_sheet_nav_bar);
     final View navBottomSheet = mFrame.findViewById(R.id.nav_bottom_sheet);
     mNextTurnContainer = mFrame.findViewById(R.id.nav_next_turn_container);
+
+    mTopFrame.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+      mMapButtonsViewModel.setTopHeaderHeight(computeNavContentHeight());
+      if (!(mSpeedLimit instanceof SpeedLimitView))
+        updateAutoRecordingButtonMargin();
+    });
 
     ViewCompat.setOnApplyWindowInsetsListener(mStreetFrame, BaselinePaddingInsetsListener.excludeBottom());
 
@@ -206,7 +210,20 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
     int margin = dimen(mFrame.getContext(), R.dimen.nav_frame_padding);
     if (hasStreet)
       margin += mStreetFrame.getHeight();
-    mMapButtonsViewModel.setTopButtonsMarginTop(margin);
+    if (mSpeedLimit instanceof SpeedLimitView)
+      mMapButtonsViewModel.setTopButtonsMarginTop(margin);
+    else
+      updateAutoRecordingButtonMargin();
+  }
+
+  private void updateAutoRecordingButtonMargin()
+  {
+    if (!RoutingController.get().isNavigating())
+      return;
+    int margin = mSpeedLimit.getBottom() + dimen(mFrame.getContext(), R.dimen.nav_frame_padding);
+    Integer previous = mMapButtonsViewModel.getTopButtonsMarginTop().getValue();
+    if (previous == null || previous != margin)
+      mMapButtonsViewModel.setTopButtonsMarginTop(margin);
   }
 
   public void show(boolean show)

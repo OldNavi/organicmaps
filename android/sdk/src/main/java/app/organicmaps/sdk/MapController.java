@@ -49,6 +49,11 @@ public class MapController implements DefaultLifecycleObserver
     mMap.updateCompassOffset(mMapView.getContext(), offsetX, offsetY, true);
   }
 
+  public void setCompassPosition(int x, int y)
+  {
+    mMap.setCompassPosition(x, y);
+  }
+
   public void updateBottomWidgetsOffset(int offsetX, int offsetY)
   {
     mMap.updateBottomWidgetsOffset(mMapView.getContext(), offsetX, offsetY);

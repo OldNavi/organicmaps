@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <dimen name="map_speed_circle_size">56dp</dimen>
-  <!-- Leave room for the track-recording button at the right edge. -->
-  <dimen name="map_speed_end_margin">80dp</dimen>
+  <!-- Align the speed instruments with the zoom/GPS control edge. -->
+  <dimen name="map_speed_end_margin">@dimen/nav_frame_padding</dimen>
   <dimen name="compass_gps_gap">64dp</dimen>
   <style name="MwmWidget.SpeedLimit.MapInstrument" parent="MwmWidget.SpeedLimit">
-    <item name="speedLimitBorderWidth">5dp</item>
-    <item name="speedLimitUnknownStrokeWidth">4dp</item>
+    <item name="speedLimitBorderWidth">4dp</item>
+    <item name="speedLimitUnknownStrokeWidth">3dp</item>
   </style>
 </resources>

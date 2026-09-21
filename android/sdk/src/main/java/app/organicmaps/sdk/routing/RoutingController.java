@@ -252,7 +252,8 @@ public class RoutingController
     Logger.d(TAG, "[B] State: " + mState + ", BuildState: " + mBuildState + " -> " + newState);
     mBuildState = newState;
 
-    if (mBuildState == BuildState.BUILT)
+    // Rebuilding a followed route must not disable native following or reopen alternatives.
+    if (!isNavigating() && mBuildState == BuildState.BUILT)
     {
       final MapObject startPoint = getStartPoint();
       if (startPoint == null || !startPoint.isMyPosition())

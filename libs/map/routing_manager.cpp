@@ -571,6 +571,7 @@ void RoutingManager::SetRouterImpl(RouterType type)
 
 void RoutingManager::RemoveRoute(bool deactivateFollowing)
 {
+  ++m_routeAltMarksGeneration;
   GetPlatform().RunTask(Platform::Thread::Gui, [this, deactivateFollowing]()
   {
     {
@@ -614,7 +615,10 @@ void RoutingManager::ClearAlternativeRoutes()
   // Synchronously clear ETA balloons. RemoveRoute uses RunTask(Gui) which only fires after
   // the current GUI flow returns, leaving stale marks briefly visible; we call the same path
   // directly since RoutingManager is GUI-thread-only.
-  m_bmManager->GetEditSession().ClearGroup(UserMark::Type::ROUTE_ALT);
+  ++m_routeAltMarksGeneration;
+  auto es = m_bmManager->GetEditSession();
+  es.ClearGroup(UserMark::Type::ROUTE_ALT);
+  es.SetIsVisible(UserMark::Type::ROUTE_ALT, false);
 
   m_drapeEngine.SafeCall(&df::DrapeEngine::RemoveAlternativeSubroutes);
 }
@@ -740,13 +744,17 @@ void RoutingManager::CreateRouteAltMarks(routing::RoutesResult const & result)
                      i == result.m_activeIdx});
   }
 
-  GetPlatform().RunTask(Platform::Thread::Gui, [this, routesId = result.m_routesId, infos = std::move(infos)]()
+  auto const generation = m_routeAltMarksGeneration;
+  GetPlatform().RunTask(Platform::Thread::Gui,
+                       [this, routesId = result.m_routesId, generation, infos = std::move(infos)]()
   {
-    // A rebuild or navigation can hide choices before this queued task runs.
+    // A queued balloon must still belong to the current planning result and visibility generation.
+    if (generation != m_routeAltMarksGeneration || !IsRoutingActive() || m_routingSession.IsFollowing())
+      return;
     bool hasAlternatives = false;
     m_routingSession.RouteCall([&](RoutesResult const & current)
     { hasAlternatives = current.m_routesId == routesId && current.m_routes.size() > 1; });
-    if (!hasAlternatives || m_routingSession.IsFollowing())
+    if (!hasAlternatives)
       return;
 
     // Place each balloon up or down based on the midpoint's latitude relative to the others:
@@ -759,6 +767,7 @@ void RoutingManager::CreateRouteAltMarks(routing::RoutesResult const & result)
     avgY /= static_cast<double>(infos.size());
 
     auto es = m_bmManager->GetEditSession();
+    es.SetIsVisible(UserMark::Type::ROUTE_ALT, true);
     for (auto const & info : infos)
     {
       auto mark = es.CreateUserMark<RouteAltMark>(info.m_pt);

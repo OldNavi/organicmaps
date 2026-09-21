@@ -68,6 +68,7 @@ public class SpeedLimitView extends View
   private final boolean mShowZero;
   private final float mConfiguredBorderWidth;
   private final float mConfiguredUnknownStrokeWidth;
+  private final float mConfiguredTextSize;
 
   public SpeedLimitView(Context context)
   {
@@ -78,6 +79,7 @@ public class SpeedLimitView extends View
   {
     super(context, attrs);
 
+    int textStyle;
     try (TypedArray data = context.getTheme().obtainStyledAttributes(attrs, R.styleable.SpeedLimitView, 0,
                                                                      R.style.MwmWidget_SpeedLimit))
     {
@@ -92,7 +94,9 @@ public class SpeedLimitView extends View
       mShowZero = data.getBoolean(R.styleable.SpeedLimitView_speedLimitShowZero, false);
       mConfiguredBorderWidth = data.getDimension(R.styleable.SpeedLimitView_speedLimitBorderWidth, 0);
       mConfiguredUnknownStrokeWidth = data.getDimension(R.styleable.SpeedLimitView_speedLimitUnknownStrokeWidth, 0);
-      if (mShowUnknown)
+      mConfiguredTextSize = data.getDimension(R.styleable.SpeedLimitView_android_textSize, 0);
+      textStyle = data.getInt(R.styleable.SpeedLimitView_android_textStyle, Typeface.BOLD);
+      if (mShowUnknown && !mShowZero)
         mSpeedLimitStr = "—";
       if (isInEditMode())
       {
@@ -113,7 +117,7 @@ public class SpeedLimitView extends View
     mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     mTextPaint.setColor(mTextColor);
     mTextPaint.setTextAlign(Paint.Align.CENTER);
-    mTextPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+    mTextPaint.setTypeface(Typeface.create(Typeface.DEFAULT, textStyle));
   }
 
   public void setSpeedLimit(final int speedLimit, boolean alert)
@@ -242,6 +246,20 @@ public class SpeedLimitView extends View
     final float textRadius =
         mBackgroundRadius - 1.5f * Math.max(mBorderWidth, mBackgroundRadius * 2 * DefaultValues.BORDER_WIDTH_RATIO);
     final float textMaxSize = 2 * textRadius;
+    if (mConfiguredTextSize > 0)
+    {
+      // Keep automotive numbers at one size, reserving room for three digits even at zero speed.
+      // Fit the configured size to the circle as well, including enlarged system fonts.
+      mTextPaint.setTextSize(mConfiguredTextSize);
+      Rect bounds = new Rect();
+      mTextPaint.getTextBounds("000", 0, 3, bounds);
+      double diagonal = Math.hypot(bounds.width(), bounds.height());
+      mTextPaint.getTextBounds(text, 0, text.length(), bounds);
+      diagonal = Math.max(diagonal, Math.hypot(bounds.width(), bounds.height()));
+      if (diagonal > textMaxSize)
+        mTextPaint.setTextSize(Math.max(1, (float) (mConfiguredTextSize * textMaxSize / diagonal)));
+      return;
+    }
     final float textMaxSizeSquared = (float) Math.pow(textMaxSize, 2);
 
     float lowerBound = 0;

@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.SystemClock;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
@@ -30,6 +31,7 @@ public class DownloaderNotifier
   public static final int NOTIFICATION_ID = 1;
 
   private final Context mContext;
+  private final ProgressUpdateLimiter mProgressUpdates = new ProgressUpdateLimiter(1000);
   private NotificationCompat.Builder mProgressNotificationBuilder = null;
   private String mNotificationCountryId = null;
 
@@ -89,8 +91,10 @@ public class DownloaderNotifier
     notifyProgress(null, 0, 0);
   }
 
-  public void notifyProgress(@Nullable String countryId, int maxProgress, int progress)
+  public void notifyProgress(@Nullable String countryId, long maxProgress, long progress)
   {
+    if (!mProgressUpdates.shouldUpdate(SystemClock.elapsedRealtime()))
+      return;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
         && ContextCompat.checkSelfPermission(mContext, POST_NOTIFICATIONS) != PERMISSION_GRANTED)
     {
@@ -109,13 +113,16 @@ public class DownloaderNotifier
   }
 
   @NonNull
-  public Notification buildProgressNotification(@Nullable String countryId, int maxProgress, int progress)
+  public Notification buildProgressNotification(@Nullable String countryId, long maxProgress, long progress)
   {
     var builder = getNotificationBuilder(countryId);
-    ///  @todo Doesn't work properly .. Bad input sizes?
-    // builder.setProgress(maxProgress, progress, maxProgress == 0);
-    builder.setProgress(maxProgress, progress, true);
+    builder.setProgress(10000, progressUnits(maxProgress, progress), maxProgress <= 0);
     return builder.build();
+  }
+
+  static int progressUnits(long total, long downloaded)
+  {
+    return total <= 0 ? 0 : (int) Math.min(10000, Math.max(0, 10000.0 * downloaded / total));
   }
 
   @NonNull

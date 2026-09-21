@@ -64,6 +64,7 @@ public class SpeedLimitView extends View
   @NonNull
   private String mSpeedLimitStr = "0";
   private boolean mAlert = false;
+  private final boolean mShowUnknown;
 
   public SpeedLimitView(Context context)
   {
@@ -84,6 +85,9 @@ public class SpeedLimitView extends View
       mTextColor = data.getColor(R.styleable.SpeedLimitView_speedLimitTextColor, DefaultValues.TEXT_COLOR);
       mTextAlertColor =
           data.getColor(R.styleable.SpeedLimitView_speedLimitTextAlertColor, DefaultValues.TEXT_ALERT_COLOR);
+      mShowUnknown = data.getBoolean(R.styleable.SpeedLimitView_speedLimitShowUnknown, false);
+      if (mShowUnknown)
+        mSpeedLimitStr = "—";
       if (isInEditMode())
       {
         mSpeedLimit = data.getInt(R.styleable.SpeedLimitView_speedLimitEditModeSpeedLimit, 60);
@@ -111,11 +115,11 @@ public class SpeedLimitView extends View
     final boolean speedLimitChanged = mSpeedLimit != speedLimit;
 
     mSpeedLimit = speedLimit;
-    mAlert = alert;
+    mAlert = alert && speedLimit > 0;
 
     if (speedLimitChanged)
     {
-      mSpeedLimitStr = Integer.toString(mSpeedLimit);
+      mSpeedLimitStr = mSpeedLimit > 0 ? Integer.toString(mSpeedLimit) : "—";
       configureTextSize();
     }
 
@@ -138,7 +142,7 @@ public class SpeedLimitView extends View
     super.onDraw(canvas);
 
     final boolean validSpeedLimit = mSpeedLimit > 0;
-    if (!validSpeedLimit)
+    if (!validSpeedLimit && !mShowUnknown)
       return;
 
     final float cx = mWidth / 2;

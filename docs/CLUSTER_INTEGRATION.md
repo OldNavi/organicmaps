@@ -279,7 +279,8 @@ om://build_route_on_map?place_to=work&start_guidance=1
 Use `Uri.Builder.appendQueryParameter()` to encode names/queries. Search runs in Organic Maps'
 offline search UI, with the optional coordinates as a search centre. Map data must cover the area.
 Routes use the vehicle router. Omitting `start_guidance` opens planning; `start_guidance=1` starts
-only after a successful build from the current position. Missing maps, warnings or other build
+only after a successful build from the current position, selecting the alternative with the smallest
+estimated travel time before following it. Manual route selection is unchanged. Missing maps, warnings or other build
 failures do not start guidance. Explicit `lat_from`/`lon_from` are supported for planning; an
 arbitrary origin does not trigger automatic guidance. Cancellation/new endpoint selection clears
 a pending automatic start.

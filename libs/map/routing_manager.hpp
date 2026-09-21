@@ -172,6 +172,7 @@ public:
   /// Returns false if the index is out of range, already active, or its adjustment caches are
   /// unavailable or belong to another result. Re-renders the drape to highlight the selected variant.
   bool SwapActiveAlternative(size_t idx);
+  void SelectFastestRoute();
 
   /// \brief Hit-tests |mercator| against the alternative-route polylines. If one is closer than
   /// a tap-area threshold (kTapPixels * |mercatorPerPixel|), swaps it to active and returns true.

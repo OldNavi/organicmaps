@@ -27,6 +27,7 @@ set(SRC
   static_texture_tests.cpp
   stipple_pen_tests.cpp
   text_metrics_cache_bench.cpp
+  texture_preparation_tests.cpp
   texture_of_colors_tests.cpp
   testing_graphics_context.hpp
   uniform_value_tests.cpp

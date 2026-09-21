@@ -616,7 +616,9 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
   {
     ref_ptr<SetClusterCameraMessage> const msg = message;
     CHECK(m_myPositionController->IsPassiveNavigation(), ());
-    m_clusterTiltDegrees = msg->GetTiltDegrees();
+    // Auto zoom also owns perspective, just like the main navigation camera. Ignore a saved manual
+    // tilt from older clients; SetAutoPerspectiveEvent keeps the angle tied to the changing scale.
+    m_clusterTiltDegrees = msg->GetZoom() == 0 ? -1.0 : msg->GetTiltDegrees();
     m_myPositionController->SetClusterAnchor(msg->GetAnchor());
     m_myPositionController->EnablePerspectiveInRouting(m_clusterTiltDegrees != 0.0);
     int const zoom = msg->GetZoom() == 0 ? 16 : msg->GetZoom();

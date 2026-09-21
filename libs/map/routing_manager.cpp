@@ -480,9 +480,14 @@ void RoutingManager::OnRoutePointPassed(RouteMarkType type, size_t intermediateI
   SaveRoutePoints();
 }
 
-void RoutingManager::OnLocationUpdate(location::GpsInfo const & info)
+void RoutingManager::OnLocationUpdate(location::GpsInfo const & info, double ageSeconds)
 {
-  m_extrapolator.OnLocationUpdate(info);
+  m_extrapolator.OnLocationUpdate(info, ageSeconds);
+}
+
+void RoutingManager::OnVehicleSpeed(double speedMps, double ageSeconds, bool valid)
+{
+  m_extrapolator.OnVehicleSpeed(speedMps, ageSeconds, valid);
 }
 
 std::unique_ptr<routing::RoadInfoReader> RoutingManager::CreateRoadInfoReader()

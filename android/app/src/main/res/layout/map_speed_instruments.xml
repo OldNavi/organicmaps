@@ -4,7 +4,7 @@
   xmlns:tools="http://schemas.android.com/tools">
   <app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView
     android:id="@+id/map_speed_value"
-    style="@style/MwmWidget.SpeedLimit"
+    style="@style/MwmWidget.SpeedLimit.MapInstrument"
     android:layout_width="@dimen/map_speed_circle_size"
     android:layout_height="@dimen/map_speed_circle_size"
     android:elevation="@dimen/nav_elevation"
@@ -16,7 +16,7 @@
     app:speedLimitEditModeSpeedLimit="60" />
   <app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView
     android:id="@+id/map_speed_limit"
-    style="@style/MwmWidget.SpeedLimit"
+    style="@style/MwmWidget.SpeedLimit.MapInstrument"
     android:layout_width="@dimen/map_speed_circle_size"
     android:layout_height="@dimen/map_speed_circle_size"
     android:layout_marginStart="-8dp"

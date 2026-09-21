@@ -85,9 +85,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:padding="@dimen/margin_eighth"
         app:tint="?iconTint"
-        tools:src="@drawable/ic_turn_left_sharp"/>
+        tools:src="@drawable/ic_then_left_sharp"/>
     </FrameLayout>
   </RelativeLayout>
 
@@ -95,27 +94,25 @@
       android:id="@+id/lanes"
       android:layout_width="0dp"
       android:layout_height="68dp"
-      android:layout_marginEnd="@dimen/margin_half"
-      android:layout_marginTop="@dimen/margin_half"
+      android:layout_margin="@dimen/margin_half"
       android:padding="@dimen/margin_half"
       android:visibility="gone"
-      app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toEndOf="@id/nav_next_turn_container"
-      app:layout_constraintTop_toBottomOf="@id/street_frame"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/nav_speed_limit"
       app:lanesActiveLaneTintColor="?navLaneArrowActiveColor"
       app:lanesInactiveLaneTintColor="?navLaneArrowInactiveColor"
-      app:lanesBackgroundColor="?navLanesBackgroundColor"
+      app:lanesBackgroundColor="?colorAccent"
       app:lanesCornerRadius="@dimen/margin_quarter"
-      app:lanesEditModeLanesCount="5"
+      app:lanesEditModeLanesCount="10"
       tools:visibility="visible" />
 
-  <app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView
+  <app.organicmaps.widget.MapSpeedView
     android:id="@+id/nav_speed_limit"
-    style="@style/MwmWidget.SpeedLimit"
-    android:layout_width="60dp"
-    android:layout_height="60dp"
-    android:layout_margin="@dimen/margin_half"
-    app:layout_constraintEnd_toEndOf="@id/nav_next_turn_container"
-    app:layout_constraintStart_toStartOf="@id/nav_next_turn_container"
-    app:layout_constraintTop_toBottomOf="@id/nav_next_turn_container" />
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/margin_half"
+    android:layout_marginEnd="@dimen/map_speed_end_margin"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/street_frame" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <dimen name="map_speed_circle_size">56dp</dimen>
-  <dimen name="map_speed_text_size">26sp</dimen>
   <!-- Leave room for the track-recording button at the right edge. -->
   <dimen name="map_speed_end_margin">80dp</dimen>
   <dimen name="compass_gps_gap">64dp</dimen>

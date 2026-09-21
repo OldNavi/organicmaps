@@ -1155,11 +1155,11 @@ void FrontendRenderer::UpdateContextDependentResources()
   m_frameData.m_forceFullRedrawNextFrame = true;
   ++m_lastRecacheRouteId;
 
-  for (auto const & subroute : m_routeRenderer->GetSubroutes())
-  {
-    auto msg = make_unique_dp<AddSubrouteMessage>(subroute.m_subrouteId, subroute.m_subroute, m_lastRecacheRouteId);
-    m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread, std::move(msg), MessagePriority::Normal);
-  }
+  // Immediate guidance switches style before the initial FlushSubroute may reach this renderer.
+  // UpdateAll discards those old-style GPU messages, so recover from the backend's logical routes,
+  // not just geometry already received here. Its queue also orders removals before recaching.
+  m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                            make_unique_dp<RecacheSubroutesMessage>(m_lastRecacheRouteId), MessagePriority::Normal);
 
   m_trafficRenderer->ClearContextDependentResources();
   m_tileBackgroundRenderer->ClearContextDependentResources(m_context);

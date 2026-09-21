@@ -66,6 +66,8 @@ public class SpeedLimitView extends View
   private boolean mAlert = false;
   private final boolean mShowUnknown;
   private final boolean mShowZero;
+  private final float mConfiguredBorderWidth;
+  private final float mConfiguredUnknownStrokeWidth;
 
   public SpeedLimitView(Context context)
   {
@@ -88,6 +90,8 @@ public class SpeedLimitView extends View
           data.getColor(R.styleable.SpeedLimitView_speedLimitTextAlertColor, DefaultValues.TEXT_ALERT_COLOR);
       mShowUnknown = data.getBoolean(R.styleable.SpeedLimitView_speedLimitShowUnknown, false);
       mShowZero = data.getBoolean(R.styleable.SpeedLimitView_speedLimitShowZero, false);
+      mConfiguredBorderWidth = data.getDimension(R.styleable.SpeedLimitView_speedLimitBorderWidth, 0);
+      mConfiguredUnknownStrokeWidth = data.getDimension(R.styleable.SpeedLimitView_speedLimitUnknownStrokeWidth, 0);
       if (mShowUnknown)
         mSpeedLimitStr = "—";
       if (isInEditMode())
@@ -180,7 +184,8 @@ public class SpeedLimitView extends View
     {
       float halfLength = Math.min(mWidth, mHeight) * 0.2f;
       float halfGap = Math.min(mWidth, mHeight) * 0.04f;
-      float halfThickness = mBorderWidth * 0.35f;
+      float halfThickness =
+          (mConfiguredUnknownStrokeWidth > 0 ? mConfiguredUnknownStrokeWidth : mBorderWidth * 0.7f) / 2;
       canvas.drawRect(cx - halfLength, cy - halfThickness, cx - halfGap, cy + halfThickness, mTextPaint);
       canvas.drawRect(cx + halfGap, cy - halfThickness, cx + halfLength, cy + halfThickness, mTextPaint);
       return;
@@ -223,7 +228,8 @@ public class SpeedLimitView extends View
     mWidth = (float) w - paddingX;
     mHeight = (float) h - paddingY;
     mBackgroundRadius = Math.min(mWidth, mHeight) / 2;
-    mBorderWidth = mBackgroundRadius * 2 * DefaultValues.BORDER_WIDTH_RATIO;
+    mBorderWidth =
+        mConfiguredBorderWidth > 0 ? mConfiguredBorderWidth : mBackgroundRadius * 2 * DefaultValues.BORDER_WIDTH_RATIO;
     mBorderRadius = mBackgroundRadius - mBorderWidth / 2;
     configureTextSize();
   }
@@ -232,7 +238,9 @@ public class SpeedLimitView extends View
   private void configureTextSize()
   {
     final String text = mSpeedLimitStr;
-    final float textRadius = mBorderRadius - mBorderWidth;
+    // A thinner cosmetic border should not enlarge the numbers.
+    final float textRadius =
+        mBackgroundRadius - 1.5f * Math.max(mBorderWidth, mBackgroundRadius * 2 * DefaultValues.BORDER_WIDTH_RATIO);
     final float textMaxSize = 2 * textRadius;
     final float textMaxSizeSquared = (float) Math.pow(textMaxSize, 2);
 

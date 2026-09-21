@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.location.Location;
+import android.os.SystemClock;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -174,6 +175,8 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     }
   }
 
+  private final Map<String, ProgressUpdateLimiter> mProgressUpdates = new HashMap<>();
+
   private final MapManager.StorageCallback mStorageCallback = new MapManager.StorageCallback() {
     private void updateItem(String countryId)
     {
@@ -214,6 +217,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
 
       for (MapManager.StorageCallbackData item : data)
       {
+        mProgressUpdates.remove(item.countryId);
         updateItem(item.countryId);
       }
     }
@@ -221,7 +225,9 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
     @Override
     public void onProgress(String countryId, long localSize, long remoteSize)
     {
-      updateItem(countryId);
+      if (mProgressUpdates.computeIfAbsent(countryId, ignored -> new ProgressUpdateLimiter(250))
+              .shouldUpdate(SystemClock.elapsedRealtime()))
+        updateItem(countryId);
     }
   };
 
@@ -776,6 +782,7 @@ class DownloaderAdapter extends RecyclerView.Adapter<DownloaderAdapter.ViewHolde
   void detach()
   {
     MapManager.nativeUnsubscribe(mListenerSlot);
+    mProgressUpdates.clear();
   }
 
   boolean isSearchResultsMode()

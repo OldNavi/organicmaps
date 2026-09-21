@@ -39,6 +39,7 @@ def getCommitMessage() {
 }
 
 android {
+  useLibrary 'android.car', false
   namespace = 'app.organicmaps'
 
   // Kotlin is enabled for the app module so new code can be written in Kotlin
@@ -288,6 +289,8 @@ def allowedPermissions = [
     // network
     "name='android.permission.INTERNET'",
     "name='android.permission.ACCESS_NETWORK_STATE'",
+    "name='android.car.permission.CAR_SPEED'",
+    "name='android.car.permission.CAR_VENDOR_EXTENSION'",
     // foreground services
     "name='android.permission.FOREGROUND_SERVICE'",
     "name='android.permission.FOREGROUND_SERVICE_LOCATION'",

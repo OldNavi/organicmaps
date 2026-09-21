@@ -135,9 +135,9 @@ void Framework::OnLocationError(int errorCode)
   m_work.OnLocationError(static_cast<location::TLocationError>(errorCode));
 }
 
-void Framework::OnLocationUpdated(location::GpsInfo const & info)
+void Framework::OnLocationUpdated(location::GpsInfo const & info, double ageSeconds)
 {
-  m_work.OnLocationUpdate(info);
+  m_work.OnLocationUpdate(info, ageSeconds);
 }
 
 void Framework::OnCompassUpdated(location::CompassInfo const & info, bool forceRedraw)

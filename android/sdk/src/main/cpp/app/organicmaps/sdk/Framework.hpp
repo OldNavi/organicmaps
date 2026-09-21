@@ -83,7 +83,7 @@ public:
   void ShowNode(storage::CountryId const & countryId, bool zoomToDownloadButton);
 
   void OnLocationError(int /* == location::TLocationStatus*/ newStatus);
-  void OnLocationUpdated(location::GpsInfo const & info);
+  void OnLocationUpdated(location::GpsInfo const & info, double ageSeconds = 0.0);
   void OnCompassUpdated(location::CompassInfo const & info, bool forceRedraw);
 
   bool CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi, bool firstLaunch, bool launchByDeepLink,

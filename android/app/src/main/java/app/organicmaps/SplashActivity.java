@@ -25,6 +25,7 @@ import app.organicmaps.sdk.display.DisplayManager;
 import app.organicmaps.sdk.display.DisplayType;
 import app.organicmaps.sdk.location.LocationHelper;
 import app.organicmaps.sdk.location.LocationUtils;
+import app.organicmaps.sdk.location.VehicleSpeedSource;
 import app.organicmaps.sdk.util.Config;
 import app.organicmaps.sdk.util.concurrency.UiThread;
 import app.organicmaps.sdk.util.log.Logger;
@@ -33,6 +34,7 @@ import app.organicmaps.util.Utils;
 import app.organicmaps.util.WindowInsetUtils.BaselinePaddingInsetsListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class SplashActivity extends AppCompatActivity
@@ -93,10 +95,20 @@ public class SplashActivity extends AppCompatActivity
     super.onResume();
     if (mCanceled)
       return;
+    ArrayList<String> permissions = new ArrayList<>();
     if (!Config.isLocationRequested() && !LocationUtils.checkLocationPermission(this))
     {
-      Logger.d(TAG, "Requesting location permissions");
-      mPermissionRequest.launch(new String[] {ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION});
+      permissions.add(ACCESS_COARSE_LOCATION);
+      permissions.add(ACCESS_FINE_LOCATION);
+    }
+    if (VehicleSpeedSource.shouldRequestPermission(this))
+    {
+      VehicleSpeedSource.markPermissionRequested(this);
+      permissions.add(VehicleSpeedSource.PERMISSION_SPEED);
+    }
+    if (!permissions.isEmpty())
+    {
+      mPermissionRequest.launch(permissions.toArray(new String[0]));
       return;
     }
 

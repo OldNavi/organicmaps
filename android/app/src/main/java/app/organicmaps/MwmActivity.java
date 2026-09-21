@@ -1213,6 +1213,25 @@ public class MwmActivity extends BaseMwmFragmentActivity
     // The map screen has no docked side panel to pop, so up-navigation is a no-op here.
   }
 
+  public void positionCompassNearGps(View gps)
+  {
+    if (mMapController == null)
+      return;
+    if (!gps.isShown())
+    {
+      mMapController.setCompassPosition(-1000, -1000);
+      return;
+    }
+    int[] mapPosition = new int[2];
+    int[] gpsPosition = new int[2];
+    mMapController.getView().getLocationInWindow(mapPosition);
+    gps.getLocationInWindow(gpsPosition);
+    int x = gpsPosition[0] - mapPosition[0] + gps.getWidth() / 2;
+    int y =
+        gpsPosition[1] - mapPosition[1] - dimen(this, R.dimen.margin_half) - dimen(this, R.dimen.map_button_size) / 2;
+    mMapController.setCompassPosition(x, y);
+  }
+
   void updateCompassOffset(int offsetY)
   {
     updateCompassOffset(offsetY, -1);

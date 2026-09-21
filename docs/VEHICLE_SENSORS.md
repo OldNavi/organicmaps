@@ -87,6 +87,10 @@ standard speed checks CAR_SPEED. Disabled or inaccessible speed falls back to fr
 
 ## Processing
 
+The ROX profile uses ESC_VEHICLESPEED `0x2160152B` (559945003), Float meters/second,
+with multiplier 1.0 and `privileged=true` for kinematic `speed`. Other car profiles retain
+the standard PERF_VEHICLE_SPEED default.
+
 Speed preserves signed values, timestamp/age filtering, numeric scalar/array support and the
 nonzero trust trigger: an initially constant zero cannot override GNSS; after the first valid
 nonzero measurement, zero is accepted. Reconnection resets trust. Speed still feeds the native

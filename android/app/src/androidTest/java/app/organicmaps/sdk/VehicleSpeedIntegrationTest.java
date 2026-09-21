@@ -26,6 +26,15 @@ public class VehicleSpeedIntegrationTest
     assertTrue(profile.sensors.containsKey("accelerometer"));
     assertTrue(profile.sensors.containsKey("gyroscope"));
     assertTrue(profile.sensors.containsKey("magnetometer"));
+    if (profile.name.equals("rox"))
+    {
+      assertEquals(0x2160152B, speed.propertyId);
+      assertEquals(1.0, speed.multiplier, 0.0);
+      assertTrue(speed.privileged);
+      assertEquals(SensorConfig.Type.VHAL, speed.type);
+      assertEquals(12.5, speed.convert(12.5f), 0.0001);
+      assertEquals(0x21408CAE, profile.sensor("speedMCU").propertyId);
+    }
   }
 
   @Test

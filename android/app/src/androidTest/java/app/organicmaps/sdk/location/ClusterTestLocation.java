@@ -61,7 +61,12 @@ public final class ClusterTestLocation implements AutoCloseable
 
   public static void setCoreLocation(double latitude, double longitude, float bearing)
   {
-    LocationState.nativeLocationUpdated(System.currentTimeMillis(), latitude, longitude, 2.0f, 0.0, -1.0f, 10.0f,
+    setCoreLocation(latitude, longitude, bearing, 10.0f);
+  }
+
+  public static void setCoreLocation(double latitude, double longitude, float bearing, float speed)
+  {
+    LocationState.nativeLocationUpdated(System.currentTimeMillis(), latitude, longitude, 2.0f, 0.0, -1.0f, speed,
                                         bearing);
   }
 

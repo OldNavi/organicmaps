@@ -1,6 +1,7 @@
 package app.organicmaps.widget;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -10,8 +11,8 @@ import android.graphics.Color;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.TextView;
 import androidx.test.platform.app.InstrumentationRegistry;
+import app.organicmaps.BuildConfig;
 import app.organicmaps.R;
 import app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView;
 import java.io.File;
@@ -24,6 +25,7 @@ public class MapSpeedViewTest
   @Test
   public void circlesRemainReadableInBothThemesAndClearTheTurnPanel()
   {
+    assumeTrue("auto".equals(BuildConfig.FLAVOR));
     var instrumentation = InstrumentationRegistry.getInstrumentation();
     instrumentation.runOnMainSync(() -> {
       Context base = instrumentation.getTargetContext();
@@ -41,9 +43,9 @@ public class MapSpeedViewTest
           for (int layout : new int[] {R.layout.layout_nav_top, R.layout.map_buttons_layout_regular})
           {
             View root = LayoutInflater.from(context).inflate(layout, null, false);
-            View speed = root.findViewById(layout == R.layout.layout_nav_top ? R.id.nav_speed : R.id.map_speed);
-            TextView number = speed.findViewById(R.id.map_speed_value);
-            number.setText("120");
+            View speed = root.findViewById(layout == R.layout.layout_nav_top ? R.id.nav_speed_limit : R.id.map_speed);
+            SpeedLimitView number = speed.findViewById(R.id.map_speed_value);
+            number.setSpeedLimit(120, false);
             SpeedLimitView limit = speed.findViewById(R.id.map_speed_limit);
             assertEquals(View.VISIBLE, limit.getVisibility());
             limit.setSpeedLimit(100, false);
@@ -55,10 +57,9 @@ public class MapSpeedViewTest
             root.layout(0, 0, width, height);
             assertTrue(speed.getLeft() >= 0 && speed.getRight() <= width);
             assertEquals(limit.getWidth(), limit.getHeight());
-            View currentCircle = speed.findViewById(R.id.map_speed_current_circle);
+            View currentCircle = number;
             assertEquals(Math.round(8 * density), currentCircle.getRight() - limit.getLeft());
             assertTrue(limit.getZ() > currentCircle.getZ());
-            assertTrue(number.getCurrentTextColor() != Color.TRANSPARENT);
             if (layout == R.layout.layout_nav_top)
               assertTrue("Speed row overlaps turn panel: " + speed.getLeft() + " < "
                              + root.findViewById(R.id.nav_next_turn_container).getRight(),
@@ -76,13 +77,26 @@ public class MapSpeedViewTest
             int alert = bitmap.getPixel(limit.getLeft() + limit.getWidth() / 2, limit.getHeight() / 5);
             assertTrue(Color.red(alert) > Color.green(alert) * 2);
             save(context, bitmap, "speed-alert-" + night + "-" + orientation + "-" + layout + ".png");
+            number.setSpeedLimit(-1, false);
             limit.setSpeedLimit(0, true);
             assertFalse(limit.isAlert());
             speed.draw(new Canvas(bitmap));
-            int unknown = bitmap.getPixel(limit.getLeft() + limit.getWidth() / 2, limit.getHeight() / 2);
+            int unknown = bitmap.getPixel(limit.getLeft() + limit.getWidth() * 3 / 8, limit.getHeight() / 2);
             assertTrue("Unknown limit must draw a dark dash",
                        Color.red(unknown) < 80 && Color.green(unknown) < 80 && Color.blue(unknown) < 80);
             assertEquals(View.VISIBLE, limit.getVisibility());
+            assertEquals("Unknown marker must have a gap in the middle", Color.WHITE,
+                         bitmap.getPixel(limit.getLeft() + limit.getWidth() / 2, limit.getHeight() / 2));
+            // Both signs use exactly the same text geometry, including the unknown marker.
+            for (int y = limit.getHeight() / 3; y < limit.getHeight() * 2 / 3; ++y)
+              for (int x = limit.getWidth() / 3; x < limit.getWidth() * 2 / 3; ++x)
+              {
+                int left = bitmap.getPixel(x, y);
+                int right = bitmap.getPixel(limit.getLeft() + x, y);
+                boolean leftDash =
+                    night == Configuration.UI_MODE_NIGHT_NO ? Color.red(left) < 80 : Color.red(left) > 200;
+                assertEquals(leftDash, Color.red(right) < 80);
+              }
             save(context, bitmap, "speed-unknown-" + night + "-" + orientation + "-" + layout + ".png");
             bitmap.recycle();
           }

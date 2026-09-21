@@ -2,6 +2,8 @@ package app.organicmaps.routing;
 
 import static app.organicmaps.sdk.util.Utils.dimen;
 
+import android.content.res.Configuration;
+import android.location.Location;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,14 +15,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
+import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
 import app.organicmaps.maplayer.MapButtonsViewModel;
 import app.organicmaps.sdk.Router;
 import app.organicmaps.sdk.maplayer.traffic.TrafficManager;
 import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.routing.RoutingInfo;
+import app.organicmaps.sdk.util.StringUtils;
 import app.organicmaps.sdk.widget.roadshield.RoadShieldUtils;
 import app.organicmaps.sdk.widgets.lanes.LanesView;
+import app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView;
 import app.organicmaps.util.UiUtils;
 import app.organicmaps.util.Utils;
 import app.organicmaps.util.WindowInsetUtils;
@@ -44,7 +49,7 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
   @NonNull
   private final LanesView mLanesView;
   @NonNull
-  private final View mSpeed;
+  private final View mSpeedLimit;
 
   private final MapButtonsViewModel mMapButtonsViewModel;
   private final View mTopFrame;
@@ -81,7 +86,7 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
 
     mLanesView = mTopFrame.findViewById(R.id.lanes);
 
-    mSpeed = mTopFrame.findViewById(R.id.nav_speed);
+    mSpeedLimit = mTopFrame.findViewById(R.id.nav_speed_limit);
 
     // Blank rectangle below the navbar that hides menu content behind it.
     final View navigationBarBackground = mFrame.findViewById(R.id.nav_bottom_sheet_nav_bar);
@@ -98,10 +103,13 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
       final int startInset = isRtl ? safeDrawing.right : safeDrawing.left;
       mNextTurnContainer.setPaddingRelative(startInset, mNextTurnContainer.getPaddingTop(),
                                             mNextTurnContainer.getPaddingEnd(), mNextTurnContainer.getPaddingBottom());
-      ViewGroup.MarginLayoutParams speedParams = (ViewGroup.MarginLayoutParams) mSpeed.getLayoutParams();
-      speedParams.setMarginEnd(dimen(activity, R.dimen.map_speed_end_margin)
-                               + (isRtl ? safeDrawing.left : safeDrawing.right));
-      mSpeed.setLayoutParams(speedParams);
+      if (!(mSpeedLimit instanceof SpeedLimitView))
+      {
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) mSpeedLimit.getLayoutParams();
+        params.setMarginEnd(dimen(activity, R.dimen.map_speed_end_margin)
+                            + (isRtl ? safeDrawing.left : safeDrawing.right));
+        mSpeedLimit.setLayoutParams(params);
+      }
       return windowInsets;
     });
 
@@ -125,13 +133,30 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
     });
   }
 
+  // Height the search sheet must clear when expanded over the navigation top frame: the always
+  // shown street-name frame plus the taller of the turn/speed column or the lanes strip (the two
+  // overlap rather than stack, so take the max). The turn/speed column is only laid out below the
+  // street frame in portrait.
   private int computeNavContentHeight()
   {
-    int bottom = mStreetFrame.getBottom();
-    for (View view : new View[] {mNextTurnContainer, mSpeed, mLanesView})
-      if (UiUtils.isVisible(view))
-        bottom = Math.max(bottom, view.getBottom());
-    return bottom;
+    if (!(mSpeedLimit instanceof SpeedLimitView))
+    {
+      int bottom = mStreetFrame.getBottom();
+      for (View view : new View[] {mNextTurnContainer, mSpeedLimit, mLanesView})
+        if (UiUtils.isVisible(view))
+          bottom = Math.max(bottom, view.getBottom());
+      return bottom;
+    }
+    int turnAndSpeedHeight = 0;
+    if (mFrame.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+    {
+      if (UiUtils.isVisible(mNextTurnContainer))
+        turnAndSpeedHeight += mNextTurnContainer.getHeight();
+      if (UiUtils.isVisible(mSpeedLimit))
+        turnAndSpeedHeight += mSpeedLimit.getHeight();
+    }
+    final int lanesHeight = UiUtils.isVisible(mLanesView) ? mLanesView.getHeight() : 0;
+    return mStreetFrame.getHeight() + Math.max(turnAndSpeedHeight, lanesHeight);
   }
 
   private void updateVehicle(@NonNull RoutingInfo info)
@@ -145,6 +170,8 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
       mNextNextTurnImage.setImageResource(info.nextCarDirection.getTurnRes());
 
     mLanesView.setLanes(info.lanes);
+
+    updateSpeedLimit(info);
   }
 
   private void updatePedestrian(@NonNull RoutingInfo info)
@@ -281,4 +308,13 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
     RoutingController.get().cancel();
   }
 
+  private void updateSpeedLimit(@NonNull final RoutingInfo info)
+  {
+    // Auto has an independent speed/limit pair in this slot; other flavors keep the original widget.
+    if (!(mSpeedLimit instanceof SpeedLimitView speedLimit))
+      return;
+    final Location location = MwmApplication.from(mFrame.getContext()).getLocationHelper().getSavedLocation();
+    final boolean speedLimitExceeded = location != null && info.speedLimitMps < location.getSpeed();
+    speedLimit.setSpeedLimit(StringUtils.nativeFormatSpeed(info.speedLimitMps), speedLimitExceeded);
+  }
 }

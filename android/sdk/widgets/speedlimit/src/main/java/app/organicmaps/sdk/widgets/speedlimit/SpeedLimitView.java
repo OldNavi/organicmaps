@@ -65,6 +65,7 @@ public class SpeedLimitView extends View
   private String mSpeedLimitStr = "0";
   private boolean mAlert = false;
   private final boolean mShowUnknown;
+  private final boolean mShowZero;
 
   public SpeedLimitView(Context context)
   {
@@ -86,6 +87,7 @@ public class SpeedLimitView extends View
       mTextAlertColor =
           data.getColor(R.styleable.SpeedLimitView_speedLimitTextAlertColor, DefaultValues.TEXT_ALERT_COLOR);
       mShowUnknown = data.getBoolean(R.styleable.SpeedLimitView_speedLimitShowUnknown, false);
+      mShowZero = data.getBoolean(R.styleable.SpeedLimitView_speedLimitShowZero, false);
       if (mShowUnknown)
         mSpeedLimitStr = "—";
       if (isInEditMode())
@@ -119,7 +121,7 @@ public class SpeedLimitView extends View
 
     if (speedLimitChanged)
     {
-      mSpeedLimitStr = mSpeedLimit > 0 ? Integer.toString(mSpeedLimit) : "—";
+      mSpeedLimitStr = (mSpeedLimit > 0 || (mShowZero && mSpeedLimit == 0)) ? Integer.toString(mSpeedLimit) : "—";
       configureTextSize();
     }
 
@@ -141,7 +143,7 @@ public class SpeedLimitView extends View
   {
     super.onDraw(canvas);
 
-    final boolean validSpeedLimit = mSpeedLimit > 0;
+    final boolean validSpeedLimit = mSpeedLimit > 0 || (mShowZero && mSpeedLimit == 0);
     if (!validSpeedLimit && !mShowUnknown)
       return;
 
@@ -173,6 +175,16 @@ public class SpeedLimitView extends View
       mTextPaint.setColor(mTextAlertColor);
     else
       mTextPaint.setColor(mTextColor);
+
+    if (mSpeedLimit <= 0 && !(mShowZero && mSpeedLimit == 0))
+    {
+      float halfLength = Math.min(mWidth, mHeight) * 0.2f;
+      float halfGap = Math.min(mWidth, mHeight) * 0.04f;
+      float halfThickness = mBorderWidth * 0.35f;
+      canvas.drawRect(cx - halfLength, cy - halfThickness, cx - halfGap, cy + halfThickness, mTextPaint);
+      canvas.drawRect(cx + halfGap, cy - halfThickness, cx + halfLength, cy + halfThickness, mTextPaint);
+      return;
+    }
 
     final Rect textBounds = new Rect();
     mTextPaint.getTextBounds(mSpeedLimitStr, 0, mSpeedLimitStr.length(), textBounds);

@@ -8,6 +8,7 @@ import android.os.SystemClock;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
@@ -15,6 +16,7 @@ import androidx.test.runner.lifecycle.Stage;
 import app.organicmaps.MwmActivity;
 import app.organicmaps.R;
 import app.organicmaps.SplashActivity;
+import app.organicmaps.sdk.location.LocationState;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
@@ -49,6 +51,36 @@ public class CompassPositionLifecycleTest
     var context = InstrumentationRegistry.getInstrumentation().getTargetContext();
     context.startActivity(new Intent(context, SplashActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
     return awaitMap(null);
+  }
+
+  @Test
+  public void pendingGpsAnimationStopsWhenControlsArePausedButStillAttached() throws Exception
+  {
+    MwmActivity activity = launchMap();
+    main(() -> {
+      var manager = activity.getSupportFragmentManager();
+      manager.executePendingTransactions();
+      MapButtonsController controls = (MapButtonsController) manager.findFragmentById(R.id.map_buttons);
+      assertNotNull(controls);
+      View gps = controls.requireView().findViewById(R.id.my_position);
+      try
+      {
+        controls.updateNavMyPositionButton(LocationState.PENDING_POSITION);
+        assertNotNull(gps.getAnimation());
+        manager.beginTransaction().setMaxLifecycle(controls, Lifecycle.State.STARTED).commitNow();
+        assertTrue(gps.isAttachedToWindow());
+        assertNull(gps.getAnimation());
+        controls.updateNavMyPositionButton(LocationState.PENDING_POSITION);
+        assertNull("Location updates must not restart a hidden animation", gps.getAnimation());
+        manager.beginTransaction().setMaxLifecycle(controls, Lifecycle.State.RESUMED).commitNow();
+        assertNotNull(gps.getAnimation());
+      }
+      finally
+      {
+        manager.beginTransaction().setMaxLifecycle(controls, Lifecycle.State.RESUMED).commitNow();
+        controls.updateNavMyPositionButton(LocationState.getMode());
+      }
+    });
   }
 
   @Test

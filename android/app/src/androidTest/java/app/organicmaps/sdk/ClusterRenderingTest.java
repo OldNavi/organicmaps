@@ -15,6 +15,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemClock;
+import android.system.Os;
+import android.system.OsConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inspector.WindowInspector;
@@ -27,8 +29,12 @@ import app.organicmaps.sdk.location.ClusterTestLocation;
 import app.organicmaps.sdk.routing.RouteMarkType;
 import app.organicmaps.sdk.util.Config;
 import app.organicmaps.util.ThemeSwitcher;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1350,6 +1356,96 @@ public class ClusterRenderingTest
     }
     assertTrue("Test route must cover enough pixels", changed > 30);
     assertTrue("Stale route pixels on display " + output.id() + ": " + stale + "/" + changed, stale < changed / 20);
+  }
+
+  private static HashMap<Integer, Long> nativeCpuTicks() throws IOException
+  {
+    HashMap<Integer, Long> result = new HashMap<>();
+    File[] tasks = new File("/proc/self/task").listFiles();
+    assertNotNull(tasks);
+    for (File task : tasks)
+    {
+      String stat;
+      try
+      {
+        stat = new String(Files.readAllBytes(new File(task, "stat").toPath()), StandardCharsets.UTF_8);
+      }
+      catch (IOException ignored)
+      {
+        continue;
+      } // A worker may exit during enumeration.
+      int end = stat.lastIndexOf(')');
+      if (!stat.substring(stat.indexOf('(') + 1, end).startsWith("Thread-"))
+        continue;
+      String[] fields = stat.substring(end + 2).trim().split("\\s+");
+      result.put(Integer.parseInt(task.getName()), Long.parseLong(fields[11]) + Long.parseLong(fields[12]));
+    }
+    return result;
+  }
+
+  @Test
+  @SdkSuppress(minSdkVersion = 29)
+  public void pausedPrimaryDoesNotSpinAndClusterRemainsIndependent() throws Exception
+  {
+    MwmApplication app =
+        (MwmApplication) InstrumentationRegistry.getInstrumentation().getTargetContext().getApplicationContext();
+    Presentation[] primary = new Presentation[1];
+    MapView[] primaryMap = new MapView[1];
+    try (Output mainOutput = new Output(app, 640, 360, 160); Output cluster = new Output(app, 512, 288, 160))
+    {
+      showUri(app, cluster, "16", null, "tilt=0");
+      awaitFrames(cluster, 3);
+      main(() -> {
+        Presentation window = new Presentation(app, mainOutput.display.getDisplay());
+        MapView view = new MapView(window.getContext());
+        view.getMap().setLocationHelper(app.getLocationHelper());
+        window.setContentView(view);
+        window.show();
+        primary[0] = window;
+        primaryMap[0] = view;
+      });
+      awaitFrames(mainOutput, 3);
+      Thread.sleep(1000);
+      main(() -> primaryMap[0].getMap().onPause());
+      Thread.sleep(200);
+      long primaryFrames = mainOutput.frames.get(), clusterFrames = cluster.frames.get();
+      var before = nativeCpuTicks();
+      assertFalse("No native threads found for CPU measurement", before.isEmpty());
+      long start = SystemClock.elapsedRealtime();
+      for (int i = 0; i < 10; ++i)
+      {
+        command(app, "show_cluster", cluster, 15 + i % 2);
+        Thread.sleep(200);
+      }
+      long elapsed = SystemClock.elapsedRealtime() - start;
+      var after = nativeCpuTicks();
+      long ticksPerSecond = Os.sysconf(OsConstants._SC_CLK_TCK);
+      for (var entry : before.entrySet())
+      {
+        if (!after.containsKey(entry.getKey()))
+          continue;
+        long ticks = after.get(entry.getKey()) - entry.getValue();
+        assertTrue("Native thread spins while primary is paused: tid=" + entry.getKey() + ", ticks=" + ticks,
+                   ticks < elapsed * ticksPerSecond * 0.6 / 1000);
+      }
+      assertTrue("Paused primary kept presenting", mainOutput.frames.get() - primaryFrames <= 1);
+      assertTrue("Pausing primary stopped the cluster", cluster.frames.get() - clusterFrames > 3);
+      main(() -> primaryMap[0].getMap().onResume());
+      awaitFrames(mainOutput, primaryFrames + 2);
+      main(() -> primary[0].dismiss());
+      primary[0] = null;
+      command(app, "hide_cluster", cluster, 16);
+    }
+    finally
+    {
+      main(() -> {
+        if (primary[0] != null)
+        {
+          primaryMap[0].getMap().onResume();
+          primary[0].dismiss();
+        }
+      });
+    }
   }
 
   @Test

@@ -25,6 +25,60 @@ import org.junit.Test;
 public class MapSpeedViewTest
 {
   @Test
+  public void numbersKeepTheirSizeAndFitThreeDigits()
+  {
+    var instrumentation = InstrumentationRegistry.getInstrumentation();
+    instrumentation.runOnMainSync(() -> {
+      Context base = instrumentation.getTargetContext();
+      for (int night : new int[] {Configuration.UI_MODE_NIGHT_NO, Configuration.UI_MODE_NIGHT_YES})
+        for (float fontScale : new float[] {1, 1.5f})
+        {
+          Configuration config = new Configuration(base.getResources().getConfiguration());
+          config.uiMode = (config.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | night;
+          config.fontScale = fontScale;
+          Context context = new ContextThemeWrapper(base.createConfigurationContext(config), R.style.MwmTheme);
+          MapSpeedView row = new MapSpeedView(context, null);
+          row.measure(View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.AT_MOST),
+                      View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.AT_MOST));
+          row.layout(0, 0, row.getMeasuredWidth(), row.getMeasuredHeight());
+          SpeedLimitView speed = row.findViewById(R.id.map_speed_value);
+          SpeedLimitView limit = row.findViewById(R.id.map_speed_limit);
+          int previousHeight = 0;
+          for (int value : new int[] {0, 60, 120, 200})
+          {
+            speed.setSpeedLimit(value, false);
+            limit.setSpeedLimit(value == 0 ? 60 : value, false);
+            Bitmap circle = Bitmap.createBitmap(speed.getWidth(), speed.getHeight(), Bitmap.Config.ARGB_8888);
+            speed.draw(new Canvas(circle));
+            Rect text = new Rect();
+            int inset = speed.getWidth() / 8;
+            for (int y = inset; y < circle.getHeight() - inset; ++y)
+              for (int x = inset; x < circle.getWidth() - inset; ++x)
+              {
+                int pixel = circle.getPixel(x, y);
+                boolean ink = night == Configuration.UI_MODE_NIGHT_NO
+                                ? Color.red(pixel) < 80 && Color.green(pixel) < 80 && Color.blue(pixel) < 80
+                                : Color.red(pixel) > 200 && Color.green(pixel) > 200 && Color.blue(pixel) > 200;
+                if (Color.alpha(pixel) > 200 && ink)
+                  text.union(x, y, x + 1, y + 1);
+              }
+            assertFalse("Missing speed digits", text.isEmpty());
+            assertTrue("Digits are too tall", text.height() <= circle.getHeight() * 0.4f);
+            assertTrue("Three digits must leave space before the rim", text.width() <= circle.getWidth() * 0.7f);
+            if (previousHeight != 0)
+              assertTrue("Font size changes with the number of digits", Math.abs(text.height() - previousHeight) <= 2);
+            previousHeight = text.height();
+            circle.recycle();
+            Bitmap bitmap = Bitmap.createBitmap(row.getWidth(), row.getHeight(), Bitmap.Config.ARGB_8888);
+            row.draw(new Canvas(bitmap));
+            save(context, bitmap, "speed-digits-" + night + "-" + fontScale + "-" + value + ".png");
+            bitmap.recycle();
+          }
+        }
+    });
+  }
+
+  @Test
   public void rightEdgeMatchesZoomOnCompactAndWideScreens()
   {
     InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {

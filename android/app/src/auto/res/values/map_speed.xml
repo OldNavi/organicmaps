@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <dimen name="map_speed_circle_size">72dp</dimen>
+  <color name="map_current_speed_border">#D8DADD</color>
+  <color name="map_speed_limit_border">#E6533F</color>
+  <style name="MwmWidget.SpeedLimit.MapInstrument" parent="MwmWidget.SpeedLimit">
+    <item name="android:textSize">32sp</item>
+    <item name="android:textStyle">normal</item>
+    <item name="speedLimitUnknownStrokeWidth">3dp</item>
+  </style>
+  <style name="MwmWidget.SpeedLimit.MapInstrument.CurrentSpeed">
+    <item name="speedLimitBackgroundColor">?cardBackground</item>
+    <item name="speedLimitTextColor">?android:attr/textColorPrimary</item>
+    <item name="speedLimitBorderWidth">1dp</item>
+    <item name="speedLimitBorderColor">@color/map_current_speed_border</item>
+  </style>
+  <style name="MwmWidget.SpeedLimit.MapInstrument.Limit">
+    <item name="speedLimitBackgroundColor">@android:color/white</item>
+    <item name="speedLimitTextColor">@android:color/black</item>
+    <item name="speedLimitBorderWidth">5dp</item>
+    <item name="speedLimitBorderColor">@color/map_speed_limit_border</item>
+  </style>
 </resources>

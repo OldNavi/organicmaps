@@ -21,6 +21,7 @@ for GPS or speed-limit data.
 | Path | Contents |
 | --- | --- |
 | `/api_version` | Protocol version (`version=1`) |
+| `/speed` | Display speed (MCU, kinematic sensor, then GNSS), validity, source and age. |
 | `/guidance` | Guidance state, remaining/total distance, remaining time, speed limit, current road |
 | `/maneuver` | Maneuver action, next road, distance and roundabout exit number |
 | `/lanes` | Direction lists and the recommended direction for each lane |
@@ -73,6 +74,62 @@ branch ambiguity and a camera behind a reverse-moving vehicle. A device integrat
 on the downloaded Moscow map reported 30 km/h on Bolshoy Gnezdnikovsky Lane with no route
 and confirmed that the provider clears the limit after GPS expiry. No system mock provider
 or vehicle-control commands are involved in that test.
+
+## Automotive vehicle speed
+
+Sensor sources are configured in `android/sdk/src/main/res/xml/vehicle_sensors.xml`.
+See [vehicle sensor profiles](VEHICLE_SENSORS.md) for the hierarchy, car detection, source fields,
+privileged signature requirements and motion-sensor processing. The old independent
+`can_speed_*` bool/integer/dimen resources are no longer used.
+
+The car/default speed source remains VHAL `PERF_VEHICLE_SPEED` (291504647), global area 0,
+in meters/second. Phone/default disables the extra speed source and keeps GNSS speed.
+Numeric scalars and arrays are supported; `value_index` selects an array element.
+`multiplier` is a dimensionless XML number, independent of display density.
+
+The reference Yandex Auto 2.3.3.5921.0 uses the former `can_speed_*` resource names. In the inspected APK,
+`Sa/j` polls once per second, tries `Float[]` first and then a scalar Float, and multiplies the
+result. Its bundled property is vendor ID 560010980 (`0x216116E4`), not the standard speed ID.
+`B5/g` selects the CAN speed provider when available and the MapKit speed provider otherwise.
+This is evidence of speed-source selection, not proof of Yandex's coordinate prediction algorithm.
+
+OM makes an initial generic `getProperty(propertyId, 0)` read and registers a callback, requesting
+10 Hz for continuous properties within their advertised sample-rate range. Car connection and
+property calls run on a worker, with a nonblocking Car-service connection. Unavailable/error
+status clears the sample; timestamps use elapsed-realtime nanoseconds. Out-of-order, future,
+nonfinite, above 75 m/s in magnitude, or older-than-two-seconds samples cannot replace GNSS speed.
+An AVAILABLE property returning only zeros is initially untrusted. The first valid nonzero
+measurement arms it, after which zero is a valid stop; temporary invalid data does not erase
+that trust, but reconnecting Car Service resets it. Disconnect clears cached
+data and unregisters the callback. Signed speed is available from `VehicleSpeedSource`; Location
+receives its magnitude. Mock locations and route simulation retain their own speed.
+
+`CAR_SPEED` and `CAR_VENDOR_EXTENSION` are declared. Standard speed requests `CAR_SPEED` once
+when the UI is opened, if necessary. A vendor property checks `CAR_VENDOR_EXTENSION`, which
+must be granted by the platform; it is not a runtime-dialog permission. Without permission or
+an available property, GNSS speed remains in use, including service-only starts.
+
+Vehicle speed is applied to each newly accepted GNSS fix for the existing location consumers.
+It also reaches the native extrapolator as an independent stream, retaining each measurement's
+monotonic timestamp. Position updates are predicted every 200 ms, integrating speed over time
+along the latest GNSS course, with or without an active route. Neither this stream nor its
+predictions are injected into Android's location provider or the raw GNSS track recorder.
+
+The horizon is two seconds from the GNSS measurement (including delivery delay and Android
+suspend time), and speed freshness is independently limited to two seconds. Unknown intervals
+are not filled retroactively. An invalidated speed freezes the last prediction until a fresh
+GNSS anchor; subsequent fixes can use ordinary GNSS extrapolation if vehicle speed is unavailable.
+A confirmed zero stops advancement. A change between forward and reverse waits for a new GNSS
+course, because GNSS bearing describes movement rather than the body's orientation. New GNSS
+fixes reset accumulated displacement and correct the rendered pose through the existing animation.
+Without a trusted VHAL sample, the existing route-based GNSS extrapolation remains in effect.
+
+`VehicleSpeedCacheTest` covers scalar/vector conversion, reverse/zero speed, freshness and
+property-group permissions and the zero-value trust trigger. `vehicle_motion_tests` covers
+integration, acceleration/stopping, stale/invalid data, delayed samples, reverse and GNSS resets.
+`VehicleSpeedIntegrationTest` checks the packaged XML profile and can read the configured property on a head unit
+with `-e carSensors true`; a trusted nonzero value must be observed during this opt-in test.
+It never writes VHAL properties.
 
 ## Map connections
 

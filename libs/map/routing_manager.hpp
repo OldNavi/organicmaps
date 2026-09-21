@@ -253,7 +253,8 @@ public:
   void OnNeedMoreMaps(uint64_t routeId, storage::CountriesSet const & absentCountries);
   void OnRemoveRoute(routing::RouterResultCode code);
   void OnRoutePointPassed(RouteMarkType type, size_t intermediateIndex);
-  void OnLocationUpdate(location::GpsInfo const & info);
+  void OnLocationUpdate(location::GpsInfo const & info, double ageSeconds = 0.0);
+  void OnVehicleSpeed(double speedMps, double ageSeconds, bool valid);
 
   routing::SpeedCameraManager & GetSpeedCamManager() { return m_routingSession.GetSpeedCamManager(); }
   bool IsSpeedCamLimitExceeded() const;

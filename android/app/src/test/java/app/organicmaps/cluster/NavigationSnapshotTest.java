@@ -1,9 +1,12 @@
 package app.organicmaps.cluster;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
+import app.organicmaps.sdk.cluster.RoadInfo;
 import app.organicmaps.sdk.routing.CarDirection;
 import app.organicmaps.sdk.routing.LaneWay;
+import app.organicmaps.sdk.routing.RoutingInfo;
 import app.organicmaps.sdk.util.Distance;
 import java.util.Set;
 import org.junit.Test;
@@ -11,10 +14,33 @@ import org.junit.Test;
 public class NavigationSnapshotTest
 {
   @Test
+  public void mapSpeedLimitExpiresAndNeverFallsBackToAnOldRoadWhileNavigating() throws Exception
+  {
+    long time = 10_000_000_000L;
+    RoadInfo road = new RoadInfo(true, 15, "Road", new double[0]);
+    NavigationSnapshot snapshot = new NavigationSnapshot(null, road.camera, new double[3], road, time);
+    assertEquals(15, snapshot.currentSpeedLimitMps(time), 0.0);
+    assertEquals(0, snapshot.currentSpeedLimitMps(time + 5_001_000_000L), 0.0);
+    assertEquals(0, snapshot.currentSpeedLimitMps(time - 1), 0.0);
+    assertEquals(0, NavigationSnapshot.EMPTY.currentSpeedLimitMps(time), 0.0);
+    RoutingInfo route = mock(RoutingInfo.class);
+    var limitField = RoutingInfo.class.getField("speedLimitMps");
+    limitField.setAccessible(true);
+    limitField.setDouble(route, 25);
+    snapshot = new NavigationSnapshot(route, road.camera, new double[3], road, time);
+    assertEquals(25, snapshot.currentSpeedLimitMps(time), 0.0);
+    limitField.setDouble(route, -1);
+    assertEquals(0, snapshot.currentSpeedLimitMps(time), 0.0);
+    RoadInfo unmatched = new RoadInfo(false, 15, "", new double[0]);
+    assertEquals(
+        0, new NavigationSnapshot(null, unmatched.camera, new double[3], unmatched, time).currentSpeedLimitMps(time),
+        0.0);
+  }
+
+  @Test
   public void ordinaryDrivingKeepsRouteEmptyAndTracksOriginalFixAge()
   {
-    var road =
-        new app.organicmaps.sdk.cluster.RoadInfo(true, 50.0 / 3.6, "Road", new double[] {100, 40.0 / 3.6, 55, 37, 1});
+    var road = new RoadInfo(true, 50.0 / 3.6, "Road", new double[] {100, 40.0 / 3.6, 55, 37, 1});
     var snapshot = new NavigationSnapshot(null, road.camera, new double[3], road, 10_000_000_000L);
     assertNull(snapshot.info);
     assertEquals(50.0 / 3.6, snapshot.roadInfo.speedLimitMps, 0.001);

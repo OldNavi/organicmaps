@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <declare-styleable name="SpeedLimitView">
+    <attr name="android:textSize" />
+    <attr name="android:textStyle" />
     <attr name="speedLimitBackgroundColor" format="color" />
     <attr name="speedLimitBorderColor" format="color" />
     <attr name="speedLimitAlertColor" format="color" />

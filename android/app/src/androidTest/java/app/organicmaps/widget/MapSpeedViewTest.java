@@ -45,7 +45,7 @@ public class MapSpeedViewTest
             TextView number = speed.findViewById(R.id.map_speed_value);
             number.setText("120");
             SpeedLimitView limit = speed.findViewById(R.id.map_speed_limit);
-            limit.setVisibility(View.VISIBLE);
+            assertEquals(View.VISIBLE, limit.getVisibility());
             limit.setSpeedLimit(100, false);
             float density = context.getResources().getDisplayMetrics().density;
             int width = (int) (config.screenWidthDp * density);
@@ -55,6 +55,9 @@ public class MapSpeedViewTest
             root.layout(0, 0, width, height);
             assertTrue(speed.getLeft() >= 0 && speed.getRight() <= width);
             assertEquals(limit.getWidth(), limit.getHeight());
+            View currentCircle = speed.findViewById(R.id.map_speed_current_circle);
+            assertEquals(Math.round(8 * density), currentCircle.getRight() - limit.getLeft());
+            assertTrue(limit.getZ() > currentCircle.getZ());
             assertTrue(number.getCurrentTextColor() != Color.TRANSPARENT);
             if (layout == R.layout.layout_nav_top)
               assertTrue("Speed row overlaps turn panel: " + speed.getLeft() + " < "
@@ -73,6 +76,14 @@ public class MapSpeedViewTest
             int alert = bitmap.getPixel(limit.getLeft() + limit.getWidth() / 2, limit.getHeight() / 5);
             assertTrue(Color.red(alert) > Color.green(alert) * 2);
             save(context, bitmap, "speed-alert-" + night + "-" + orientation + "-" + layout + ".png");
+            limit.setSpeedLimit(0, true);
+            assertFalse(limit.isAlert());
+            speed.draw(new Canvas(bitmap));
+            int unknown = bitmap.getPixel(limit.getLeft() + limit.getWidth() / 2, limit.getHeight() / 2);
+            assertTrue("Unknown limit must draw a dark dash",
+                       Color.red(unknown) < 80 && Color.green(unknown) < 80 && Color.blue(unknown) < 80);
+            assertEquals(View.VISIBLE, limit.getVisibility());
+            save(context, bitmap, "speed-unknown-" + night + "-" + orientation + "-" + layout + ".png");
             bitmap.recycle();
           }
         }

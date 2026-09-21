@@ -250,7 +250,9 @@ public class RoutingController
     mBuildState = newState;
 
     final MapObject startPoint = getStartPoint();
-    if (mBuildState == BuildState.BUILT && (startPoint == null || !startPoint.isMyPosition()))
+    // Rebuilds can no longer have the original my-position start mark. Keep native following
+    // consistent with the navigation UI instead of reopening alternative-route selection.
+    if (!isNavigating() && mBuildState == BuildState.BUILT && (startPoint == null || !startPoint.isMyPosition()))
       Framework.nativeDisableFollowing();
 
     if (mContainer != null)

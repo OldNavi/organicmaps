@@ -1,8 +1,12 @@
 package app.organicmaps.sdk.routing;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 
+import app.organicmaps.sdk.bookmarks.data.MapObject;
 import app.organicmaps.sdk.util.log.Logger;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -12,6 +16,25 @@ import org.mockito.MockedStatic;
 
 public class RoutingControllerNavigationStateTest
 {
+  @Test
+  public void rebuildWithoutOriginalStartDoesNotDisableNavigation() throws ReflectiveOperationException
+  {
+    RoutingController controller = spy(new RoutingController());
+    try (MockedStatic<Logger> ignored = mockStatic(Logger.class))
+    {
+      doReturn(null).when(controller).getStartPoint();
+      setState(controller, "NAVIGATION");
+      Method setBuildState =
+          RoutingController.class.getDeclaredMethod("setBuildState", RoutingController.BuildState.class);
+      setBuildState.setAccessible(true);
+      // Calling nativeDisableFollowing here would also fail on the JVM: it has no JNI library.
+      setBuildState.invoke(controller, RoutingController.BuildState.BUILT);
+      doReturn(mock(MapObject.class)).when(controller).getStartPoint();
+      setBuildState.invoke(controller, RoutingController.BuildState.BUILT);
+      assertEquals(true, controller.isNavigating());
+    }
+  }
+
   @Test
   public void listenerReceivesOnlyNavigationBoundaryTransitions() throws ReflectiveOperationException
   {

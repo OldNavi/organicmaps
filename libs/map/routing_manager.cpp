@@ -952,6 +952,15 @@ void RoutingManager::FollowRoute()
   CancelRecommendation(Recommendation::RebuildAfterPointsLoading);
 }
 
+void RoutingManager::SelectFastestRoute()
+{
+  if (!m_routingSession.IsRouteValid())
+    return;
+  size_t fastest = 0;
+  m_routingSession.RouteCall([&fastest](RoutesResult const & result) { fastest = result.GetFastestRouteIndex(); });
+  SwapActiveAlternative(fastest);
+}
+
 bool RoutingManager::SwapActiveAlternative(size_t idx)
 {
   if (!m_routingSession.SwapActiveAlternative(idx))

@@ -748,6 +748,10 @@ void RoutingManager::CreateRouteAltMarks(routing::RoutesResult const & result)
 
   GetPlatform().RunTask(Platform::Thread::Gui, [this, infos = std::move(infos)]()
   {
+    // Auto-start can enter follow mode in the build callback before this queued task runs.
+    // Do not recreate planning balloons after FollowRoute has already cleared them.
+    if (m_routingSession.IsFollowing())
+      return;
     // Place each balloon up or down based on the midpoint's latitude relative to the others:
     // the northern midpoint (larger mercator y) gets the up balloon, the southern one goes down.
     // +y in drape vertex-normal space is downward, so (0, -N) lifts the body above the pivot.
@@ -949,6 +953,15 @@ void RoutingManager::FollowRoute()
   ClearAlternativeRoutes();
 
   CancelRecommendation(Recommendation::RebuildAfterPointsLoading);
+}
+
+void RoutingManager::SelectFastestRoute()
+{
+  if (!m_routingSession.IsRouteValid())
+    return;
+  size_t fastest = 0;
+  m_routingSession.RouteCall([&fastest](RoutesResult const & result) { fastest = result.GetFastestRouteIndex(); });
+  SwapActiveAlternative(fastest);
 }
 
 bool RoutingManager::SwapActiveAlternative(size_t idx)

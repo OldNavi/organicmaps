@@ -9,6 +9,7 @@
 #include "drape_frontend/map_data_provider.hpp"
 #include "drape_frontend/overlay_batcher.hpp"
 #include "drape_frontend/requested_tiles.hpp"
+#include "drape_frontend/route_shape.hpp"
 #include "drape_frontend/traffic_generator.hpp"
 #include "drape_frontend/transit_scheme_builder.hpp"
 #include "drape_frontend/user_mark_generator.hpp"
@@ -18,7 +19,7 @@
 
 #include <functional>
 #include <memory>
-#include <unordered_set>
+#include <unordered_map>
 
 namespace dp
 {
@@ -130,7 +131,7 @@ private:
   drape_ptr<ReadManager> m_readManager;
   drape_ptr<RouteBuilder> m_routeBuilder;
   // Logical route lifetime survives graphics resource recreation.
-  std::unordered_set<dp::DrapeID> m_activeSubroutes;
+  std::unordered_map<dp::DrapeID, SubrouteConstPtr> m_activeSubroutes;
   drape_ptr<TransitSchemeBuilder> m_transitBuilder;
   drape_ptr<TrafficGenerator> m_trafficGenerator;
   drape_ptr<UserMarkGenerator> m_userMarkGenerator;

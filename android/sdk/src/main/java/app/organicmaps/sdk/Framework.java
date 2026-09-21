@@ -229,6 +229,7 @@ public class Framework
   public static native void nativeRemoveRoute();
 
   public static native void nativeFollowRoute();
+  public static native void nativeSelectFastestRoute();
 
   public static native void nativeDisableFollowing();
 

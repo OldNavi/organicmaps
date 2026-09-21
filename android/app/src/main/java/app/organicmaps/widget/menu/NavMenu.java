@@ -1,6 +1,7 @@
 package app.organicmaps.widget.menu;
 
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.util.Pair;
 import android.view.View;
 import android.widget.Button;
@@ -11,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
+import app.organicmaps.BuildConfig;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
 import app.organicmaps.sdk.routing.RoutingInfo;
@@ -233,11 +235,23 @@ public class NavMenu implements DefaultLifecycleObserver
 
   private void updateSpeedView(@NonNull RoutingInfo info)
   {
-    var speed = MwmApplication.from(mActivity).getLocationHelper().getDisplaySpeed();
-    Pair<String, String> speedAndUnits = StringUtils.nativeFormatSpeedAndUnits(speed == null ? 0.0 : speed.speedMps());
-    mSpeedValue.setText(speed == null ? "—" : speedAndUnits.first);
+    Double speedMps;
+    if ("auto".equals(BuildConfig.FLAVOR))
+    {
+      var speed = MwmApplication.from(mActivity).getLocationHelper().getDisplaySpeed();
+      speedMps = speed == null ? null : speed.speedMps();
+    }
+    else
+    {
+      Location last = MwmApplication.from(mActivity).getLocationHelper().getSavedLocation();
+      if (last == null)
+        return;
+      speedMps = (double) last.getSpeed();
+    }
+    Pair<String, String> speedAndUnits = StringUtils.nativeFormatSpeedAndUnits(speedMps == null ? 0.0 : speedMps);
+    mSpeedValue.setText(speedMps == null ? "—" : speedAndUnits.first);
 
-    if (speed != null && info.speedLimitMps > 0.0 && speed.speedMps() > info.speedLimitMps)
+    if (speedMps != null && info.speedLimitMps > 0.0 && speedMps > info.speedLimitMps)
     {
       if (info.isSpeedCamLimitExceeded())
         mSpeedValue.setTextColor(ContextCompat.getColor(mActivity, R.color.white_primary));

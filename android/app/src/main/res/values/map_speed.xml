@@ -4,4 +4,8 @@
   <!-- Leave room for the track-recording button at the right edge. -->
   <dimen name="map_speed_end_margin">80dp</dimen>
   <dimen name="compass_gps_gap">64dp</dimen>
+  <style name="MwmWidget.SpeedLimit.MapInstrument" parent="MwmWidget.SpeedLimit">
+    <item name="speedLimitBorderWidth">5dp</item>
+    <item name="speedLimitUnknownStrokeWidth">4dp</item>
+  </style>
 </resources>

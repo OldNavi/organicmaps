@@ -8,4 +8,13 @@
     <item name="speedLimitBorderWidth">4dp</item>
     <item name="speedLimitUnknownStrokeWidth">3dp</item>
   </style>
+  <style name="MwmWidget.SpeedLimit.MapInstrument.CurrentSpeed">
+    <item name="speedLimitBackgroundColor">?cardBackground</item>
+    <item name="speedLimitBorderColor">?android:attr/textColorHint</item>
+    <item name="speedLimitTextColor">?android:attr/textColorPrimary</item>
+  </style>
+  <style name="MwmWidget.SpeedLimit.MapInstrument.Limit">
+    <item name="speedLimitBackgroundColor">@android:color/white</item>
+    <item name="speedLimitTextColor">@android:color/black</item>
+  </style>
 </resources>

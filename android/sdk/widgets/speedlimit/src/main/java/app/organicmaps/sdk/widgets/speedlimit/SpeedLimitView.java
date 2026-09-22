@@ -66,6 +66,7 @@ public class SpeedLimitView extends View
   private boolean mAlert = false;
   private final boolean mShowUnknown;
   private final boolean mShowZero;
+  private final boolean mKeepBorderOnAlert;
   private final float mConfiguredBorderWidth;
   private final float mConfiguredUnknownStrokeWidth;
   private final float mConfiguredTextSize;
@@ -92,6 +93,7 @@ public class SpeedLimitView extends View
           data.getColor(R.styleable.SpeedLimitView_speedLimitTextAlertColor, DefaultValues.TEXT_ALERT_COLOR);
       mShowUnknown = data.getBoolean(R.styleable.SpeedLimitView_speedLimitShowUnknown, false);
       mShowZero = data.getBoolean(R.styleable.SpeedLimitView_speedLimitShowZero, false);
+      mKeepBorderOnAlert = data.getBoolean(R.styleable.SpeedLimitView_speedLimitKeepBorderOnAlert, false);
       mConfiguredBorderWidth = data.getDimension(R.styleable.SpeedLimitView_speedLimitBorderWidth, 0);
       mConfiguredUnknownStrokeWidth = data.getDimension(R.styleable.SpeedLimitView_speedLimitUnknownStrokeWidth, 0);
       mConfiguredTextSize = data.getDimension(R.styleable.SpeedLimitView_android_textSize, 0);
@@ -170,7 +172,7 @@ public class SpeedLimitView extends View
       mSignBackgroundPaint.setColor(mBackgroundColor);
 
     canvas.drawCircle(cx, cy, mBackgroundRadius, mSignBackgroundPaint);
-    if (!alert)
+    if (!alert || mKeepBorderOnAlert)
     {
       mSignBorderPaint.setStrokeWidth(mBorderWidth);
       canvas.drawCircle(cx, cy, mBorderRadius, mSignBorderPaint);

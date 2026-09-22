@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.MotionEvent;
@@ -45,7 +46,7 @@ public class LanesView extends View
   private final Paint mBackgroundPaint;
 
   @Nullable
-  private LanesDrawable mLanesDrawable;
+  private Drawable mLanesDrawable;
   @Nullable
   private Rect mViewBounds = null;
 
@@ -82,8 +83,15 @@ public class LanesView extends View
     if (lanes == null || lanes.length == 0)
       mLanesDrawable = null;
     else
-      mLanesDrawable = new LanesDrawable(getContext(), lanes, mActiveLaneTintColor, mInactiveLaneTintColor);
+      mLanesDrawable = createLanesDrawable(lanes, mActiveLaneTintColor, mInactiveLaneTintColor);
     update();
+  }
+
+  @NonNull
+  protected Drawable createLanesDrawable(@NonNull LaneInfo[] lanes, @ColorInt int activeColor,
+                                         @ColorInt int inactiveColor)
+  {
+    return new LanesDrawable(getContext(), lanes, activeColor, inactiveColor);
   }
 
   @Override

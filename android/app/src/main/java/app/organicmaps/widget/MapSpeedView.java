@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewTreeLifecycleOwner;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
 import app.organicmaps.cluster.NavigationProvider;
+import app.organicmaps.routing.SpeedWarningController;
 import app.organicmaps.sdk.util.StringUtils;
 import app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView;
 
@@ -51,7 +52,7 @@ public final class MapSpeedView extends LinearLayout implements DefaultLifecycle
     Double speed = reading == null ? null : reading.speedMps();
     double limit = NavigationProvider.getCurrentSpeedLimitMps();
     Pair<String, String> formatted = StringUtils.nativeFormatSpeedAndUnits(speed != null ? speed : 0.0);
-    boolean exceeded = speed != null && limit > 0 && speed > limit;
+    boolean exceeded = speed != null && SpeedWarningController.isExceeded(getContext(), speed, limit);
     int displayedSpeed = speed == null ? -1 : StringUtils.nativeFormatSpeed(speed);
     if (mSpeed.getSpeedLimit() != displayedSpeed || mSpeed.isAlert() != exceeded)
     {
@@ -59,9 +60,9 @@ public final class MapSpeedView extends LinearLayout implements DefaultLifecycle
       mSpeed.setContentDescription(speed == null ? "--" : formatted.first + " " + formatted.second);
     }
     int formattedLimit = limit > 0 ? StringUtils.nativeFormatSpeed(limit) : 0;
-    if (mLimit.getSpeedLimit() != formattedLimit || mLimit.isAlert() != exceeded)
+    if (mLimit.getSpeedLimit() != formattedLimit || mLimit.isAlert())
     {
-      mLimit.setSpeedLimit(formattedLimit, exceeded);
+      mLimit.setSpeedLimit(formattedLimit, false);
       mLimit.setContentDescription(formattedLimit > 0 ? formattedLimit + " " + formatted.second : "--");
     }
     // Read only caches. This also expires stale data when GNSS/VHAL stops sending events.

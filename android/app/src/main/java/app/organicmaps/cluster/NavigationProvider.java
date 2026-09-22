@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import app.organicmaps.BuildConfig;
 import app.organicmaps.MwmApplication;
+import app.organicmaps.routing.SpeedWarningController;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.cluster.ClusterCamera;
 import app.organicmaps.sdk.cluster.ClusterFlag;
@@ -26,6 +27,7 @@ import app.organicmaps.sdk.cluster.RoadInfo;
 import app.organicmaps.sdk.location.LocationHelper;
 import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.routing.RoutingInfo;
+import app.organicmaps.settings.SpeedWarningSettings;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -41,6 +43,8 @@ public final class NavigationProvider extends ContentProvider
   @Nullable
   private static NavigationSnapshot sNotifiedSnapshot;
   private static boolean sInitialized;
+  @Nullable
+  private static SpeedWarningController sSpeedWarnings;
   private static long sPublishedAt;
   private static RoadInfo sRoadInfo = RoadInfo.EMPTY;
   private static long sRoadFixNanos;
@@ -62,6 +66,8 @@ public final class NavigationProvider extends ContentProvider
     if (sInitialized)
       return;
     sInitialized = true;
+    if (SpeedWarningSettings.isAvailable())
+      sSpeedWarnings = new SpeedWarningController(app);
     VoiceSavedPlaces.initialize(app);
     sRoadMonitor = new RoadInfoMonitor((info, fixNanos) -> {
       sRoadInfo = info;
@@ -71,6 +77,8 @@ public final class NavigationProvider extends ContentProvider
     sExpired = () -> publish(app, true);
     app.getLocationHelper().addListener(location -> onLocation(app, location));
     app.getLocationHelper().addDisplaySpeedListener(() -> {
+      if (sSpeedWarnings != null)
+        sSpeedWarnings.update();
       if (sSpeedNotificationPending)
         return;
       sSpeedNotificationPending = true;
@@ -116,6 +124,8 @@ public final class NavigationProvider extends ContentProvider
     for (String path : DATA_PATHS)
       if (previous == null || !current.hasSameData(path, previous))
         context.getContentResolver().notifyChange(Uri.withAppendedPath(CONTENT_URI, path), null);
+    if (sSpeedWarnings != null)
+      sSpeedWarnings.update();
   }
 
   @Override

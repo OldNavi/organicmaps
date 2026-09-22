@@ -8,6 +8,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -15,8 +16,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import androidx.test.platform.app.InstrumentationRegistry;
 import app.organicmaps.BuildConfig;
+import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
+import app.organicmaps.routing.SpeedWarningController;
 import app.organicmaps.sdk.widgets.speedlimit.SpeedLimitView;
+import app.organicmaps.settings.SpeedWarningSettings;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,6 +28,70 @@ import org.junit.Test;
 
 public class MapSpeedViewTest
 {
+  @Test
+  public void offsetWarningVisualExamples()
+  {
+    InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+      Context base = InstrumentationRegistry.getInstrumentation().getTargetContext();
+      var prefs = MwmApplication.prefs(base);
+      boolean hadOffset = prefs.contains(SpeedWarningSettings.OFFSET_KEY);
+      int oldOffset = prefs.getInt(SpeedWarningSettings.OFFSET_KEY, 0);
+      prefs.edit().putInt(SpeedWarningSettings.OFFSET_KEY, 16).apply();
+      try
+      {
+        for (int night : new int[] {Configuration.UI_MODE_NIGHT_NO, Configuration.UI_MODE_NIGHT_YES})
+        {
+          Configuration config = new Configuration(base.getResources().getConfiguration());
+          config.uiMode = (config.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | night;
+          Context context = new ContextThemeWrapper(base.createConfigurationContext(config), R.style.MwmTheme);
+          Bitmap bitmap = Bitmap.createBitmap(700, 260, Bitmap.Config.ARGB_8888);
+          Canvas canvas = new Canvas(bitmap);
+          canvas.drawColor(night == Configuration.UI_MODE_NIGHT_NO ? 0xffeceee8 : 0xff141a26);
+          Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
+          text.setColor(night == Configuration.UI_MODE_NIGHT_NO ? Color.BLACK : Color.WHITE);
+          text.setTextSize(24);
+          canvas.drawText("Лимит 60 км/ч · Оффсет +16 км/ч", 24, 35, text);
+          text.setTextSize(20);
+          for (int i = 0; i < 2; ++i)
+          {
+            int value = 76 + i;
+            boolean exceeded = SpeedWarningController.isExceeded(context, value / 3.6, 60 / 3.6);
+            assertEquals(i == 1, exceeded);
+            MapSpeedView row = new MapSpeedView(context, null);
+            row.measure(View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.AT_MOST),
+                        View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.AT_MOST));
+            row.layout(0, 0, row.getMeasuredWidth(), row.getMeasuredHeight());
+            SpeedLimitView speed = row.findViewById(R.id.map_speed_value);
+            SpeedLimitView limit = row.findViewById(R.id.map_speed_limit);
+            speed.setSpeedLimit(value, exceeded);
+            limit.setSpeedLimit(60, false);
+            assertEquals(exceeded, speed.isAlert());
+            assertFalse(limit.isAlert());
+            int x = 24 + i * 350;
+            canvas.drawText(value + " км/ч — " + (exceeded ? "предупреждение" : "без подсветки"), x, 78, text);
+            int saved = canvas.save();
+            canvas.translate(x, 100);
+            float scale = 240f / row.getWidth();
+            canvas.scale(scale, scale);
+            row.draw(canvas);
+            canvas.restoreToCount(saved);
+          }
+          save(context, bitmap, "speed-offset-preview-" + night + ".png");
+          bitmap.recycle();
+        }
+      }
+      finally
+      {
+        var editor = prefs.edit();
+        if (hadOffset)
+          editor.putInt(SpeedWarningSettings.OFFSET_KEY, oldOffset);
+        else
+          editor.remove(SpeedWarningSettings.OFFSET_KEY);
+        editor.apply();
+      }
+    });
+  }
+
   @Test
   public void numbersKeepTheirSizeAndFitThreeDigits()
   {
@@ -159,10 +227,19 @@ public class MapSpeedViewTest
             boolean light = Color.red(background) + Color.green(background) + Color.blue(background) > 384;
             assertEquals(night == Configuration.UI_MODE_NIGHT_NO, light);
             assertEquals(Color.WHITE, bitmap.getPixel(limit.getLeft() + limit.getWidth() / 2, limit.getHeight() / 5));
-            limit.setSpeedLimit(100, true);
+            int border = context.getColor(R.color.map_current_speed_border);
+            number.setSpeedLimit(120, true);
+            bitmap.eraseColor(Color.TRANSPARENT);
             speed.draw(new Canvas(bitmap));
-            int alert = bitmap.getPixel(limit.getLeft() + limit.getWidth() / 2, limit.getHeight() / 5);
+            int alert = bitmap.getPixel(number.getWidth() / 2, number.getHeight() / 5);
             assertTrue(Color.red(alert) > Color.green(alert) * 2);
+            assertEquals("The speed-limit sign must stay white", Color.WHITE,
+                         bitmap.getPixel(limit.getLeft() + limit.getWidth() / 2, limit.getHeight() / 5));
+            int alertBorder = bitmap.getPixel(number.getWidth() / 2, 0);
+            // A one-pixel rim is antialiased over a different fill. Compare it to the configured rim,
+            // rather than requiring the same blended edge pixel before and after an alert.
+            assertTrue("Current-speed border must survive the alert: " + Integer.toHexString(alertBorder),
+                       colorDistance(alertBorder, border) < colorDistance(alert, border) / 2);
             save(context, bitmap, "speed-alert-" + night + "-" + orientation + "-" + layout + ".png");
             number.setSpeedLimit(-1, false);
             limit.setSpeedLimit(0, true);
@@ -191,6 +268,12 @@ public class MapSpeedViewTest
       }
     });
   }
+  private static int colorDistance(int a, int b)
+  {
+    return Math.abs(Color.red(a) - Color.red(b)) + Math.abs(Color.green(a) - Color.green(b))
+  + Math.abs(Color.blue(a) - Color.blue(b));
+  }
+
   private static void save(Context context, Bitmap bitmap, String name)
   {
     File directory = new File(context.getCacheDir(), "speed-view-tests");

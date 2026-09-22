@@ -36,6 +36,7 @@
 #include "indexer/validate_and_format_contacts.hpp"
 
 #include "routing/following_info.hpp"
+#include "routing/route.hpp"
 #include "routing/routing_options.hpp"
 #include "routing/speed_camera_manager.hpp"
 
@@ -1362,6 +1363,25 @@ JNIEXPORT void Java_app_organicmaps_sdk_Framework_nativeRemoveRoute(JNIEnv * env
 JNIEXPORT void Java_app_organicmaps_sdk_Framework_nativeFollowRoute(JNIEnv * env, jclass)
 {
   frm()->GetRoutingManager().FollowRoute();
+}
+
+JNIEXPORT jboolean Java_app_organicmaps_sdk_Framework_nativePreviewNextTurn(JNIEnv *, jclass)
+{
+  auto & session = frm()->GetRoutingManager().RoutingSession();
+  if (!session.IsFollowing() || !session.IsNavigable() || session.IsFinished() || !session.IsRouteValid() ||
+      frm()->GetDrapeEngine() == nullptr)
+    return false;
+
+  auto const * route = session.GetRoute();
+  routing::turns::TurnItem turn;
+  double distanceToTurnMeters = 0.0;
+  route->GetNearestTurn(distanceToTurnMeters, turn);
+  auto const & point = route->GetPoly().GetPoint(turn.m_index);
+  // Stop only the main camera, not route guidance or independent cluster cameras. This also
+  // resets the renderer's existing 20-second routing auto-return timer on every tap.
+  frm()->StopLocationFollow();
+  frm()->SetViewportCenter(point, 17 /* zoomLevel */, true /* isAnim */, true /* trackVisibleViewport */);
+  return true;
 }
 
 JNIEXPORT void Java_app_organicmaps_sdk_Framework_nativeSelectFastestRoute(JNIEnv * env, jclass)

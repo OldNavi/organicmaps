@@ -15,9 +15,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
+import app.organicmaps.BuildConfig;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
 import app.organicmaps.maplayer.MapButtonsViewModel;
+import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.Router;
 import app.organicmaps.sdk.maplayer.traffic.TrafficManager;
 import app.organicmaps.sdk.routing.RoutingController;
@@ -75,6 +77,17 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
     View turnFrame = mTopFrame.findViewById(R.id.nav_next_turn_frame);
     mNextTurnImage = turnFrame.findViewById(R.id.turn);
     mNextTurnDistance = turnFrame.findViewById(R.id.distance);
+    if ("auto".equals(BuildConfig.FLAVOR))
+    {
+      View.OnClickListener previewTurn = v ->
+      {
+        if (RoutingController.get().isNavigating())
+          Framework.nativePreviewNextTurn();
+      };
+      turnFrame.setOnClickListener(previewTurn);
+      mNextTurnImage.setOnClickListener(previewTurn);
+      mNextTurnImage.setContentDescription(activity.getString(R.string.auto_preview_next_turn));
+    }
 
     mNextNextTurnFrame = mTopFrame.findViewById(R.id.nav_next_next_turn_frame);
     mNextNextTurnImage = mNextNextTurnFrame.findViewById(R.id.turn);

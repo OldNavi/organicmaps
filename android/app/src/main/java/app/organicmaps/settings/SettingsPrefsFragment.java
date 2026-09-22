@@ -72,6 +72,7 @@ public class SettingsPrefsFragment extends BaseXmlSettingsFragment implements La
     initScreenSleepEnabledPrefsCallbacks();
     initShowOnLockScreenPrefsCallbacks();
     initNightNavigationPrefsCallbacks();
+    SpeedWarningSettings.addPreferences(this);
   }
 
   private void updateVoiceInstructionsPrefsSummary()

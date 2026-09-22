@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import androidx.annotation.NonNull;
 import app.organicmaps.sdk.util.log.Logger;
 import java.lang.reflect.Method;
@@ -30,6 +31,8 @@ public final class RoxVoice implements AutoCloseable
   private final Consumer<Boolean> mStateListener;
   private volatile boolean mClosed;
   private volatile boolean mReady;
+  private volatile boolean mSpeaking;
+  private volatile long mSpeechPendingUntil;
   private Object mManager;
   private Object mListener;
   private Object mTtsListener;
@@ -106,6 +109,11 @@ public final class RoxVoice implements AutoCloseable
         {
           // A rejected utterance (e.g. lost audio focus) does not disconnect the service.
           String status = String.valueOf(args[0]);
+          if ("VOICE_STATUS_TTS_PLAY_BEGINNING".equals(status))
+            mSpeaking = true;
+          else if ("VOICE_STATUS_TTS_PLAY_END".equals(status) || "VOICE_STATUS_TTS_PLAY_STOP".equals(status)
+                   || "VOICE_STATUS_TTS_PLAY_ERROR".equals(status))
+            mSpeaking = false;
           if ("VOICE_STATUS_TTS_PLAY_ERROR".equals(status))
             Logger.e("RoxVoice", "Stock navigation TTS playback failed");
           else
@@ -166,6 +174,11 @@ public final class RoxVoice implements AutoCloseable
     if (mClosed)
       return;
     mReady = ready;
+    if (!ready)
+    {
+      mSpeaking = false;
+      mSpeechPendingUntil = 0;
+    }
     mMain.post(() -> {
       if (!mClosed)
         mStateListener.accept(ready);
@@ -177,10 +190,17 @@ public final class RoxVoice implements AutoCloseable
     return mReady && !mClosed;
   }
 
+  public boolean isSpeaking()
+  {
+    return isReady() && (mSpeaking || SystemClock.elapsedRealtime() < mSpeechPendingUntil);
+  }
+
   public void speak(@NonNull String text)
   {
     if (!isReady() || text.isEmpty())
       return;
+    // Cover the asynchronous queue and the previous utterance's STOP callback before BEGINNING arrives.
+    mSpeechPendingUntil = SystemClock.elapsedRealtime() + 1500;
     sWorker.execute(() -> {
       if (!isReady())
         return;
@@ -207,6 +227,8 @@ public final class RoxVoice implements AutoCloseable
 
   public void stop()
   {
+    mSpeaking = false;
+    mSpeechPendingUntil = 0;
     if (mClosed)
       return;
     sWorker.execute(() -> {

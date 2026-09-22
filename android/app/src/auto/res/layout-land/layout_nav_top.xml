@@ -48,18 +48,18 @@
       android:elevation="@dimen/nav_elevation">
       <ImageView
           android:id="@+id/turn"
-          android:theme="?navigationTheme"
           android:layout_width="@dimen/nav_next_turn_sign"
           android:layout_height="@dimen/nav_next_turn_sign"
           android:layout_marginTop="@dimen/nav_next_turn_top"
           android:layout_marginBottom="@dimen/nav_next_turn_space"
           android:layout_gravity="center_horizontal"
-          app:tint="?iconTint"
+          android:tint="@color/auto_nav_foreground"
           tools:src="@drawable/ic_roundabout_exit_12"/>
 
       <TextView
         android:id="@+id/distance"
         style="@style/MwmWidget.TextView.NavNextTurn"
+        android:textColor="@color/auto_nav_foreground"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/nav_next_turn_bottom"
@@ -85,12 +85,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        app:tint="?iconTint"
+        android:tint="@color/auto_nav_foreground"
         tools:src="@drawable/ic_then_left_sharp"/>
     </FrameLayout>
   </RelativeLayout>
 
-  <app.organicmaps.sdk.widgets.lanes.LanesView
+  <app.organicmaps.widget.AutoLanesView
       android:id="@+id/lanes"
       android:layout_width="0dp"
       android:layout_height="68dp"
@@ -100,10 +100,10 @@
       app:layout_constraintStart_toEndOf="@id/nav_next_turn_container"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintTop_toBottomOf="@id/nav_speed_limit"
-      app:lanesActiveLaneTintColor="?navLaneArrowActiveColor"
-      app:lanesInactiveLaneTintColor="?navLaneArrowInactiveColor"
-      app:lanesBackgroundColor="?colorAccent"
-      app:lanesCornerRadius="@dimen/margin_quarter"
+      app:lanesActiveLaneTintColor="@color/auto_nav_foreground"
+      app:lanesInactiveLaneTintColor="@color/auto_nav_inactive"
+      app:lanesBackgroundColor="@color/auto_nav_background"
+      app:lanesCornerRadius="@dimen/auto_nav_corner_radius"
       app:lanesEditModeLanesCount="10"
       tools:visibility="visible" />
 

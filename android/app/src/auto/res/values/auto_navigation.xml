@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="auto_nav_background">#246BFD</color>
+  <color name="auto_nav_foreground">#FFFFFF</color>
+  <color name="auto_nav_inactive">#80FFFFFF</color>
+  <dimen name="auto_nav_corner_radius">12dp</dimen>
+</resources>

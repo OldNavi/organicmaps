@@ -45366,3 +45366,43 @@ tags = android-app
 en = Search along the route is not supported.
 ru = Поиск вдоль маршрута не поддерживается.
 uk = Пошук уздовж маршруту не підтримується.
+
+[auto_speed_warning_title]
+  tags = android-app
+  en = Speed limit warning
+  ru = Предупреждение о превышении скорости
+
+[auto_speed_warning_offset]
+  tags = android-app
+  en = Warn above the limit by +%d km/h
+  ru = Предупреждать при превышении на +%d км/ч
+
+[auto_speed_warning_mode_title]
+  tags = android-app
+  en = Speed warning sound
+  ru = Оповещение о превышении
+
+[auto_speed_warning_mode_voice]
+  tags = android-app
+  en = Voice warning
+  ru = Голосовое предупреждение
+
+[auto_speed_warning_mode_sound]
+  tags = android-app
+  en = Warning sound
+  ru = Предупреждающий звук
+
+[auto_speed_warning_mode_silent]
+  tags = android-app
+  en = No sound
+  ru = Без звука
+
+[auto_speed_warning_voice]
+  tags = android-app
+  en = Speed limit exceeded.
+  ru = Вы превысили ограничение скорости.
+
+[auto_preview_next_turn]
+  tags = android-app
+  en = Show the next maneuver on the map
+  ru = Показать ближайший манёвр на карте

@@ -18,6 +18,13 @@ from the navigation owner and location updates, at most four location-driven sna
 Stopping guidance clears navigation data immediately. These are snapshots, not a freshness guarantee
 for GPS or speed-limit data.
 
+Each URI is notified independently when its published data changes. Lane and direction-sign
+comparisons include distance and display units, as in Yandex Auto; unchanged artwork alone does not
+make the whole response equal. Clients can reuse lane drawables when only distance changes.
+Fresh GNSS observations still notify `/guidance` and an active `/speed_camera` so ISA and camera
+passage tracking retain measurement freshness. Display-speed updates continue to notify `/speed`
+and `/guidance` independently. Expiry and route cancellation notify consumers to clear old data.
+
 | Path | Contents |
 | --- | --- |
 | `/api_version` | Protocol version (`version=1`) |

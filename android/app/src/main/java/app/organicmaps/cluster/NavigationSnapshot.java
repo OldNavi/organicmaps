@@ -3,9 +3,13 @@ package app.organicmaps.cluster;
 import androidx.annotation.Nullable;
 import app.organicmaps.sdk.cluster.RoadInfo;
 import app.organicmaps.sdk.routing.CarDirection;
+import app.organicmaps.sdk.routing.LaneInfo;
 import app.organicmaps.sdk.routing.LaneWay;
 import app.organicmaps.sdk.routing.RoutingInfo;
+import app.organicmaps.sdk.routing.roadshield.RoadShield;
 import app.organicmaps.sdk.util.Distance;
+import java.util.Arrays;
+import java.util.Objects;
 
 final class NavigationSnapshot
 {
@@ -35,6 +39,112 @@ final class NavigationSnapshot
   long fixAgeMillis(long nowNanos)
   {
     return fixTimeNanos <= 0 || fixTimeNanos > nowNanos ? Long.MAX_VALUE : (nowNanos - fixTimeNanos) / 1_000_000;
+  }
+
+  NavigationSnapshot validAt(long nowNanos)
+  {
+    return fixAgeMillis(nowNanos) > RoadInfoMonitor.MAX_FIX_AGE_MS ? EMPTY : this;
+  }
+
+  /** Compare the fields exposed by each URI, without building cursors or serialized rows. */
+  boolean hasSameData(String path, NavigationSnapshot previous)
+  {
+    return switch (path)
+    {
+      case "guidance" -> sameGuidance(previous);
+      case "speed_camera" -> sameCamera(previous);
+      case "maneuver" ->
+        info == null || previous.info == null
+            ? info == previous.info
+            : sameTurnDistance(previous) && action(info.carDirection).equals(action(previous.info.carDirection))
+                  && Objects.equals(info.nextStreet, previous.info.nextStreet) && info.exitNum == previous.info.exitNum;
+      case "lanes" -> sameLanes(previous);
+      case "direction_signs" -> sameSigns(previous);
+      case "routes" ->
+        info == null || previous.info == null ? info == previous.info
+                                              : Math.round(metrics[1]) == Math.round(previous.metrics[1])
+                                                    && info.totalTimeInSeconds == previous.info.totalTimeInSeconds;
+      default -> throw new IllegalArgumentException("Unknown navigation data: " + path);
+    };
+  }
+
+  private boolean sameGuidance(NavigationSnapshot previous)
+  {
+    // A new fix renews validity even when the limit is unchanged. ISA consumes these updates too.
+    if (fixTimeNanos != previous.fixTimeNanos)
+      return false;
+    if (info == null || previous.info == null)
+      return info == previous.info && roadInfo.matched == previous.roadInfo.matched
+   && Double.compare(roadInfo.speedLimitMps, previous.roadInfo.speedLimitMps) == 0
+   && Objects.equals(roadInfo.road, previous.roadInfo.road);
+    return Double.compare(speedLimitMps(info.speedLimitMps), speedLimitMps(previous.info.speedLimitMps)) == 0
+ && Math.round(metrics[0]) == Math.round(previous.metrics[0])
+ && Math.round(metrics[1]) == Math.round(previous.metrics[1])
+ && sameDisplayDistance(info.distToTarget, previous.info.distToTarget)
+ && info.totalTimeInSeconds == previous.info.totalTimeInSeconds
+ && Objects.equals(info.currentStreet, previous.info.currentStreet);
+  }
+
+  private boolean sameCamera(NavigationSnapshot previous)
+  {
+    if (camera.length != 5 || previous.camera.length != 5)
+      return camera.length != 5 && previous.camera.length != 5;
+    // Camera passage tracking needs fresh observations even while the vehicle is stationary.
+    return fixTimeNanos == previous.fixTimeNanos && Arrays.equals(camera, previous.camera);
+  }
+
+  private boolean sameTurnDistance(NavigationSnapshot previous)
+  {
+    return Math.round(metrics[2]) == Math.round(previous.metrics[2])
+ && sameDisplayDistance(info.distToTurn, previous.info.distToTurn);
+  }
+
+  private static boolean sameDisplayDistance(Distance a, Distance b)
+  {
+    return a.mUnits == b.mUnits && Objects.equals(a.mDistanceStr, b.mDistanceStr);
+  }
+
+  private boolean sameLanes(NavigationSnapshot previous)
+  {
+    LaneInfo[] lanes = info == null ? null : info.lanes;
+    LaneInfo[] oldLanes = previous.info == null ? null : previous.info.lanes;
+    int count = lanes == null ? 0 : lanes.length;
+    if (count != (oldLanes == null ? 0 : oldLanes.length))
+      return false;
+    if (count == 0)
+      return true;
+    // Distance is part of the public lanes contract, even when its artwork stays the same.
+    if (!sameTurnDistance(previous))
+      return false;
+    for (int i = 0; i < count; ++i)
+      if (lanes[i].mActiveLaneWay != oldLanes[i].mActiveLaneWay
+          || !Arrays.equals(lanes[i].mLaneWays, oldLanes[i].mLaneWays))
+        return false;
+    return true;
+  }
+
+  private RoadShield[] roadShields()
+  {
+    return info != null && info.nextStreetRoadShields != null && info.nextStreetRoadShields.hasTargetRoadShields()
+      ? info.nextStreetRoadShields.targetRoadShields
+      : null;
+  }
+
+  private boolean sameSigns(NavigationSnapshot previous)
+  {
+    RoadShield[] shields = roadShields();
+    RoadShield[] oldShields = previous.roadShields();
+    int count = shields == null ? 0 : shields.length;
+    if (count != (oldShields == null ? 0 : oldShields.length))
+      return false;
+    if (count == 0)
+      return true;
+    if (!sameTurnDistance(previous) || !action(info.carDirection).equals(action(previous.info.carDirection)))
+      return false;
+    for (int i = 0; i < count; ++i)
+      if (!Objects.equals(shields[i].text, oldShields[i].text))
+        return false;
+    return true;
   }
 
   static double speedLimitMps(double limitMps)

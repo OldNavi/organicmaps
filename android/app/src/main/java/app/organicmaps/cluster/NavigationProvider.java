@@ -38,6 +38,8 @@ public final class NavigationProvider extends ContentProvider
   private static final String[] DATA_PATHS = {"guidance",     "maneuver",        "lanes",
                                               "speed_camera", "direction_signs", "routes"};
   private static volatile NavigationSnapshot sSnapshot = NavigationSnapshot.EMPTY;
+  @Nullable
+  private static NavigationSnapshot sNotifiedSnapshot;
   private static boolean sInitialized;
   private static long sPublishedAt;
   private static RoadInfo sRoadInfo = RoadInfo.EMPTY;
@@ -106,8 +108,14 @@ public final class NavigationProvider extends ContentProvider
     sSnapshot = new NavigationSnapshot(info, navigating ? ClusterMap.nativeGetCameraAhead() : sRoadInfo.camera,
                                        navigating ? ClusterMap.nativeGetRouteMetrics() : new double[3],
                                        navigating ? RoadInfo.EMPTY : sRoadInfo, navigating ? sFixNanos : sRoadFixNanos);
+    // Compare with the last published effective state, not an old snapshot re-evaluated at the new time:
+    // expiry must notify consumers once so they clear previously visible instructions.
+    NavigationSnapshot current = sSnapshot.validAt(SystemClock.elapsedRealtimeNanos());
+    NavigationSnapshot previous = sNotifiedSnapshot;
+    sNotifiedSnapshot = current;
     for (String path : DATA_PATHS)
-      context.getContentResolver().notifyChange(Uri.withAppendedPath(CONTENT_URI, path), null);
+      if (previous == null || !current.hasSameData(path, previous))
+        context.getContentResolver().notifyChange(Uri.withAppendedPath(CONTENT_URI, path), null);
   }
 
   @Override

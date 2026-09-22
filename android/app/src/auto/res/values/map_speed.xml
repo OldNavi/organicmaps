@@ -13,6 +13,7 @@
     <item name="speedLimitTextColor">?android:attr/textColorPrimary</item>
     <item name="speedLimitBorderWidth">1dp</item>
     <item name="speedLimitBorderColor">@color/map_current_speed_border</item>
+    <item name="speedLimitKeepBorderOnAlert">true</item>
   </style>
   <style name="MwmWidget.SpeedLimit.MapInstrument.Limit">
     <item name="speedLimitBackgroundColor">@android:color/white</item>

@@ -138,6 +138,30 @@ integration, acceleration/stopping, stale/invalid data, delayed samples, reverse
 with `-e carSensors true`; a trusted nonzero value must be observed during this opt-in test.
 It never writes VHAL properties.
 
+## Automotive navigation UI and speed warnings
+
+The `auto` application uses automotive maneuver vectors and compound lane arrows: all permitted
+branches are visible and the recommended branch is drawn last in the active color. Roundabout
+icons retain exit numbers 1–12. The other flavors use their original lane renderer and resources.
+Tapping the current maneuver in the main `auto` Activity centers its camera on that turn at zoom 17.
+Guidance and cluster cameras continue normally. The existing routing camera timer resumes following
+after 20 seconds without interaction; another tap or map gesture restarts the timer.
+
+General settings in `auto` include a speed-warning offset of 0–40 km/h (default 0), and a choice of
+voice, signal, or silent operation. The offset applies to both the main-map instruments and the
+application's speeding alert, with and without a route. Muting this alert does not disable its
+visual indication. Voice mode respects the navigation TTS enable setting and the selected engine,
+including ROX navigation TTS. Signal mode uses the Yandex Auto `sounds/default/Danger/0.mp3` resource
+(0.552 seconds), packaged only in `auto`, with navigation audio usage and transient ducking focus.
+The prepared player is reused; completion releases audio focus.
+
+One application controller consumes cached display speed and matched-road limits, independently
+of how many map views exist. Missing or expired measurements suppress alerts. Audio requires a
+continuous one-second exceedance, then rearms after three seconds at least 2 km/h below the threshold;
+separate alerts are at least 30 seconds apart. These debounce timings are OM choices. Yandex Auto
+2.3.3 was used to verify the shared tolerance/status approach and its `SPEED_LIMIT_EXCEEDED` → `Danger`
+audio mapping, not to infer its native debounce algorithm or regional fine rules.
+
 ## Map connections
 
 Create an Android display accessible to Organic Maps (for a different UID, normally a public

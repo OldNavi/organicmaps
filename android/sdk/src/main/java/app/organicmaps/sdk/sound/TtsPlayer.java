@@ -346,6 +346,27 @@ public enum TtsPlayer
       stop();
   }
 
+  public boolean isSpeaking()
+  {
+    return mRoxVoice != null ? mRoxVoice.isSpeaking() : mTts != null && (mTtsQueueSize.get() > 0 || mTts.isSpeaking());
+  }
+
+  /** Low-priority alerts must not interrupt a maneuver instruction. Retry only while the alert is current. */
+  public boolean speakWarning(@NonNull String text)
+  {
+    if (!isReady() || !Config.TTS.isEnabled() || isSpeaking())
+      return false;
+    if (mRoxVoice != null)
+    {
+      mRoxVoice.speak(text);
+      return true;
+    }
+    if (speakFirstString(text))
+      return true;
+    stop();
+    return false;
+  }
+
   public void playTurnNotifications(@NonNull String[] turnNotifications)
   {
     if (!isReady())

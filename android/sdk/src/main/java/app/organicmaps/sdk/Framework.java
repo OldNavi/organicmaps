@@ -229,6 +229,8 @@ public class Framework
   public static native void nativeRemoveRoute();
 
   public static native void nativeFollowRoute();
+  /** Temporarily centers the main map on the next maneuver while keeping guidance active. */
+  public static native boolean nativePreviewNextTurn();
   public static native void nativeSelectFastestRoute();
 
   public static native void nativeDisableFollowing();

@@ -971,4 +971,12 @@
     <string name="voice_navigation_saved_place_missing">Метка не найдена или есть несколько меток с таким названием.</string>
     <!-- Do not silently turn an along-route search into an unrestricted search. -->
     <string name="voice_navigation_along_route_unavailable">Поиск вдоль маршрута не поддерживается.</string>
+    <string name="auto_speed_warning_title">Предупреждение о превышении скорости</string>
+    <string name="auto_speed_warning_offset">Предупреждать при превышении на +%d км/ч</string>
+    <string name="auto_speed_warning_mode_title">Оповещение о превышении</string>
+    <string name="auto_speed_warning_mode_voice">Голосовое предупреждение</string>
+    <string name="auto_speed_warning_mode_sound">Предупреждающий звук</string>
+    <string name="auto_speed_warning_mode_silent">Без звука</string>
+    <string name="auto_speed_warning_voice">Вы превысили ограничение скорости.</string>
+    <string name="auto_preview_next_turn">Показать ближайший манёвр на карте</string>
 </resources>

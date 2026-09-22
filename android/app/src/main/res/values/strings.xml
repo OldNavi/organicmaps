@@ -960,4 +960,12 @@
     <string name="voice_navigation_saved_place_missing">Saved place not found or its name is ambiguous.</string>
     <!-- Do not silently turn an along-route search into an unrestricted search. -->
     <string name="voice_navigation_along_route_unavailable">Search along the route is not supported.</string>
+    <string name="auto_speed_warning_title">Speed limit warning</string>
+    <string name="auto_speed_warning_offset">Warn above the limit by +%d km/h</string>
+    <string name="auto_speed_warning_mode_title">Speed warning sound</string>
+    <string name="auto_speed_warning_mode_voice">Voice warning</string>
+    <string name="auto_speed_warning_mode_sound">Warning sound</string>
+    <string name="auto_speed_warning_mode_silent">No sound</string>
+    <string name="auto_speed_warning_voice">Speed limit exceeded.</string>
+    <string name="auto_preview_next_turn">Show the next maneuver on the map</string>
 </resources>

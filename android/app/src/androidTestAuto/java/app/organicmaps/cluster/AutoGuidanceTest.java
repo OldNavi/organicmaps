@@ -261,6 +261,8 @@ public class AutoGuidanceTest
         }
         while (SystemClock.elapsedRealtime() < deadline);
         assertTrue("Navigation has no route line for " + targets[attempt] + ": " + routePixels, routePixels > 40);
+        if (attempt == 0)
+          verifyTurnPreview(awaitMap(), app);
       }
     }
     finally
@@ -268,9 +270,62 @@ public class AutoGuidanceTest
       placesField.set(null, savedPlaces);
       main(() -> {
         RoutingController.get().cancel();
+        assertFalse("A cancelled route has no maneuver to preview", Framework.nativePreviewNextTurn());
         Config.UiTheme.setUiThemePreference(previousTheme[0]);
         ThemeSwitcher.INSTANCE.synchronizeApplicationTheme();
       });
+    }
+  }
+
+  private static void verifyTurnPreview(MwmActivity activity, MwmApplication app) throws Exception
+  {
+    // Keep the deterministic route-test position, without replacing Android's GPS provider.
+    main(() -> app.getLocationHelper().stop());
+    try
+    {
+      View icon = activity.findViewById(R.id.nav_next_turn_frame).findViewById(R.id.turn);
+      main(() -> {
+        assertTrue(icon.performClick());
+        assertTrue(RoutingController.get().isNavigating());
+      });
+      int[] mode = {LocationState.FOLLOW_AND_ROTATE};
+      long deadline = SystemClock.elapsedRealtime() + 5000;
+      do
+      {
+        main(() -> mode[0] = LocationState.getMode());
+        if (mode[0] == LocationState.NOT_FOLLOW)
+          break;
+        Thread.sleep(100);
+      }
+      while (SystemClock.elapsedRealtime() < deadline);
+      assertEquals("Preview must leave camera follow mode", LocationState.NOT_FOLLOW, mode[0]);
+      Thread.sleep(3000);
+      main(() -> assertTrue(icon.performClick()));
+      long repeatedAt = SystemClock.elapsedRealtime();
+      Bitmap preview = snapshot(activity.findViewById(R.id.map));
+      try (FileOutputStream output = new FileOutputStream(new File(activity.getCacheDir(), "turn-preview.png")))
+      {
+        preview.compress(Bitmap.CompressFormat.PNG, 100, output);
+      }
+      preview.recycle();
+      do
+      {
+        main(() -> {
+          mode[0] = LocationState.getMode();
+          assertTrue("Preview must not stop route guidance", RoutingController.get().isNavigating());
+        });
+        if (SystemClock.elapsedRealtime() - repeatedAt < 19000)
+          assertEquals("A second tap must restart the auto-return timer", LocationState.NOT_FOLLOW, mode[0]);
+        if (mode[0] == LocationState.FOLLOW_AND_ROTATE)
+          break;
+        Thread.sleep(100);
+      }
+      while (SystemClock.elapsedRealtime() - repeatedAt < 26000);
+      assertEquals("Camera must resume route following automatically", LocationState.FOLLOW_AND_ROTATE, mode[0]);
+    }
+    finally
+    {
+      main(() -> app.getLocationHelper().start());
     }
   }
 }

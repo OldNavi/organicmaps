@@ -7,16 +7,19 @@ import android.text.InputType;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.SwitchPreferenceCompat;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
 import app.organicmaps.road.RoadDataManager;
+import app.organicmaps.road.RoadUpdateSettings;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -38,6 +41,8 @@ public final class RoadDataProviderFragment extends BaseXmlSettingsFragment
   private Preference mLogin;
   private Preference mLogout;
   private String mImportCountry;
+  private SwitchPreferenceCompat mAutoUpdate;
+  private EditTextPreference mUpdateDays;
   private final ActivityResultLauncher<String[]> mPicker =
       registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
         if (uri != null && mImportCountry != null)
@@ -70,6 +75,7 @@ public final class RoadDataProviderFragment extends BaseXmlSettingsFragment
       mImportCountry = mManager.selectedCountry();
       mPicker.launch(new String[] {"text/*", "application/octet-stream"});
     });
+    addUpdatePreferences();
     mImported = new PreferenceCategory(requireContext());
     mImported.setTitle(R.string.road_events_imported_countries);
     getPreferenceScreen().addPreference(mImported);
@@ -111,8 +117,13 @@ public final class RoadDataProviderFragment extends BaseXmlSettingsFragment
     mLogout.setEnabled(!state.busy());
     mImport.setEnabled(!state.busy() && !country.isEmpty());
     mDownload.setEnabled(!state.busy() && !country.isEmpty() && mManager.configured());
-    if (state.message() != 0)
-      mStatus.setSummary(state.message());
+    mStatus.setSummary(state.message() == 0 ? null : getString(state.message()));
+    var prefs = MwmApplication.prefs(requireContext());
+    mAutoUpdate.setChecked(RoadUpdateSettings.enabled(prefs, mManager.providerId()));
+    mAutoUpdate.setSummary(RoadUpdateSettings.needsLogin(prefs, mManager.providerId())
+                               ? R.string.road_events_auto_login_required
+                               : R.string.road_events_auto_summary);
+    mUpdateDays.setEnabled(mAutoUpdate.isChecked());
     if (mShownImports != state.imports())
     {
       mShownImports = state.imports();
@@ -140,6 +151,54 @@ public final class RoadDataProviderFragment extends BaseXmlSettingsFragment
   public static String countryName(String code)
   {
     return new Locale("", code).getDisplayCountry();
+  }
+
+  private void addUpdatePreferences()
+  {
+    Context context = requireContext();
+    var prefs = MwmApplication.prefs(context);
+    String provider = mManager.providerId();
+    mAutoUpdate = new SwitchPreferenceCompat(context);
+    mAutoUpdate.setKey(RoadUpdateSettings.enabledKey(provider));
+    mAutoUpdate.setPersistent(false);
+    mAutoUpdate.setTitle(R.string.road_events_auto_update);
+    mAutoUpdate.setChecked(RoadUpdateSettings.enabled(prefs, provider));
+    mAutoUpdate.setOnPreferenceChangeListener((preference, value) -> {
+      prefs.edit().putBoolean(RoadUpdateSettings.enabledKey(provider), (Boolean) value).apply();
+      mManager.updateSchedule();
+      return true;
+    });
+    getPreferenceScreen().addPreference(mAutoUpdate);
+
+    mUpdateDays = new EditTextPreference(context);
+    mUpdateDays.setKey(RoadUpdateSettings.intervalKey(provider));
+    mUpdateDays.setPersistent(false);
+    mUpdateDays.setTitle(R.string.road_events_update_interval);
+    int days = RoadUpdateSettings.days(prefs, provider);
+    mUpdateDays.setText(Integer.toString(days));
+    mUpdateDays.setSummary(getString(R.string.road_events_update_days, days));
+    mUpdateDays.setOnBindEditTextListener(edit -> {
+      edit.setInputType(InputType.TYPE_CLASS_NUMBER);
+      edit.selectAll();
+    });
+    mUpdateDays.setOnPreferenceChangeListener((preference, value) -> {
+      try
+      {
+        int interval = Integer.parseInt(((String) value).trim());
+        if (interval <= 0)
+          throw new NumberFormatException();
+        prefs.edit().putInt(RoadUpdateSettings.intervalKey(provider), interval).apply();
+        preference.setSummary(getString(R.string.road_events_update_days, interval));
+        mManager.updateSchedule();
+        return true;
+      }
+      catch (NumberFormatException e)
+      {
+        Toast.makeText(context, R.string.road_events_update_days_invalid, Toast.LENGTH_SHORT).show();
+        return false;
+      }
+    });
+    getPreferenceScreen().addPreference(mUpdateDays);
   }
 
   private void chooseCountry()

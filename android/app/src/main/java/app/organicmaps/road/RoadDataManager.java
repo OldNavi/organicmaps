@@ -26,9 +26,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -51,7 +54,7 @@ public final class RoadDataManager
   private final SharedPreferences.OnSharedPreferenceChangeListener mWarningSettingsListener;
   private boolean mAuthenticated;
   private String mAccountName = "";
-  private final RoadDataProvider mProvider = new OpenSpeedCamProvider();
+  private final RoadDataProvider mProvider;
   private final ExecutorService mWorker = Executors.newSingleThreadExecutor();
   private final ExecutorService mNetwork = Executors.newSingleThreadExecutor();
   private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -68,6 +71,10 @@ public final class RoadDataManager
   private boolean mMissing;
   private List<String> mCountries = List.of();
   private List<ImportedCountry> mImports = List.of();
+  private volatile boolean mInitialized;
+  private AutomaticUpdate mAutomaticUpdate;
+  private long mLastUpdateCheck;
+  private String mLastUpdateCountry = "";
 
   public record ImportedCountry(String country, long updatedAt, int count)
   {
@@ -80,9 +87,15 @@ public final class RoadDataManager
 
   private RoadDataManager(Context context)
   {
+    this(context, new OpenSpeedCamProvider(), new RoadEventDatabase(context));
+  }
+
+  RoadDataManager(Context context, RoadDataProvider provider, RoadEventDatabase database)
+  {
     mContext = context.getApplicationContext();
     mPrefs = MwmApplication.prefs(mContext);
-    mDatabase = new RoadEventDatabase(mContext);
+    mDatabase = database;
+    mProvider = provider;
     mCredentials = new RoadDataCredentials(mContext);
     mMinZooms = RoadEventDisplayConfig.load(mContext);
     RoadEventVisibility.migrate(mPrefs);
@@ -147,7 +160,11 @@ public final class RoadDataManager
 
   public void initialize()
   {
+    if (mInitialized)
+      return;
+    mInitialized = true;
     configure();
+    updateSchedule();
     mWorker.execute(this::refreshImports);
     readCredentials((login, password) -> {
       mAccountName = login;
@@ -178,6 +195,9 @@ public final class RoadDataManager
 
   public void configure()
   {
+    // A WorkManager job can import SQLite before any activity or native map has been initialized.
+    if (!mInitialized)
+      return;
     boolean wasEnabled = mEnabled;
     boolean warningsChanged = mWarningsEnabled != warnings();
     mEnabled = enabled();
@@ -203,7 +223,7 @@ public final class RoadDataManager
 
   public void onLocation(Location location)
   {
-    if (!mEnabled)
+    if (!mEnabled && !RoadUpdateSettings.enabled(mPrefs, providerId()))
       return;
     long age = SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos();
     if (age < 0 || age > 30_000_000_000L || !location.hasAccuracy() || location.getAccuracy() > 1000)
@@ -211,17 +231,19 @@ public final class RoadDataManager
     if (mLastCountryLocation != null && location.distanceTo(mLastCountryLocation) < 1000
         && location.getElapsedRealtimeNanos() - mLastCountryLocation.getElapsedRealtimeNanos() < 30_000_000_000L)
       return;
+    long observedAt = System.currentTimeMillis() - TimeUnit.NANOSECONDS.toMillis(age);
     mLastCountryLocation = new Location(location);
     double lat = location.getLatitude();
     double lon = location.getLongitude();
     mWorker.execute(() -> {
       try
       {
-        if (!mEnabled)
+        if (!mEnabled && !RoadUpdateSettings.enabled(mPrefs, providerId()))
           return;
-        Set<String> countries = countriesNear(lat, lon);
-        String current = countries.isEmpty() ? "" : countries.iterator().next();
-        if (!countries.equals(mLoadedCountries))
+        CountrySelection selection = countriesNear(lat, lon);
+        Set<String> countries = selection.nearby();
+        String current = selection.current();
+        if (mEnabled && !countries.equals(mLoadedCountries))
         {
           mDatabase.loadIndex(countries);
           mLoadedCountries = countries;
@@ -231,6 +253,7 @@ public final class RoadDataManager
         boolean missing = !current.isEmpty() && !mDatabase.hasCountry(mProvider.id(), current);
         mMain.post(() -> {
           mCurrentCountry = current;
+          rememberCurrentCountry(current, observedAt);
           mMissing = mEnabled && missing;
           emit();
         });
@@ -242,18 +265,23 @@ public final class RoadDataManager
     });
   }
 
-  private Set<String> countriesNear(double lat, double lon) throws IOException, JSONException
+  private record CountrySelection(String current, Set<String> nearby)
+  {
+  }
+
+  private CountrySelection countriesNear(double lat, double lon) throws IOException, JSONException
   {
     if (mCountryCodes == null)
       mCountryCodes = loadCountryCodes(mContext);
     Set<String> result = new LinkedHashSet<>();
-    for (String name : RoadEvents.nativeCountriesNear(lat, lon))
+    String[] regions = RoadEvents.nativeCountriesNear(lat, lon);
+    for (String name : regions)
     {
       String code = mCountryCodes.optString(name);
       if (!code.isEmpty())
         result.add(code);
     }
-    return result;
+    return new CountrySelection(regions.length == 0 ? "" : mCountryCodes.optString(regions[0]), result);
   }
 
   static JSONObject loadCountryCodes(Context context) throws IOException, JSONException
@@ -285,6 +313,8 @@ public final class RoadDataManager
           mAccountName = login;
           mCountries = List.copyOf(countries);
           mPrefs.edit().putBoolean(CONFIGURED + "." + mProvider.id(), true).apply();
+          mPrefs.edit().putBoolean(RoadUpdateSettings.authKey(providerId()), false).apply();
+          updateSchedule();
           finish(R.string.road_events_signed_in);
         });
       }
@@ -323,25 +353,52 @@ public final class RoadDataManager
         mAccountName = "";
         mCountries = List.of();
         mPrefs.edit().putBoolean(CONFIGURED + "." + mProvider.id(), false).apply();
+        updateSchedule();
         finish(R.string.not_signed_in);
       });
     });
   }
 
-  private void ensureAuthenticated() throws IOException
+  private void ensureAuthenticated(boolean loadCountries) throws IOException
   {
     if (mAuthenticated)
       return;
     var account = mCredentials.load(mProvider.id());
     if (account == null)
-      throw new IOException("Sign in to the source first");
+      throw new RoadDataProvider.AuthenticationException();
     mProvider.login(account.login(), account.password());
     mAuthenticated = true;
+    if (!loadCountries)
+      return;
     List<String> countries = mProvider.countries();
     mMain.post(() -> {
       mCountries = List.copyOf(countries);
       emit();
     });
+  }
+
+  private void downloadExport(String country, File file, boolean loadCountries, BooleanSupplier allowed)
+      throws IOException
+  {
+    if (!allowed.getAsBoolean())
+      throw new IOException("Update no longer current");
+    ensureAuthenticated(loadCountries);
+    if (!allowed.getAsBoolean())
+      throw new IOException("Update no longer current");
+    try
+    {
+      mProvider.download(country, file);
+    }
+    catch (RoadDataProvider.SessionExpiredException expired)
+    {
+      mAuthenticated = false;
+      if (!allowed.getAsBoolean())
+        throw new IOException("Update no longer current");
+      ensureAuthenticated(loadCountries);
+      if (!allowed.getAsBoolean())
+        throw new IOException("Update no longer current");
+      mProvider.download(country, file);
+    }
   }
 
   public void download(String country)
@@ -353,17 +410,7 @@ public final class RoadDataManager
       try
       {
         file = File.createTempFile("road-export-", ".txt", mContext.getCacheDir());
-        ensureAuthenticated();
-        try
-        {
-          mProvider.download(country, file);
-        }
-        catch (RoadDataProvider.SessionExpiredException expired)
-        {
-          mAuthenticated = false;
-          ensureAuthenticated();
-          mProvider.download(country, file);
-        }
+        downloadExport(country, file, true, () -> true);
         File downloaded = file;
         mWorker.execute(() -> {
           try (InputStream in = new FileInputStream(downloaded))
@@ -410,16 +457,21 @@ public final class RoadDataManager
   private void importStream(String country, InputStream input) throws IOException
   {
     mDatabase.importFile(mProvider, country, input);
+    publishImport(country, () -> finish(R.string.road_events_imported));
+  }
+
+  private void publishImport(String country, Runnable onComplete)
+  {
     refreshImports();
-    if (mEnabled && mLoadedCountries.isEmpty())
+    if (mInitialized && mEnabled && mLoadedCountries.isEmpty())
       mLoadedCountries = Set.of(country);
-    if (mLoadedCountries.contains(country))
+    if (mInitialized && mLoadedCountries.contains(country))
       mDatabase.loadIndex(mLoadedCountries);
     mMain.post(() -> {
       if (country.equals(mCurrentCountry))
         mMissing = false;
       refreshLayer();
-      finish(R.string.road_events_imported);
+      onComplete.run();
     });
   }
 
@@ -434,8 +486,181 @@ public final class RoadDataManager
 
   private void refreshLayer()
   {
+    if (!mInitialized)
+      return;
     RoadEvents.nativeConfigure(enabled(), warnings(), visibleKinds(), mMinZooms);
     NavigationProvider.invalidateRoadData();
+  }
+
+  public void updateSchedule()
+  {
+    RoadUpdateScheduler.sync(mContext, providerId(), configured());
+    mLastCountryLocation = null;
+    if (mInitialized)
+    {
+      Location location = MwmApplication.from(mContext).getLocationHelper().getSavedLocation();
+      if (location != null)
+        onLocation(location);
+    }
+    emit();
+  }
+
+  private void rememberCurrentCountry(String country, long observedAt)
+  {
+    mPrefs.edit()
+        .putString(RoadUpdateSettings.CURRENT_COUNTRY, country)
+        .putLong(RoadUpdateSettings.COUNTRY_OBSERVED_AT, observedAt)
+        .apply();
+    long now = SystemClock.elapsedRealtime();
+    if (configured() && (!country.equals(mLastUpdateCountry) || now - mLastUpdateCheck >= TimeUnit.HOURS.toMillis(1)))
+    {
+      mLastUpdateCheck = now;
+      mLastUpdateCountry = country;
+      RoadUpdateScheduler.checkNow(mContext, providerId());
+    }
+  }
+
+  enum UpdateResult
+  {
+    UPDATED,
+    SKIPPED,
+    RETRY,
+    NEEDS_LOGIN
+  }
+
+  private final class AutomaticUpdate
+  {
+    final String country;
+    final BooleanSupplier cancelled;
+    final CompletableFuture<UpdateResult> completion;
+    long importedAt;
+    AutomaticUpdate(String country, BooleanSupplier cancelled, CompletableFuture<UpdateResult> completion)
+    {
+      this.country = country;
+      this.cancelled = cancelled;
+      this.completion = completion;
+    }
+    boolean allowed()
+    {
+      long now = System.currentTimeMillis();
+      return !cancelled.getAsBoolean() && configured() && RoadUpdateSettings.enabled(mPrefs, providerId())
+   && !RoadUpdateSettings.needsLogin(mPrefs, providerId())
+   && country.equals(RoadUpdateSettings.currentCountry(mPrefs, now))
+   && RoadUpdateSettings.expired(importedAt, now, RoadUpdateSettings.days(mPrefs, providerId()));
+    }
+  }
+
+  // Called on main by WorkManager. Network and storage use the same executors and busy owner as manual imports.
+  void updateAutomatically(String provider, String expectedCountry, BooleanSupplier cancelled,
+                           CompletableFuture<UpdateResult> completion)
+  {
+    String country = RoadUpdateSettings.currentCountry(mPrefs, System.currentTimeMillis());
+    if (!providerId().equals(provider) || !country.matches("[A-Z]{2}") || cancelled.getAsBoolean()
+        || (expectedCountry != null && !expectedCountry.equals(country)) || !configured()
+        || !RoadUpdateSettings.enabled(mPrefs, providerId()) || RoadUpdateSettings.needsLogin(mPrefs, providerId()))
+    {
+      completion.complete(UpdateResult.SKIPPED);
+      return;
+    }
+    if (!begin())
+    {
+      completion.complete(UpdateResult.RETRY);
+      return;
+    }
+    var update = new AutomaticUpdate(country, cancelled, completion);
+    mAutomaticUpdate = update;
+    mWorker.execute(() -> {
+      try
+      {
+        update.importedAt = mDatabase.importedAt(providerId(), country);
+        if (!update.allowed())
+          postAutomaticResult(update, UpdateResult.SKIPPED);
+        else
+          mNetwork.execute(() -> downloadAutomatic(update));
+      }
+      catch (SQLiteException e)
+      {
+        postAutomaticResult(update, UpdateResult.RETRY);
+      }
+    });
+  }
+
+  private void downloadAutomatic(AutomaticUpdate update)
+  {
+    File file = null;
+    try
+    {
+      if (!update.allowed())
+      {
+        postAutomaticResult(update, UpdateResult.SKIPPED);
+        return;
+      }
+      file = File.createTempFile("road-auto-", ".txt", mContext.getCacheDir());
+      downloadExport(update.country, file, false, update::allowed);
+      File downloaded = file;
+      mWorker.execute(() -> {
+        try (InputStream input = new FileInputStream(downloaded))
+        {
+          if (!update.allowed())
+          {
+            postAutomaticResult(update, UpdateResult.SKIPPED);
+            return;
+          }
+          mDatabase.importFile(mProvider, update.country, input, () -> !update.allowed());
+          publishImport(update.country, () -> completeAutomatic(update, UpdateResult.UPDATED));
+        }
+        catch (IOException | SQLiteException e)
+        {
+          postAutomaticResult(update, update.allowed() ? UpdateResult.RETRY : UpdateResult.SKIPPED);
+        }
+        finally
+        {
+          downloaded.delete();
+        }
+      });
+    }
+    catch (RoadDataProvider.AuthenticationException e)
+    {
+      mAuthenticated = false;
+      if (file != null)
+        file.delete();
+      postAutomaticResult(update, update.allowed() ? UpdateResult.NEEDS_LOGIN : UpdateResult.SKIPPED);
+    }
+    catch (IOException e)
+    {
+      if (file != null)
+        file.delete();
+      postAutomaticResult(update, update.allowed() ? UpdateResult.RETRY : UpdateResult.SKIPPED);
+    }
+  }
+
+  private void postAutomaticResult(AutomaticUpdate update, UpdateResult result)
+  {
+    mMain.post(() -> completeAutomatic(update, result));
+  }
+
+  private void completeAutomatic(AutomaticUpdate update, UpdateResult result)
+  {
+    mAutomaticUpdate = null;
+    if (result == UpdateResult.NEEDS_LOGIN)
+    {
+      mPrefs.edit().putBoolean(RoadUpdateSettings.authKey(providerId()), true).apply();
+      RoadUpdateScheduler.sync(mContext, providerId(), configured());
+    }
+    finish(switch (result)
+    {
+      case UPDATED -> R.string.road_events_imported;
+      case NEEDS_LOGIN -> R.string.road_events_auto_login_required;
+      case RETRY -> R.string.road_events_download_failed;
+      case SKIPPED -> 0;
+    });
+    update.completion.complete(result);
+  }
+
+  void cancelAutomaticUpdate(CompletableFuture<UpdateResult> completion)
+  {
+    if (mAutomaticUpdate != null && mAutomaticUpdate.completion == completion)
+      mProvider.cancel();
   }
 
   private boolean begin()

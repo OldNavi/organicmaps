@@ -1050,4 +1050,10 @@
     <string name="road_warning_cross_camera">Впереди камера на перекрёсток</string>
     <string name="road_warning_speed_camera">Впереди камера контроля скорости</string>
     <string name="road_warning_speed_limit">Впереди ограничение скорости %s</string>
+    <string name="road_events_auto_update">Автоматическое обновление</string>
+    <string name="road_events_auto_summary">Обновлять ранее загруженные данные текущей страны</string>
+    <string name="road_events_update_interval">Интервал обновления в днях</string>
+    <string name="road_events_update_days">Дней: %d</string>
+    <string name="road_events_update_days_invalid">Введите целое число дней больше нуля</string>
+    <string name="road_events_auto_login_required">Для автообновления войдите в источник снова</string>
 </resources>

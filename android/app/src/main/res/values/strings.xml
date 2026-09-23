@@ -1039,4 +1039,10 @@
     <string name="road_warning_cross_camera">Intersection camera ahead</string>
     <string name="road_warning_speed_camera">Speed camera ahead</string>
     <string name="road_warning_speed_limit">Speed limit %s ahead</string>
+    <string name="road_events_auto_update">Automatic updates</string>
+    <string name="road_events_auto_summary">Refresh previously downloaded data for your current country</string>
+    <string name="road_events_update_interval">Update interval in days</string>
+    <string name="road_events_update_days">Days: %d</string>
+    <string name="road_events_update_days_invalid">Enter a whole number of days greater than zero</string>
+    <string name="road_events_auto_login_required">Sign in again to resume automatic updates</string>
 </resources>

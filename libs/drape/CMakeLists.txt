@@ -1,6 +1,7 @@
 project(drape)
 
 set(DRAPE_TESTABLE_SRC
+  render_context.cpp
   attribute_buffer_mutator.cpp
   attribute_buffer_mutator.hpp
   attribute_provider.cpp

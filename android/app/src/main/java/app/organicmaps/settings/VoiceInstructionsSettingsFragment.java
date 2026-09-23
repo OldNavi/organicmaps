@@ -199,6 +199,7 @@ public class VoiceInstructionsSettingsFragment extends BaseXmlSettingsFragment
   public void onResume()
   {
     super.onResume();
+    SpeedWarningSettings.refreshLevel(this);
 
     updateTts();
   }
@@ -386,7 +387,14 @@ public class VoiceInstructionsSettingsFragment extends BaseXmlSettingsFragment
 
   private void initSpeedCamerasPrefs()
   {
-    final ListPreference pref = getPreference(getString(R.string.pref_tts_speed_cameras));
+    ListPreference existing =
+        SpeedWarningSettings.isAvailable() ? findPreference(SpeedWarningSettings.LEVEL_KEY) : null;
+    final ListPreference pref = existing != null ? existing : getPreference(getString(R.string.pref_tts_speed_cameras));
+    if (SpeedWarningSettings.isAvailable())
+    {
+      SpeedWarningSettings.configureLevelPreference(pref, requireContext());
+      return;
+    }
     pref.setSummary(pref.getEntry());
     pref.setOnPreferenceChangeListener((preference, newValue) -> {
       final String speedCamModeValue = (String) newValue;

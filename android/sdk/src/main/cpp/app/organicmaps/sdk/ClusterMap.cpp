@@ -1,50 +1,12 @@
 #include "Framework.hpp"
 #include "app/organicmaps/sdk/core/jni_helper.hpp"
 #include "geometry/mercator.hpp"
-#include "routing/road_info.hpp"
 #include "routing/route.hpp"
 #include "routing/speed_camera.hpp"
 #include "routing/speed_camera_manager.hpp"
 
 extern "C"
 {
-JNIEXPORT jobject Java_app_organicmaps_sdk_cluster_RoadInfo_nativeRead(JNIEnv * env, jclass, jdouble latitude,
-                                                                       jdouble longitude, jdouble accuracy,
-                                                                       jdouble speed, jdouble bearing,
-                                                                       jdouble timestamp)
-{
-  // This JNI entry point is used exclusively by the road-info worker.
-  static thread_local auto reader = frm()->GetRoutingManager().CreateRoadInfoReader();
-  location::GpsInfo location;
-  location.m_latitude = latitude;
-  location.m_longitude = longitude;
-  location.m_horizontalAccuracy = accuracy;
-  location.m_speed = speed;
-  location.m_bearing = bearing;
-  location.m_timestamp = timestamp;
-  routing::RoadInfoSnapshot info;
-  try
-  {
-    info = reader->Read(location);
-  }
-  catch (routing::RoutingException const &)
-  {
-    // A downloaded map may be replaced or removed between matching and reading its attributes.
-  }
-  auto camera = env->NewDoubleArray(info.m_cameraDistance >= 0.0 ? 5 : 0);
-  if (info.m_cameraDistance >= 0.0)
-  {
-    auto const ll = mercator::ToLatLon(info.m_cameraPosition);
-    double const values[] = {info.m_cameraDistance, info.m_cameraLimitMps, ll.m_lat, ll.m_lon,
-                             info.m_cameraLimitMps > 0 && speed > info.m_cameraLimitMps ? 1.0 : 0.0};
-    env->SetDoubleArrayRegion(camera, 0, 5, values);
-  }
-  auto cls = env->FindClass("app/organicmaps/sdk/cluster/RoadInfo");
-  auto constructor = env->GetMethodID(cls, "<init>", "(ZDLjava/lang/String;[D)V");
-  return env->NewObject(cls, constructor, static_cast<jboolean>(info.m_matched), info.m_speedLimitMps,
-                        jni::ToJavaString(env, info.m_road), camera);
-}
-
 JNIEXPORT jlong Java_app_organicmaps_sdk_cluster_ClusterMap_nativeCreate(JNIEnv * env, jclass, jobject surface,
                                                                          jint dpi, jdouble scale, jint zoom,
                                                                          jboolean showPoi, jboolean buildings3d,

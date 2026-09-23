@@ -38,9 +38,18 @@ final class RoadInfoMonitor
     mWorker.postAtTime(mRead, Math.max(SystemClock.uptimeMillis(), mNextRead));
   }
 
+  void invalidate()
+  {
+    mLatest = null;
+    mWorker.removeCallbacks(mRead);
+    mLastFixNanos = 0;
+  }
+
   private void read()
   {
     Location location = mLatest;
+    if (location == null)
+      return;
     mNextRead = SystemClock.uptimeMillis() + 250;
     long age = (SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()) / 1_000_000;
     RoadInfo info = age < 0 || age > MAX_FIX_AGE_MS || !location.hasAccuracy()

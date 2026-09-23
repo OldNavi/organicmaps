@@ -1,4 +1,5 @@
 #include "drape_frontend/drape_engine.hpp"
+#include "drape_frontend/external_marks.hpp"
 
 #include "drape_frontend/gui/drape_gui.hpp"
 #include "drape_frontend/message_subclasses.hpp"
@@ -32,6 +33,7 @@ DrapeEngine::DrapeEngine(Params && params)
   , m_viewport(std::move(params.m_viewport))
 {
   dp::RenderContext::Scope scope(m_renderContext);
+  m_externalMarks = std::move(params.m_externalMarks);
   m_isPassiveNavigation = params.m_hints.m_isPassiveNavigation;
   dp::DrapeRoutine::Init();
 
@@ -443,8 +445,62 @@ void DrapeEngine::AddUserEvent(drape_ptr<UserEvent> && e)
   m_frontend->AddUserEvent(std::move(e));
 }
 
+void DrapeEngine::RefreshExternalMarks()
+{
+  class RefreshMessage : public Message
+  {
+  public:
+    Type GetType() const override { return Type::RefreshExternalMarks; }
+  };
+  m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread, make_unique_dp<RefreshMessage>(),
+                                  MessagePriority::Normal);
+}
+
 void DrapeEngine::ModelViewChanged(ScreenBase const & screen)
 {
+  if (m_externalMarks && m_externalMarks->Revision() != 0)
+  {
+    int const zoom = df::GetZoomLevel(screen.GetScale());
+    auto const revision = m_externalMarks->Revision();
+    auto const rect = screen.ClipRect();
+    if (revision != m_externalMarksRevision || zoom != m_externalMarksZoom || !m_externalMarksRect.IsRectInside(rect))
+    {
+      // Keep a margin around the viewport: animated frames reuse marks instead of reallocating them.
+      m_externalMarksRect = rect;
+      m_externalMarksRect.Scale(1.5);
+      m_externalMarksZoom = zoom;
+      m_externalMarksRevision = revision;
+      auto data = m_externalMarks->Query(m_externalMarksRect, zoom);
+      auto & marks = data.m_marks;
+      auto & lines = data.m_lines;
+      if (!marks->empty() || !m_externalMarkIds.empty() || !lines->empty() || !m_externalLineIds.empty())
+      {
+        auto removed = make_unique_dp<IDCollections>();
+        removed->m_markIds = std::move(m_externalMarkIds);
+        removed->m_lineIds = std::move(m_externalLineIds);
+        m_externalLineIds.clear();
+        auto created = make_unique_dp<IDCollections>();
+        for (auto const & [id, mark] : *marks)
+          created->m_markIds.push_back(id);
+        m_externalMarkIds = created->m_markIds;
+        for (auto const & [id, line] : *lines)
+          m_externalLineIds.push_back(id);
+        auto group = make_unique_dp<IDCollections>();
+        group->m_markIds = m_externalMarkIds;
+        group->m_lineIds = m_externalLineIds;
+        m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                                        make_unique_dp<UpdateUserMarksMessage>(std::move(created), std::move(removed),
+                                                                               std::move(marks), std::move(lines)),
+                                        MessagePriority::Normal);
+        m_threadCommutator->PostMessage(
+            ThreadsCommutator::ResourceUploadThread,
+            make_unique_dp<UpdateUserMarkGroupMessage>(m_externalMarks->GroupId(), std::move(group)),
+            MessagePriority::Normal);
+        ChangeVisibilityUserMarksGroup(m_externalMarks->GroupId(), true);
+        InvalidateUserMarks();
+      }
+    }
+  }
   m_currentZoomLevel.store(df::GetZoomLevel(screen.GetScale()));
   m_currentTilt.store(math::RadToDeg(screen.GetRotationAngle()));
   if (m_modelViewChangedHandler != nullptr)

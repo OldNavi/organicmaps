@@ -45406,3 +45406,358 @@ uk = Пошук уздовж маршруту не підтримується.
   tags = android-app
   en = Show the next maneuver on the map
   ru = Показать ближайший манёвр на карте
+
+  [road_events_title]
+    tags = android-app
+    en = Road events
+    ru = Дорожные события
+
+  [road_events_enabled]
+    tags = android-app
+    en = Use external road events
+    ru = Использовать внешние дорожные события
+
+  [road_events_categories]
+    tags = android-app
+    en = Show on the map
+    ru = Показывать на карте
+
+  [road_events_warnings]
+    tags = android-app
+    en = Warn about road events
+    ru = Предупреждать о дорожных событиях
+
+  [road_events_source]
+    tags = android-app
+    en = Road data source
+    ru = Источник дорожных событий
+
+  [road_events_login]
+    tags = android-app
+    en = Sign in to the data source
+    ru = Войти в источник данных
+
+  [road_events_country]
+    tags = android-app
+    en = Country for download or import
+    ru = Страна для загрузки или импорта
+
+  [road_events_download]
+    tags = android-app
+    en = Download country events
+    ru = Загрузить события страны
+
+  [road_events_import]
+    tags = android-app
+    en = Import a file for this country
+    ru = Импортировать файл для этой страны
+
+  [road_events_loading]
+    tags = android-app
+    en = Loading road events…
+    ru = Загрузка дорожных событий…
+
+  [road_events_failed]
+    tags = android-app
+    en = Could not import road events. The previous database has been kept.
+    ru = Не удалось импортировать события. Предыдущая база сохранена.
+
+  [road_events_download_failed]
+    tags = android-app
+    en = Download failed. Check your connection and sign in again if necessary.
+    ru = Не удалось загрузить данные. Проверьте подключение и при необходимости войдите снова.
+
+  [road_events_imported]
+    tags = android-app
+    en = Road events updated
+    ru = Дорожные события обновлены
+
+  [road_events_signed_in]
+    tags = android-app
+    en = Signed in
+    ru = Вход выполнен
+
+  [road_events_login_failed]
+    tags = android-app
+    en = Sign-in failed. Check your login, password and connection.
+    ru = Не удалось войти. Проверьте логин, пароль и подключение.
+
+  [road_events_logout]
+    tags = android-app
+    en = Sign out of the data source
+    ru = Выйти из источника данных
+
+  [road_events_username]
+    tags = android-app
+    en = Login
+    ru = Логин
+
+  [road_events_password]
+    tags = android-app
+    en = Password
+    ru = Пароль
+
+  [road_events_missing]
+    tags = android-app
+    en = Road events for %s are not downloaded
+    ru = Дорожные события для страны «%s» не загружены
+
+  [road_events_camera]
+    tags = android-app
+    en = Cameras and enforcement
+    ru = Камеры и контроль движения
+
+  [road_events_average]
+    tags = android-app
+    en = Average-speed control
+    ru = Контроль средней скорости
+
+  [road_events_limits]
+    tags = android-app
+    en = Speed-limit signs
+    ru = Знаки ограничения скорости
+
+  [road_events_settlements]
+    tags = android-app
+    en = Settlement boundaries
+    ru = Границы населённых пунктов
+
+  [road_events_bumps]
+    tags = android-app
+    en = Speed bumps
+    ru = Лежачие полицейские
+
+  [road_events_crossings]
+    tags = android-app
+    en = Pedestrian crossings and children
+    ru = Пешеходные переходы и дети
+
+  [road_events_railways]
+    tags = android-app
+    en = Railway crossings
+    ru = Железнодорожные переезды
+
+  [road_events_hazards]
+    tags = android-app
+    en = Dangerous road sections
+    ru = Опасные участки дороги
+
+  [road_events_overtaking]
+    tags = android-app
+    en = Overtaking restrictions
+    ru = Запрет обгона
+
+  [road_event_camera]
+    tags = android-app
+    en = Speed camera
+    ru = Камера контроля скорости
+
+  [road_event_dummy]
+    tags = android-app
+    en = Dummy camera
+    ru = Муляж камеры
+
+  [road_event_video]
+    tags = android-app
+    en = Video enforcement
+    ru = Видеоконтроль
+
+  [road_event_red_light]
+    tags = android-app
+    en = Red-light camera
+    ru = Контроль проезда на красный
+
+  [road_event_lane_control]
+    tags = android-app
+    en = Lane enforcement
+    ru = Контроль движения по полосе
+
+  [road_event_mobile]
+    tags = android-app
+    en = Mobile speed camera
+    ru = Мобильная камера
+
+  [road_event_police]
+    tags = android-app
+    en = Police post
+    ru = Пост дорожной полиции
+
+  [road_event_average_start]
+    tags = android-app
+    en = Average-speed control begins
+    ru = Начало контроля средней скорости
+
+  [road_event_average_end]
+    tags = android-app
+    en = Average-speed control ends
+    ru = Конец контроля средней скорости
+
+  [road_event_speed_limit]
+    tags = android-app
+    en = Speed limit
+    ru = Ограничение скорости
+
+  [road_event_settlement_start]
+    tags = android-app
+    en = Entering a settlement
+    ru = Начало населённого пункта
+
+  [road_event_settlement_end]
+    tags = android-app
+    en = Leaving a settlement
+    ru = Конец населённого пункта
+
+  [road_event_bump]
+    tags = android-app
+    en = Speed bump
+    ru = Искусственная неровность
+
+  [road_event_crossing]
+    tags = android-app
+    en = Pedestrian crossing
+    ru = Пешеходный переход
+
+  [road_event_children]
+    tags = android-app
+    en = Children
+    ru = Дети
+
+  [road_event_railway]
+    tags = android-app
+    en = Railway crossing
+    ru = Железнодорожный переезд
+
+  [road_event_bad_road]
+    tags = android-app
+    en = Uneven road
+    ru = Неровная дорога
+
+  [road_event_bend]
+    tags = android-app
+    en = Dangerous bend
+    ru = Опасный поворот
+
+  [road_event_intersection]
+    tags = android-app
+    en = Dangerous intersection
+    ru = Опасный перекрёсток
+
+  [road_event_danger]
+    tags = android-app
+    en = Road hazard
+    ru = Опасный участок
+
+  [road_event_no_overtaking]
+    tags = android-app
+    en = No overtaking
+    ru = Обгон запрещён
+
+  [road_event_announcement]
+    tags = android-app
+    en = Ahead: %s
+    ru = Впереди: %s
+
+  [road_events_imported_countries]
+    tags = android-app
+    en = Imported countries
+    ru = Импортированные страны
+
+  [road_events_import_details]
+    tags = android-app
+    en = Updated %1$s · %2$d events
+    ru = Обновлено %1$s · %2$d событий
+
+  [road_events_no_imports]
+    tags = android-app
+    en = No countries imported yet
+    ru = Пока нет импортированных стран
+
+  [road_event_info_limit]
+    tags = android-app
+    en = Speed limit: %s
+    ru = Ограничение скорости: %s
+
+  [road_event_info_source_speed]
+    tags = android-app
+    en = Speed specified by the source: %s
+    ru = Скорость, указанная источником: %s
+
+  [road_event_info_source]
+    tags = android-app
+    en = Source: %s
+    ru = Источник: %s
+
+  [road_event_info_updated]
+    tags = android-app
+    en = Data updated: %s
+    ru = Данные обновлены: %s
+
+  [road_events_show_map]
+    tags = android-app
+    en = Show on the map
+    ru = Показывать на карте
+
+  [road_events_show_route]
+    tags = android-app
+    en = Show during navigation
+    ru = Показывать на маршруте
+
+  [road_events_providers]
+    tags = android-app
+    en = Data providers
+    ru = Провайдеры данных
+
+  [road_warning_level]
+    tags = android-app
+    en = Road warnings
+    ru = Дорожные предупреждения
+
+  [road_warning_off]
+    tags = android-app
+    en = Off
+    ru = Выкл
+
+  [road_warning_important]
+    tags = android-app
+    en = Important only
+    ru = Только важные
+
+  [road_warning_all]
+    tags = android-app
+    en = All
+    ru = Все
+
+  [road_warning_delivery]
+    tags = android-app
+    en = Warning sound
+    ru = Способ предупреждения
+
+  [road_warning_bump]
+    tags = android-app
+    en = Speed bump ahead
+    ru = Впереди лежачий полицейский
+
+  [road_warning_children]
+    tags = android-app
+    en = Caution, children
+    ru = Осторожно, дети
+
+  [road_warning_lane_camera]
+    tags = android-app
+    en = Lane enforcement camera ahead
+    ru = Впереди камера на полосу
+
+  [road_warning_cross_camera]
+    tags = android-app
+    en = Intersection camera ahead
+    ru = Впереди камера на перекрёсток
+
+  [road_warning_speed_camera]
+    tags = android-app
+    en = Speed camera ahead
+    ru = Впереди камера контроля скорости
+
+  [road_warning_speed_limit]
+    tags = android-app
+    en = Speed limit %s ahead
+    ru = Впереди ограничение скорости %s

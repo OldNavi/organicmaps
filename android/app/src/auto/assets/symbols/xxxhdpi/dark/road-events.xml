@@ -1,0 +1,57 @@
+<!DOCTYPE skin>
+<root>
+ <file height="512" width="1024">
+  <symbol maxX="232" maxY="232" minX="0" minY="0" name="road-event-coverage"/>
+  <symbol maxX="314" maxY="82" minX="232" minY="0" name="road-event-video-l"/>
+  <symbol maxX="389" maxY="82" minX="314" minY="0" name="road-event-red-light-l"/>
+  <symbol maxX="471" maxY="82" minX="389" minY="0" name="road-event-police-l"/>
+  <symbol maxX="553" maxY="82" minX="471" minY="0" name="road-event-no-overtaking-l"/>
+  <symbol maxX="628" maxY="82" minX="553" minY="0" name="road-event-mobile-l"/>
+  <symbol maxX="703" maxY="82" minX="628" minY="0" name="road-event-lane-l"/>
+  <symbol maxX="785" maxY="82" minX="703" minY="0" name="road-event-dummy-l"/>
+  <symbol maxX="867" maxY="82" minX="785" minY="0" name="road-event-crossing-l"/>
+  <symbol maxX="949" maxY="82" minX="867" minY="0" name="road-event-camera-l"/>
+  <symbol maxX="82" maxY="314" minX="0" minY="232" name="road-event-bump-l"/>
+  <symbol maxX="164" maxY="304" minX="82" minY="232" name="road-event-rough-l"/>
+  <symbol maxX="246" maxY="304" minX="164" minY="232" name="road-event-intersection-l"/>
+  <symbol maxX="328" maxY="304" minX="246" minY="232" name="road-event-danger-l"/>
+  <symbol maxX="410" maxY="304" minX="328" minY="232" name="road-event-children-l"/>
+  <symbol maxX="492" maxY="304" minX="410" minY="232" name="road-event-bend-l"/>
+  <symbol maxX="560" maxY="300" minX="492" minY="232" name="road-event-video-m"/>
+  <symbol maxX="621" maxY="300" minX="560" minY="232" name="road-event-red-light-m"/>
+  <symbol maxX="689" maxY="300" minX="621" minY="232" name="road-event-police-m"/>
+  <symbol maxX="757" maxY="300" minX="689" minY="232" name="road-event-no-overtaking-m"/>
+  <symbol maxX="818" maxY="300" minX="757" minY="232" name="road-event-mobile-m"/>
+  <symbol maxX="879" maxY="300" minX="818" minY="232" name="road-event-lane-m"/>
+  <symbol maxX="947" maxY="300" minX="879" minY="232" name="road-event-dummy-m"/>
+  <symbol maxX="1015" maxY="300" minX="947" minY="232" name="road-event-crossing-m"/>
+  <symbol maxX="68" maxY="382" minX="0" minY="314" name="road-event-camera-m"/>
+  <symbol maxX="136" maxY="382" minX="68" minY="314" name="road-event-bump-m"/>
+  <symbol maxX="204" maxY="371" minX="136" minY="314" name="road-event-rough-m"/>
+  <symbol maxX="272" maxY="371" minX="204" minY="314" name="road-event-intersection-m"/>
+  <symbol maxX="340" maxY="371" minX="272" minY="314" name="road-event-danger-m"/>
+  <symbol maxX="408" maxY="371" minX="340" minY="314" name="road-event-children-m"/>
+  <symbol maxX="476" maxY="371" minX="408" minY="314" name="road-event-bend-m"/>
+  <symbol maxX="530" maxY="368" minX="476" minY="314" name="road-event-video-s"/>
+  <symbol maxX="580" maxY="368" minX="530" minY="314" name="road-event-red-light-s"/>
+  <symbol maxX="634" maxY="368" minX="580" minY="314" name="road-event-police-s"/>
+  <symbol maxX="688" maxY="368" minX="634" minY="314" name="road-event-no-overtaking-s"/>
+  <symbol maxX="738" maxY="368" minX="688" minY="314" name="road-event-mobile-s"/>
+  <symbol maxX="788" maxY="368" minX="738" minY="314" name="road-event-lane-s"/>
+  <symbol maxX="842" maxY="368" minX="788" minY="314" name="road-event-dummy-s"/>
+  <symbol maxX="896" maxY="368" minX="842" minY="314" name="road-event-crossing-s"/>
+  <symbol maxX="950" maxY="368" minX="896" minY="314" name="road-event-camera-s"/>
+  <symbol maxX="1004" maxY="368" minX="950" minY="314" name="road-event-bump-s"/>
+  <symbol maxX="82" maxY="432" minX="0" minY="382" name="road-event-railway-l"/>
+  <symbol maxX="136" maxY="429" minX="82" minY="382" name="road-event-rough-s"/>
+  <symbol maxX="190" maxY="429" minX="136" minY="382" name="road-event-intersection-s"/>
+  <symbol maxX="244" maxY="429" minX="190" minY="382" name="road-event-danger-s"/>
+  <symbol maxX="298" maxY="429" minX="244" minY="382" name="road-event-children-s"/>
+  <symbol maxX="352" maxY="429" minX="298" minY="382" name="road-event-bend-s"/>
+  <symbol maxX="473" maxY="425" minX="352" minY="382" name="road-event-settlement-start-l"/>
+  <symbol maxX="541" maxY="422" minX="473" minY="382" name="road-event-railway-m"/>
+  <symbol maxX="641" maxY="418" minX="541" minY="382" name="road-event-settlement-start-m"/>
+  <symbol maxX="695" maxY="414" minX="641" minY="382" name="road-event-railway-s"/>
+  <symbol maxX="774" maxY="411" minX="695" minY="382" name="road-event-settlement-start-s"/>
+ </file>
+</root>

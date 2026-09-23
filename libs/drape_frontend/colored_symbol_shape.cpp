@@ -386,7 +386,12 @@ void ColoredSymbolShape::Draw(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::
     dp::OverlayID overlayId(m_params.m_featureId, m_params.m_markId, m_tile.coords, m_textIndex);
     m2::PointD const pivot(m_point.x + m_tile.xOffset, m_point.y);
 
-    if (!m_overlaySizes.empty())
+    if ((m_params.m_markId >> 60) == kml::kExternalMarkGroupId)
+    {
+      handle = make_unique_dp<dp::SelectionHandle>(overlayId, m_params.m_anchor, pivot, m2::PointD(pixelSize),
+                                                   m2::PointD(m_params.m_offset), m_params.m_minVisibleScale);
+    }
+    else if (!m_overlaySizes.empty())
     {
       handle = make_unique_dp<DynamicSquareHandle>(
           overlayId, m_params.m_anchor, pivot, m_overlaySizes, m2::PointD(m_params.m_offset), GetOverlayPriority(),

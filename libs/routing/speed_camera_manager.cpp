@@ -102,7 +102,7 @@ void SpeedCameraManager::GenerateNotifications(std::vector<std::string> & notifi
 {
   CHECK_THREAD_CHECKER(m_threadChecker, ());
 
-  if (!Enable())
+  if (!Enable() || m_externalNotifications)
     return;
 
   if (VoiceSignalAvailable())
@@ -118,7 +118,7 @@ bool SpeedCameraManager::ShouldPlayBeepSignal()
 {
   CHECK_THREAD_CHECKER(m_threadChecker, ());
 
-  if (!Enable())
+  if (!Enable() || m_externalNotifications)
     return false;
 
   if (BeepSignalAvailable())
@@ -224,8 +224,17 @@ void SpeedCameraManager::PassClosestCameraToUI()
   // Clear previous speed cam in UI.
   m_speedCamClearCallback();
 
-  if (Enable())
+  if (Enable() && m_cameraVisible)
     m_speedCamShowCallback(m_closestCamera.m_position, m_closestCamera.m_maxSpeedKmH);
+}
+
+void SpeedCameraManager::SetCameraVisible(bool visible)
+{
+  if (m_cameraVisible == visible)
+    return;
+  m_cameraVisible = visible;
+  if (m_closestCamera.IsValid())
+    PassClosestCameraToUI();
 }
 
 bool SpeedCameraManager::IsSpeedHigh(double distanceToCameraMeters, double speedMpS,

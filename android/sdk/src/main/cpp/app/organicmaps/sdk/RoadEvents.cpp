@@ -70,8 +70,8 @@ JNIEXPORT jobjectArray Java_app_organicmaps_sdk_road_RoadEvents_nativeCountriesN
   std::vector<std::string> regions;
   getter.GetRegionsCountryId(position, regions, 30000);
   auto const current = getter.GetRegionCountryId(position);
-  if (!current.empty())
-    regions.insert(regions.begin(), current);
+  // Keep an empty first entry outside known countries: nearby regions must not become the current country.
+  regions.insert(regions.begin(), current);
   std::vector<std::string> countries;
   for (auto const & region : regions)
     if (std::find(countries.begin(), countries.end(), region) == countries.end())

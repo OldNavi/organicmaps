@@ -145,19 +145,26 @@ The automotive atlas is generated at
 `android/app/src/auto/assets/symbols/<density>/<theme>/road-events.png`, with a
 matching XML index. Generic and dummy cameras use separate named symbols.
 
-## Planned: background updates
+## Background updates
 
-- In each provider settings screen, add an automatic-update switch and an integer
-  interval in days, defaulting to seven. Persist these settings independently per provider.
-- Treat each provider/country import as stale after that provider's configured interval,
-  measured from its last successful import.
-- When a fresh current-country fix is available, schedule unique work for that
-  provider/country; also check periodically while the country is still current.
-- Require a configured provider and available network. Reuse its saved session
-  and credentials without putting credentials into job payloads or logs.
-- Serialize with manual imports and suppress duplicate jobs; retry transient
-  failures with backoff. An authentication failure requests renewed login.
-- Download and parse on workers, replace SQLite in one transaction, then publish
-  a new immutable native index. On failure retain the previous database/index.
-- Initially refresh only the current country. Do not guess it from a stale GNSS
-  fix or refresh every downloaded country in the background.
+Each provider has an automatic-update switch (off initially) and a positive integer
+interval in days (default seven). WorkManager persists network-constrained checks:
+a periodic check every 12 hours, plus a check on a fresh country change and at most
+once per hour while location updates continue. The configured interval is the
+minimum data age, measured from SQLite's last successful import, not from job start.
+
+Only existing imports of the current country are updated. The country must have
+been observed from a fresh GNSS fix within 30 minutes; imported countries and the
+visual fallback index are never used to guess it. An unknown current country does
+not fall back to nearby regions. The updater does not wake GNSS or open an activity.
+
+Manual and automatic imports share one busy owner and the same provider, network
+executor, database executor and importer. Credentials remain in the existing
+encrypted store and are never included in work payloads. Expired sessions are
+reauthenticated; rejected credentials pause automatic jobs until a successful login.
+Network failures use bounded exponential retries.
+
+Cancellation, disabled updates, a changed/expired country observation, or a raised
+interval abort the pending update. Cancellation during parsing rolls back the
+transaction; the previous data stays usable. Successful import publishes the native
+index only if the core is initialized, otherwise the next map startup loads it.

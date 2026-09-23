@@ -9,6 +9,7 @@ import app.organicmaps.sdk.routing.RoutingInfo;
 import app.organicmaps.sdk.routing.roadshield.RoadShield;
 import app.organicmaps.sdk.util.Distance;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Objects;
 
 final class NavigationSnapshot
@@ -51,6 +52,9 @@ final class NavigationSnapshot
   {
     return switch (path)
     {
+      case "road_events" ->
+        Objects.equals(roadInfo.eventId, previous.roadInfo.eventId)
+            && Arrays.equals(roadInfo.event, previous.roadInfo.event);
       case "guidance" -> sameGuidance(previous);
       case "speed_camera" -> sameCamera(previous);
       case "maneuver" ->
@@ -71,7 +75,8 @@ final class NavigationSnapshot
   private boolean sameGuidance(NavigationSnapshot previous)
   {
     // A new fix renews validity even when the limit is unchanged. ISA consumes these updates too.
-    if (fixTimeNanos != previous.fixTimeNanos)
+    if (fixTimeNanos != previous.fixTimeNanos
+        || roadInfo.externalSpeedLimitMps != previous.roadInfo.externalSpeedLimitMps)
       return false;
     if (info == null || previous.info == null)
       return info == previous.info && roadInfo.matched == previous.roadInfo.matched
@@ -156,7 +161,10 @@ final class NavigationSnapshot
   {
     if (fixAgeMillis(nowNanos) > RoadInfoMonitor.MAX_FIX_AGE_MS)
       return 0.0;
-    double limit = info != null ? info.speedLimitMps : roadInfo.matched ? roadInfo.speedLimitMps : 0.0;
+    double limit = roadInfo.externalSpeedLimitMps > 0 ? roadInfo.externalSpeedLimitMps
+                 : info != null                       ? info.speedLimitMps
+                 : roadInfo.matched                   ? roadInfo.speedLimitMps
+                                                      : 0.0;
     return Double.isFinite(limit) ? speedLimitMps(limit) : 0.0;
   }
 
@@ -165,7 +173,7 @@ final class NavigationSnapshot
     if (camera.length != 5)
       return new Object[] {Integer.MAX_VALUE, 0.0, "m", "", 0};
     return new Object[] {(int) Math.round(camera[0]), camera[1], "m",
-                         String.format(java.util.Locale.ROOT, "%.6f,%.6f", camera[2], camera[3]), (int) camera[4]};
+                         String.format(Locale.ROOT, "%.6f,%.6f", camera[2], camera[3]), (int) camera[4]};
   }
 
   static String action(CarDirection direction)

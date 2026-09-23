@@ -12,6 +12,10 @@ import app.organicmaps.R;
 
 public final class SpeedWarningSettings
 {
+  public static final String LEVEL_KEY = "auto_road_warning_level";
+  public static final int OFF = 0;
+  public static final int IMPORTANT = 1;
+  public static final int ALL = 2;
   public static final String OFFSET_KEY = "auto_speed_warning_offset_kmh";
   public static final String MODE_KEY = "auto_speed_warning_mode";
   public static final String VOICE = "voice";
@@ -34,7 +38,40 @@ public final class SpeedWarningSettings
 
   public static String mode(Context context)
   {
-    return MwmApplication.prefs(context).getString(MODE_KEY, VOICE);
+    String mode = MwmApplication.prefs(context).getString(MODE_KEY, VOICE);
+    return SILENT.equals(mode) ? VOICE : mode;
+  }
+
+  public static int level(Context context)
+  {
+    SharedPreferences prefs = MwmApplication.prefs(context);
+    return prefs.getInt(LEVEL_KEY, SILENT.equals(prefs.getString(MODE_KEY, VOICE)) ? OFF : IMPORTANT);
+  }
+
+  public static void configureLevelPreference(ListPreference preference, Context context)
+  {
+    preference.setKey(LEVEL_KEY);
+    preference.setTitle(R.string.road_warning_level);
+    preference.setPersistent(false);
+    preference.setEntries(new CharSequence[] {context.getString(R.string.road_warning_off),
+                                              context.getString(R.string.road_warning_important),
+                                              context.getString(R.string.road_warning_all)});
+    preference.setEntryValues(new CharSequence[] {"0", "1", "2"});
+    preference.setValue(Integer.toString(level(context)));
+    preference.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
+    preference.setOnPreferenceChangeListener((pref, value) -> {
+      MwmApplication.prefs(context).edit().putInt(LEVEL_KEY, Integer.parseInt((String) value)).apply();
+      return true;
+    });
+  }
+
+  public static void refreshLevel(PreferenceFragmentCompat fragment)
+  {
+    if (!isAvailable())
+      return;
+    ListPreference preference = fragment.findPreference(LEVEL_KEY);
+    if (preference != null)
+      preference.setValue(Integer.toString(level(fragment.requireContext())));
   }
 
   public static void addPreferences(PreferenceFragmentCompat fragment)
@@ -65,15 +102,19 @@ public final class SpeedWarningSettings
     });
     general.addPreference(offset);
 
+    ListPreference level = new ListPreference(context);
+    configureLevelPreference(level, context);
+    level.setOrder(22);
+    general.addPreference(level);
+
     ListPreference mode = new ListPreference(context);
     mode.setKey(MODE_KEY);
-    mode.setTitle(R.string.auto_speed_warning_mode_title);
-    mode.setOrder(22);
+    mode.setTitle(R.string.road_warning_delivery);
+    mode.setOrder(23);
     mode.setPersistent(false);
     mode.setEntries(new CharSequence[] {context.getString(R.string.auto_speed_warning_mode_voice),
-                                        context.getString(R.string.auto_speed_warning_mode_sound),
-                                        context.getString(R.string.auto_speed_warning_mode_silent)});
-    mode.setEntryValues(new CharSequence[] {VOICE, SOUND, SILENT});
+                                        context.getString(R.string.auto_speed_warning_mode_sound)});
+    mode.setEntryValues(new CharSequence[] {VOICE, SOUND});
     mode.setValue(mode(context));
     mode.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
     mode.setOnPreferenceChangeListener((preference, value) -> {

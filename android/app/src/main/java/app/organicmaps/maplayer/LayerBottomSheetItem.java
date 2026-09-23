@@ -5,11 +5,13 @@ import android.view.View;
 import androidx.annotation.AttrRes;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import app.organicmaps.R;
 import app.organicmaps.adapter.OnItemClickListener;
 import app.organicmaps.sdk.maplayer.Mode;
 import app.organicmaps.util.ThemeUtils;
+import java.util.function.Predicate;
 
 public class LayerBottomSheetItem
 {
@@ -17,8 +19,9 @@ public class LayerBottomSheetItem
   private final int mDrawableResId;
   @StringRes
   private final int mTitleResId;
-  @NonNull
+  @Nullable
   private final Mode mMode;
+  private final Predicate<Context> mEnabled;
   @NonNull
   private final OnItemClickListener<LayerBottomSheetItem> mItemClickListener;
 
@@ -28,7 +31,23 @@ public class LayerBottomSheetItem
     mDrawableResId = drawableResId;
     mTitleResId = titleResId;
     mMode = mode;
+    mEnabled = mode::isEnabled;
     mItemClickListener = itemClickListener;
+  }
+
+  LayerBottomSheetItem(@DrawableRes int drawableResId, @StringRes int titleResId, Predicate<Context> enabled,
+                       OnItemClickListener<LayerBottomSheetItem> listener)
+  {
+    mDrawableResId = drawableResId;
+    mTitleResId = titleResId;
+    mMode = null;
+    mEnabled = enabled;
+    mItemClickListener = listener;
+  }
+
+  public boolean isEnabled(Context context)
+  {
+    return mEnabled.test(context);
   }
 
   public static LayerBottomSheetItem create(@NonNull Context mContext, Mode mode,
@@ -72,7 +91,7 @@ public class LayerBottomSheetItem
     return new LayerBottomSheetItem(drawableResId, buttonTextResource, mode, layerItemClickListener);
   }
 
-  @NonNull
+  @Nullable
   public Mode getMode()
   {
     return mMode;

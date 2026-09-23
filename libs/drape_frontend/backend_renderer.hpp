@@ -123,6 +123,7 @@ private:
   void FlushTransitRenderData(TransitRenderData && renderData);
   void FlushTrafficRenderData(TrafficRenderData && renderData);
   void FlushUserMarksRenderData(TUserMarksRenderData && renderData);
+  void RecacheUserAreas(bool force = false);
 
   void CleanupOverlays(TileKey const & tileKey);
 

@@ -272,14 +272,20 @@ private:
   drape_ptr<IDCollections> m_ids;
 };
 
+using FlushUserAreasMessage = FlushRenderDataMessage<TUserMarksRenderData, Message::Type::FlushUserAreas>;
+
 using FlushUserMarksMessage = FlushRenderDataMessage<TUserMarksRenderData, Message::Type::FlushUserMarks>;
 
 class InvalidateUserMarksMessage : public Message
 {
 public:
-  InvalidateUserMarksMessage() = default;
+  explicit InvalidateUserMarksMessage(bool recacheAreas = false) : m_recacheAreas(recacheAreas) {}
 
   Type GetType() const override { return Type::InvalidateUserMarks; }
+  bool NeedRecacheAreas() const { return m_recacheAreas; }
+
+private:
+  bool m_recacheAreas;
 };
 
 class GuiLayerRecachedMessage : public Message

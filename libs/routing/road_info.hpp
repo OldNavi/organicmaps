@@ -3,6 +3,7 @@
 #include "routing/data_source.hpp"
 #include "routing/features_road_graph.hpp"
 #include "routing/maxspeeds.hpp"
+#include "routing/road_events.hpp"
 #include "routing/speed_camera_ser_des.hpp"
 
 #include "platform/location.hpp"
@@ -11,6 +12,12 @@
 
 namespace routing
 {
+struct ApproachingRoadEvent
+{
+  RoadEvent m_event;
+  double m_distance = 0;
+};
+
 struct RoadInfoSnapshot
 {
   bool m_matched = false;
@@ -19,6 +26,10 @@ struct RoadInfoSnapshot
   double m_cameraDistance = -1.0;
   double m_cameraLimitMps = 0.0;
   m2::PointD m_cameraPosition;
+  double m_externalSpeedLimitMps = 0;
+  double m_eventDistance = -1;
+  RoadEvent m_event;
+  std::vector<ApproachingRoadEvent> m_warnings;
 };
 
 // Pure selection policy, shared with tests. Ambiguous parallel roads are not a match.
@@ -34,10 +45,16 @@ void FindRoadCamera(IRoadGraph const & graph, Edge edge, m2::PointD const & posi
 class RoadInfoReader
 {
 public:
-  RoadInfoReader(DataSource & source, VehicleModelFactory::CountryParentNameGetterFn const & parents);
+  RoadInfoReader(DataSource & source, VehicleModelFactory::CountryParentNameGetterFn const & parents,
+                 std::shared_ptr<RoadEventSource> events = {});
   RoadInfoSnapshot Read(location::GpsInfo const & location);
 
 private:
+  void ReadEvents(IRoadGraph::EdgeProjectionT const & match, m2::PointD const & previous,
+                  RoadEventSource::Snapshot const & events, RoadInfoSnapshot & result);
+  std::shared_ptr<RoadEventSource> m_events;
+  std::shared_ptr<RoadEventStore const> m_eventStore;
+  double m_externalLimit = 0;
   struct Attributes
   {
     std::unique_ptr<Maxspeeds> m_speeds;

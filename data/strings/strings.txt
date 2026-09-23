@@ -45761,3 +45761,33 @@ uk = Пошук уздовж маршруту не підтримується.
     tags = android-app
     en = Speed limit %s ahead
     ru = Впереди ограничение скорости %s
+
+  [road_events_auto_update]
+    tags = android-app
+    en = Automatic updates
+    ru = Автоматическое обновление
+
+  [road_events_auto_summary]
+    tags = android-app
+    en = Refresh previously downloaded data for your current country
+    ru = Обновлять ранее загруженные данные текущей страны
+
+  [road_events_update_interval]
+    tags = android-app
+    en = Update interval in days
+    ru = Интервал обновления в днях
+
+  [road_events_update_days]
+    tags = android-app
+    en = Days: %d
+    ru = Дней: %d
+
+  [road_events_update_days_invalid]
+    tags = android-app
+    en = Enter a whole number of days greater than zero
+    ru = Введите целое число дней больше нуля
+
+  [road_events_auto_login_required]
+    tags = android-app
+    en = Sign in again to resume automatic updates
+    ru = Для автообновления войдите в источник снова

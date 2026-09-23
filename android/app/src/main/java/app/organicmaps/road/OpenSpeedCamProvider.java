@@ -70,9 +70,14 @@ public final class OpenSpeedCamProvider implements RoadDataProvider
                                            .build()))
       {
         if (new JSONObject(readJson(response)).optJSONObject("user") == null)
-          throw new IOException("Invalid login response");
+          throw new AuthenticationException();
       }
       countries(); // Verify the authenticated session against the protected endpoint.
+    }
+    catch (AuthenticationException e)
+    {
+      logout();
+      throw e;
     }
     catch (JSONException | IOException e)
     {
@@ -85,6 +90,12 @@ public final class OpenSpeedCamProvider implements RoadDataProvider
   public void logout()
   {
     mCookies.clear();
+  }
+
+  @Override
+  public void cancel()
+  {
+    mClient.dispatcher().cancelAll();
   }
 
   @Override

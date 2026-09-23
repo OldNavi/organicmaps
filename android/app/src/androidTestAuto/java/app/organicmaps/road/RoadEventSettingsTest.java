@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
+import androidx.preference.EditTextPreference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.SwitchPreferenceCompat;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -15,6 +16,7 @@ import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
 import app.organicmaps.sdk.road.RoadEventKind;
 import app.organicmaps.sdk.road.RoadEvents;
+import app.organicmaps.settings.RoadDataProviderFragment;
 import app.organicmaps.settings.RoadDataSettingsFragment;
 import app.organicmaps.settings.RoadEventVisibilityFragment;
 import app.organicmaps.settings.SettingsActivity;
@@ -51,6 +53,10 @@ public class RoadEventSettingsTest
     int oldMap = RoadEventVisibility.get(prefs, false);
     int oldRoute = RoadEventVisibility.get(prefs, true);
     boolean oldEnabled = prefs.getBoolean(RoadDataManager.ENABLED, false);
+    String provider = RoadDataManager.get(context).providerId();
+    boolean oldAuto = RoadUpdateSettings.enabled(prefs, provider);
+    int oldDays = RoadUpdateSettings.days(prefs, provider);
+    boolean oldAuth = RoadUpdateSettings.needsLogin(prefs, provider);
     AtomicReference<SettingsActivity> activity = new AtomicReference<>();
     try
     {
@@ -113,6 +119,34 @@ public class RoadEventSettingsTest
         });
       }
       main(() -> {
+        // Prevent actual exports while exercising controls against the real settings screen.
+        prefs.edit().putBoolean(RoadUpdateSettings.authKey(provider), true).apply();
+        var category = (PreferenceCategory) root.get().getPreferenceScreen().getPreference(3);
+        activity.get().onPreferenceStartFragment(root.get(), category.getPreference(0));
+      });
+      InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+      main(() -> {
+        RoadDataProviderFragment providerScreen = null;
+        for (var fragment : activity.get().getSupportFragmentManager().getFragments())
+          if (fragment instanceof RoadDataProviderFragment visible && visible.isResumed())
+            providerScreen = visible;
+        assertNotNull(providerScreen);
+        SwitchPreferenceCompat automatic = providerScreen.findPreference(RoadUpdateSettings.enabledKey(provider));
+        EditTextPreference interval = providerScreen.findPreference(RoadUpdateSettings.intervalKey(provider));
+        assertNotNull(automatic);
+        assertNotNull(interval);
+        assertEquals(Integer.toString(oldDays), interval.getText());
+        assertTrue(automatic.callChangeListener(true));
+        automatic.setChecked(true);
+        assertTrue(RoadUpdateSettings.enabled(prefs, provider));
+        assertTrue(interval.isEnabled());
+        assertTrue(interval.callChangeListener("3"));
+        interval.setText("3");
+        assertEquals(3, RoadUpdateSettings.days(prefs, provider));
+        assertFalse(interval.callChangeListener("0"));
+        assertEquals(3, RoadUpdateSettings.days(prefs, provider));
+      });
+      main(() -> {
         long records = RoadEvents.nativeGetState()[1];
         prefs.edit().putBoolean(RoadDataManager.ENABLED, false).apply();
         RoadDataManager.get(context).configure();
@@ -131,8 +165,12 @@ public class RoadEventSettingsTest
             .putInt(RoadEventVisibility.MAP, oldMap)
             .putInt(RoadEventVisibility.ROUTE, oldRoute)
             .putBoolean(RoadDataManager.ENABLED, oldEnabled)
+            .putBoolean(RoadUpdateSettings.enabledKey(provider), oldAuto)
+            .putInt(RoadUpdateSettings.intervalKey(provider), oldDays)
+            .putBoolean(RoadUpdateSettings.authKey(provider), oldAuth)
             .apply();
         RoadDataManager.get(context).configure();
+        RoadDataManager.get(context).updateSchedule();
         if (activity.get() != null)
           activity.get().finish();
       });

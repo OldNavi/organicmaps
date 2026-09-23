@@ -7,11 +7,18 @@ import java.util.List;
 /** Each source owns its protocol and importer; storage and navigation consume normalized events. */
 public interface RoadDataProvider
 {
-  final class SessionExpiredException extends IOException
+  class AuthenticationException extends IOException
+  {
+    public AuthenticationException()
+    {
+      super("Source authentication required");
+    }
+  }
+  final class SessionExpiredException extends AuthenticationException
   {
     public SessionExpiredException()
     {
-      super("Source session expired");
+      super();
     }
   }
   String id();
@@ -20,4 +27,5 @@ public interface RoadDataProvider
   void logout();
   List<String> countries() throws IOException;
   void download(String country, File destination) throws IOException;
+  default void cancel() {}
 }

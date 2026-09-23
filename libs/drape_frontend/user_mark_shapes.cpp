@@ -342,12 +342,51 @@ drape_ptr<dp::OverlayHandle> CreateSymbolOverlayHandle(UserMarkRenderParams cons
   dp::OverlayID overlayId(renderInfo.m_featureId, renderInfo.m_markId, tileKey.GetTileCoords(),
                           kStartUserMarkOverlayIndex + renderInfo.m_index);
   m2::PointD const pivot(renderInfo.m_pivot.x + tileKey.GetTileXOffset(), renderInfo.m_pivot.y);
+  if ((renderInfo.m_markId >> 60) == kml::kExternalMarkGroupId)
+    return make_unique_dp<dp::SelectionHandle>(overlayId, renderInfo.m_anchor, pivot,
+                                               pixelRect.RightTop() - pixelRect.LeftBottom(), m2::PointD(symbolOffset),
+                                               renderInfo.m_minZoom);
   drape_ptr<dp::OverlayHandle> handle = make_unique_dp<dp::SquareHandle>(
       overlayId, renderInfo.m_anchor, pivot, pixelRect.RightTop() - pixelRect.LeftBottom(), m2::PointD(symbolOffset),
       0 /*priority*/, true /* isBound */, renderInfo.m_minZoom, true /* isBillboard */);
   return handle;
 }
 }  // namespace
+
+void CacheUserArea(ref_ptr<dp::GraphicsContext> context, TileKey const & tileKey, ref_ptr<dp::TextureManager> textures,
+                   UserLineRenderParams const & params, dp::Batcher & batcher)
+{
+  auto const & fill = *params.m_fill;
+  auto const tileRect = tileKey.GetWrappedDataRect();
+  dp::TextureManager::SymbolRegion region;
+  textures->GetSymbolRegion(fill.m_symbolName, region);
+  auto const & uv = region.GetTexRect();
+  auto const center = tileRect.Center();
+  std::vector<gpu::SolidTexturingVertex> vertices;
+  auto const append = [&](m2::PointD const & point)
+  {
+    auto const local = MapShape::ConvertToLocal(point, center, kShapeCoordScalar);
+    float const u = (point.x - fill.m_textureRect.minX()) / fill.m_textureRect.SizeX();
+    float const v = (point.y - fill.m_textureRect.minY()) / fill.m_textureRect.SizeY();
+    vertices.emplace_back(glsl::vec4(local.x, local.y, 0, 0), glsl::vec2(0, 0),
+                          glsl::vec2(uv.minX() + u * uv.SizeX(), uv.maxY() - v * uv.SizeY()));
+  };
+  vertices.reserve(fill.m_triangles.size());
+  for (auto const & point : fill.m_triangles)
+    append(point);
+  if (vertices.empty())
+    return;
+  // The tile key supplies a local precision origin only; the whole area is independent of map LOD.
+  auto state = CreateRenderState(gpu::Program::Texturing, params.m_depthLayer);
+  state.SetProgram3d(gpu::Program::Texturing);
+  state.SetDepthTestEnabled(false);
+  state.SetColorTexture(region.GetTexture());
+  state.SetTextureIndex(region.GetTextureIndex());
+  state.SetTextureFilter(dp::TextureFilter::Linear);
+  dp::AttributeProvider provider(1, static_cast<uint32_t>(vertices.size()));
+  provider.InitStream(0, gpu::SolidTexturingVertex::GetBindingInfo(), make_ref(vertices.data()));
+  batcher.InsertTriangleList(context, state, make_ref(&provider));
+}
 
 void CacheUserMarks(ref_ptr<dp::GraphicsContext> context, TileKey const & tileKey, ref_ptr<dp::TextureManager> textures,
                     MarksSource const & source, UserMarksRenderCollection const & renderParams, dp::Batcher & batcher)

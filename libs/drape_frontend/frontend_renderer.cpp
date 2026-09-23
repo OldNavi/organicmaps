@@ -345,6 +345,23 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
     break;
   }
 
+  case Message::Type::FlushUserAreas:
+  {
+    ref_ptr<FlushUserAreasMessage> msg = message;
+    std::vector<UserAreaGroup> areas;
+    for (auto & data : msg->AcceptRenderData())
+    {
+      PrepareBucket(data.m_state, data.m_bucket);
+      auto group = make_unique_dp<UserMarkRenderGroup>(data.m_state, data.m_tileKey);
+      group->AddBucket(std::move(data.m_bucket));
+      areas.push_back({std::move(group), data.m_minZoom});
+    }
+    // Replace one complete snapshot. Retaining parent/child tiles would blend the gradient twice.
+    m_userAreas.swap(areas);
+    m_frameData.m_forceFullRedrawNextFrame = true;
+    break;
+  }
+
   case Message::Type::FlushUserMarks:
   {
     ref_ptr<FlushUserMarksMessage> msg = message;
@@ -356,6 +373,9 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
       {
         PrepareBucket(renderData.m_state, renderData.m_bucket);
         AddToRenderGroup<UserMarkRenderGroup>(renderData.m_state, std::move(renderData.m_bucket), renderData.m_tileKey);
+        // Static external marks can arrive after the scene entered its cached-frame path.
+        // Redraw now instead of waiting for another gesture or reopening the layers sheet.
+        m_frameData.m_forceFullRedrawNextFrame = true;
       }
     }
     break;
@@ -930,6 +950,8 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
   }
   break;
 
+  case Message::Type::RefreshExternalMarks: EmitModelViewChanged(m_userEventStream.GetCurrentScreen()); break;
+
   case Message::Type::InvalidateUserMarks:
   {
     m_forceUpdateUserMarks = true;
@@ -1103,6 +1125,7 @@ void FrontendRenderer::UpdateAll()
 #endif  // BUILD_DESIGNER
 
   // Clear all graphics.
+  m_userAreas.clear();
   for (RenderLayer & layer : m_layers)
   {
     layer.m_renderGroups.clear();
@@ -1153,6 +1176,9 @@ void FrontendRenderer::UpdateContextDependentResources()
   m_forceUpdateScene = true;
   m_forceUpdateUserMarks = true;
   m_frameData.m_forceFullRedrawNextFrame = true;
+  m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                            make_unique_dp<InvalidateUserMarksMessage>(true /* recacheAreas */),
+                            MessagePriority::Normal);
   ++m_lastRecacheRouteId;
 
   // Immediate guidance switches style before the initial FlushSubroute may reach this renderer.
@@ -1375,7 +1401,10 @@ std::pair<FeatureID, kml::MarkId> FrontendRenderer::GetVisiblePOI(m2::RectD cons
   auto selectionRect = pixelRect;
   constexpr double kTapRectFactor = 0.25;  // make tap rect size smaller for extended objects
   selectionRect.Scale(kTapRectFactor);
-  SearchInNonDisplaceableUserMarksLayer(screen, DepthLayer::SearchMarkLayer, selectionRect, selectResult);
+  // External marks are painted above labels; give their visible symbols the same tap priority.
+  SearchInNonDisplaceableUserMarksLayer(screen, DepthLayer::UserMarkLayer, selectionRect, selectResult);
+  if (selectResult.empty())
+    SearchInNonDisplaceableUserMarksLayer(screen, DepthLayer::SearchMarkLayer, selectionRect, selectResult);
 
   if (selectResult.empty())
     m_overlayTree->Select(pixelRect, selectResult);
@@ -1534,6 +1563,9 @@ void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFram
 
     Render2dLayer(modelView);
     RenderUserMarksLayer(modelView, DepthLayer::UserLineLayer);
+    for (auto const & area : m_userAreas)
+      if (GetCurrentZoom() >= area.m_minZoom)
+        RenderSingleGroup(m_context, modelView, make_ref(area.m_group));
 
     bool const hasTransitRouteData = HasTransitRouteData();
     if (m_buildingsFramebuffer->IsSupported() && !m_routeRenderer->IsRulerRoute())
@@ -1804,7 +1836,20 @@ void FrontendRenderer::RenderUserMarksLayer(ScreenBase const & modelView, DepthL
   m_context->Clear(dp::ClearBits::DepthBit, dp::kClearBitsStoreAll);
 
   for (drape_ptr<RenderGroup> const & group : renderGroups)
+  {
+    if (layerId == DepthLayer::UserMarkLayer)
+      group->ForEachOverlay([&modelView](ref_ptr<dp::OverlayHandle> const & handle)
+      {
+        // External numeric sign labels are not managed by the POI displacement tree.
+        if ((handle->GetOverlayID().m_markId >> 60) == kml::kExternalMarkGroupId && handle->HasDynamicAttributes())
+        {
+          handle->SetIsVisible(true);
+          handle->BeforeUpdate();
+          handle->Update(modelView);
+        }
+      });
     RenderSingleGroup(m_context, modelView, make_ref(group));
+  }
 }
 
 void FrontendRenderer::RenderNonDisplaceableUserMarksLayer(ScreenBase const & modelView, DepthLayer layerId)
@@ -2495,6 +2540,7 @@ void FrontendRenderer::OnContextDestroy()
     m_renderInjectionHandler(m_context, m_texMng, make_ref(m_gpuProgramManager), true);
 
   // Clear all graphics.
+  m_userAreas.clear();
   for (RenderLayer & layer : m_layers)
   {
     layer.m_renderGroups.clear();
@@ -2597,6 +2643,10 @@ void FrontendRenderer::OnContextCreate()
   { return m_postprocessRenderer->OnFramebufferFallback(m_context); });
 
   m_transitBackground = make_unique_dp<ScreenQuadRenderer>(m_context);
+  // The draw context can be recreated while the upload context and logical areas survive.
+  m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                            make_unique_dp<InvalidateUserMarksMessage>(true /* recacheAreas */),
+                            MessagePriority::Normal);
 }
 
 void FrontendRenderer::OnRenderingEnabled()
@@ -2666,6 +2716,7 @@ void FrontendRenderer::Routine::Do()
 
 void FrontendRenderer::ReleaseResources()
 {
+  m_userAreas.clear();
   for (RenderLayer & layer : m_layers)
     layer.m_renderGroups.clear();
 
@@ -2887,9 +2938,12 @@ void FrontendRenderer::SearchInNonDisplaceableUserMarksLayer(ScreenBase const & 
       group->Update(modelView);
     }
     group->ForEachOverlay(
-        [&modelView, &result, selectionRect = m2::RectF(selectionRect)](ref_ptr<dp::OverlayHandle> const & h)
+        [&modelView, &result, layerId, selectionRect = m2::RectF(selectionRect)](ref_ptr<dp::OverlayHandle> const & h)
     {
       if (!h->IsVisible())
+        return;
+      // Keep the existing selection path for ordinary bookmarks and other user marks.
+      if (layerId == DepthLayer::UserMarkLayer && (h->GetOverlayID().m_markId >> 60) != kml::kExternalMarkGroupId)
         return;
 
       dp::OverlayHandle::Rects shapes;

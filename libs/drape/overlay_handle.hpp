@@ -231,6 +231,19 @@ private:
   bool m_isBound;
 };
 
+// Hit testing only: these symbols never take part in displacement or per-frame index mutation.
+class SelectionHandle final : public SquareHandle
+{
+public:
+  SelectionHandle(OverlayID const & id, Anchor anchor, m2::PointD const & pivot, m2::PointD const & size,
+                  m2::PointD const & offset, int minVisibleScale)
+    : SquareHandle(id, anchor, pivot, size, offset, 0, true, minVisibleScale, true)
+  {
+    SetIsVisible(true);
+  }
+  bool IndexesRequired() const override { return false; }
+};
+
 uint64_t CalculateOverlayPriority(uint8_t rank, float depth);
 uint64_t CalculateSpecialModeUserMarkPriority(uint16_t specialPriority);
 uint64_t CalculateUserMarkPriority(int minZoomLevel, uint16_t specialPriority);

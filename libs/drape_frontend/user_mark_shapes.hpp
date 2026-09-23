@@ -63,12 +63,22 @@ struct LineLayer
   float m_depth = 0.0;
 };
 
+struct UserAreaFill
+{
+  std::vector<m2::PointD> m_triangles;
+  m2::RectD m_bounds;
+  m2::RectD m_textureRect;
+  std::string m_symbolName;
+};
+
 struct UserLineRenderParams
 {
   int m_minZoom = 1;
   DepthLayer m_depthLayer = DepthLayer::UserLineLayer;
   std::vector<LineLayer> m_layers;
   std::vector<m2::SharedSpline> m_splines;
+  // Optional textured ground fill; lines may additionally draw its outline.
+  drape_ptr<UserAreaFill> m_fill;
   bool m_visible = true;
 };
 
@@ -152,15 +162,18 @@ public:
 
 struct UserMarkRenderData
 {
-  UserMarkRenderData(dp::RenderState const & state, drape_ptr<dp::RenderBucket> && bucket, TileKey const & tileKey)
+  UserMarkRenderData(dp::RenderState const & state, drape_ptr<dp::RenderBucket> && bucket, TileKey const & tileKey,
+                     int minZoom = 1)
     : m_state(state)
     , m_bucket(std::move(bucket))
     , m_tileKey(tileKey)
+    , m_minZoom(minZoom)
   {}
 
   dp::RenderState m_state;
   drape_ptr<dp::RenderBucket> m_bucket;
   TileKey m_tileKey;
+  int m_minZoom = 1;
 };
 
 using TUserMarksRenderData = std::vector<UserMarkRenderData>;
@@ -170,4 +183,7 @@ void CacheUserMarks(ref_ptr<dp::GraphicsContext> context, TileKey const & tileKe
 
 void CacheUserLines(ref_ptr<dp::GraphicsContext> context, TileKey const & tileKey, ref_ptr<dp::TextureManager> textures,
                     TracksSource const & source, UserLinesRenderCollection const & renderParams, dp::Batcher & batcher);
+
+void CacheUserArea(ref_ptr<dp::GraphicsContext> context, TileKey const & origin, ref_ptr<dp::TextureManager> textures,
+                   UserLineRenderParams const & params, dp::Batcher & batcher);
 }  // namespace df

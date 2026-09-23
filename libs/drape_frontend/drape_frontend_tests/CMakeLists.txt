@@ -14,6 +14,7 @@ set(SRC
   shape_test_fixture.cpp
   shape_test_fixture.hpp
   stylist_tests.cpp
+  user_area_snapshot_tests.cpp
   user_event_stream_tests.cpp
   visual_params_fixture.hpp
   visual_params_tests.cpp

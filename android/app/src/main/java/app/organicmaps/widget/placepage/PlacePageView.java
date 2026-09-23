@@ -45,6 +45,8 @@ import app.organicmaps.bookmarks.BookmarksSharingHelper;
 import app.organicmaps.bookmarks.ChooseBookmarkCategoryFragment;
 import app.organicmaps.downloader.DownloaderStatusIcon;
 import app.organicmaps.downloader.MapManagerHelper;
+import app.organicmaps.road.RoadDataManager;
+import app.organicmaps.road.RoadEventLabels;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.bookmarks.data.Bookmark;
 import app.organicmaps.sdk.bookmarks.data.BookmarkCategory;
@@ -538,6 +540,13 @@ public class PlacePageView extends Fragment
     UiUtils.setTextAndHideIfEmpty(mTvAddress, mMapObject.getAddress());
 
     refreshCategoryPreview();
+
+    var roadEvent = mMapObject.getRoadEvent();
+    boolean showRoadEvent = RoadDataManager.available() && roadEvent != null;
+    UiUtils.showIf(showRoadEvent, mFrame.findViewById(R.id.road_event_info_container));
+    if (showRoadEvent)
+      ((TextView) mFrame.findViewById(R.id.road_event_info))
+          .setText(RoadEventLabels.details(requireContext(), roadEvent));
 
     final String osmDescription = mMapObject.getOsmDescription();
     if (osmDescription.isEmpty())

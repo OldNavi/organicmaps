@@ -222,6 +222,7 @@ afterEvaluate {
 }
 
 dependencies {
+  implementation libs.okhttp
   implementation project(':libs:api')
   implementation project(':libs:branding')
   implementation project(':libs:downloader')

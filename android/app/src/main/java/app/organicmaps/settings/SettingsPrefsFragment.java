@@ -17,6 +17,7 @@ import app.organicmaps.downloader.OnmapDownloader;
 import app.organicmaps.editor.LanguagesFragment;
 import app.organicmaps.editor.ProfileActivity;
 import app.organicmaps.help.HelpActivity;
+import app.organicmaps.road.RoadDataManager;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.downloader.MapManager;
 import app.organicmaps.sdk.editor.OsmOAuth;
@@ -73,6 +74,20 @@ public class SettingsPrefsFragment extends BaseXmlSettingsFragment implements La
     initShowOnLockScreenPrefsCallbacks();
     initNightNavigationPrefsCallbacks();
     SpeedWarningSettings.addPreferences(this);
+    if (RoadDataManager.available())
+    {
+      PreferenceCategory general = findPreference(getString(R.string.pref_settings_general));
+      // The preference hierarchy survives this fragment's view while a child settings screen is open.
+      if (general != null && general.findPreference(RoadDataManager.SETTINGS) == null)
+      {
+        Preference pref = new Preference(requireContext());
+        pref.setKey(RoadDataManager.SETTINGS);
+        pref.setTitle(R.string.road_events_title);
+        pref.setFragment(RoadDataSettingsFragment.class.getName());
+        pref.setOrder(23);
+        general.addPreference(pref);
+      }
+    }
   }
 
   private void updateVoiceInstructionsPrefsSummary()
@@ -113,6 +128,7 @@ public class SettingsPrefsFragment extends BaseXmlSettingsFragment implements La
 
     updateProfileSettingsPrefsSummary();
     updateVoiceInstructionsPrefsSummary();
+    SpeedWarningSettings.refreshLevel(this);
     updateRoutingSettingsPrefsSummary();
     updateMapLanguageCodeSummary();
   }

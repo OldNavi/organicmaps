@@ -311,6 +311,25 @@
   <include layout="@layout/place_page_route_ref" />
 
   <LinearLayout
+    android:id="@+id/road_event_info_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?ppBackground"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <include layout="@layout/place_page_shadow_gap" />
+
+    <TextView
+      android:id="@+id/road_event_info"
+      style="@style/MwmTextAppearance.PlacePage"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:lineSpacingExtra="@dimen/margin_half"
+      android:padding="@dimen/margin_base" />
+  </LinearLayout>
+
+  <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">

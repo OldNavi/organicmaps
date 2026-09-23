@@ -92,8 +92,10 @@ void FindRoadCamera(IRoadGraph const & graph, Edge edge, m2::PointD const & posi
   }
 }
 
-RoadInfoReader::RoadInfoReader(DataSource & source, VehicleModelFactory::CountryParentNameGetterFn const & parents)
-  : m_source(source, nullptr)
+RoadInfoReader::RoadInfoReader(DataSource & source, VehicleModelFactory::CountryParentNameGetterFn const & parents,
+                               std::shared_ptr<RoadEventSource> events)
+  : m_events(std::move(events))
+  , m_source(source, nullptr)
   , m_graph(m_source, IRoadGraph::Mode::ObeyOnewayTag, std::make_shared<CarModelFactory>(parents))
 {}
 
@@ -149,6 +151,9 @@ RoadInfoSnapshot RoadInfoReader::Read(location::GpsInfo const & location)
       m_directionTime = time;
     }
   }
+  auto const previousPosition =
+      m_previousLocation ? mercator::FromLatLon(m_previousLocation->m_latitude, m_previousLocation->m_longitude)
+                         : position;
   m_previousLocation = location;
   if (time - m_directionTime > 10.0)
     m_direction = {};
@@ -166,7 +171,10 @@ RoadInfoSnapshot RoadInfoReader::Read(location::GpsInfo const & location)
                       match->first.IsForward() == m_previousMatch->first.IsForward();
   m_previousMatch = match;
   if (!stable)
+  {
+    m_externalLimit = 0;
     return result;
+  }
   auto const & edge = match->first;
   auto & attrs = GetAttributes(edge.GetFeatureId().m_mwmId);
   result.m_matched = true;
@@ -185,6 +193,118 @@ RoadInfoSnapshot RoadInfoReader::Read(location::GpsInfo const & location)
     auto const it = cameras.find({e.GetFeatureId().m_index, e.GetSegId()});
     return it == cameras.end() ? std::vector<RouteSegment::SpeedCamera>{} : it->second;
   }, result);
+  if (m_events)
+  {
+    auto const events = m_events->Get();
+    if (events.m_store != m_eventStore || !events.m_enabled)
+      m_externalLimit = 0;
+    m_eventStore = events.m_store;
+    if (events.m_enabled && events.m_store)
+      ReadEvents(*match, previousPosition, events, result);
+    result.m_externalSpeedLimitMps = m_externalLimit;
+    if (m_externalLimit > 0)
+      result.m_speedLimitMps = m_externalLimit;
+  }
   return result;
+}
+
+void RoadInfoReader::ReadEvents(IRoadGraph::EdgeProjectionT const & match, m2::PointD const & previous,
+                                RoadEventSource::Snapshot const & events, RoadInfoSnapshot & result)
+{
+  auto edge = match.first;
+  auto const position = match.second.GetPoint();
+  double passed = -mercator::DistanceOnEarth(edge.GetStartPoint(), position);
+  std::set<Edge> visited;
+  double latestCrossed = -std::numeric_limits<double>::max();
+  for (size_t n = 0; n < 256 && passed < 2000 && visited.insert(edge).second; ++n)
+  {
+    auto const start = edge.GetStartPoint();
+    auto const direction = edge.GetDirection();
+    auto const lengthSquared = direction.SquaredLength();
+    if (lengthSquared == 0)
+      break;
+    auto rect = m2::RectD(start, edge.GetEndPoint());
+    rect.Add(mercator::RectByCenterXYAndSizeInMeters(start, 15));
+    rect.Add(mercator::RectByCenterXYAndSizeInMeters(edge.GetEndPoint(), 15));
+    double const length = mercator::DistanceOnEarth(start, edge.GetEndPoint());
+    double const bearing = math::RadToDeg(std::atan2(direction.x, direction.y));
+    for (auto index : events.m_store->Query(rect, kAllRoadEventCategories, 4096))
+    {
+      auto const & event = events.m_store->Get(index);
+      if (!event.MatchesBearing(bearing))
+        continue;
+      double const coefficient = DotProduct(event.m_position - start, direction) / lengthSquared;
+      if (coefficient < 0 || coefficient > 1)
+        continue;
+      auto const projected = start + direction * coefficient;
+      if (mercator::DistanceOnEarth(projected, event.m_position) > 12)
+        continue;
+      // A nearby parallel road must not donate its signs to the matched carriageway.
+      std::vector<IRoadGraph::EdgeProjectionT> candidates;
+      m_graph.FindClosestEdges(mercator::RectByCenterXYAndSizeInMeters(event.m_position, 25), 16, candidates);
+      auto eventMatch = MatchRoad(event.m_position, direction, 5, candidates);
+      if (!eventMatch || eventMatch->first.GetFeatureId() != edge.GetFeatureId() ||
+          eventMatch->first.IsForward() != edge.IsForward())
+        continue;
+      double const distance = passed + length * coefficient;
+      bool const crossed =
+          n == 0 && DotProduct(previous - projected, direction) < 0 && DotProduct(position - projected, direction) >= 0;
+      if (crossed && distance > latestCrossed &&
+          (event.m_kind == RoadEventKind::SpeedLimit || event.m_kind == RoadEventKind::SettlementStart ||
+           event.m_kind == RoadEventKind::SettlementEnd))
+      {
+        latestCrossed = distance;
+        // A settlement baseline never raises an already known lower posted limit.
+        if (event.m_kind == RoadEventKind::SettlementStart)
+        {
+          double const limit = event.m_speedKmh / 3.6;
+          double const current = m_externalLimit > 0 ? m_externalLimit : result.m_speedLimitMps;
+          if (limit > 0)
+            m_externalLimit = current > 0 ? std::min(current, limit) : limit;
+        }
+        else
+          m_externalLimit = event.m_speedKmh / 3.6;
+      }
+      if (distance < 0 || distance > std::min<double>(2000, event.m_distance))
+        continue;
+      if (result.m_eventDistance < 0 || distance < result.m_eventDistance)
+      {
+        result.m_eventDistance = distance;
+        result.m_event = event;
+      }
+      if (events.m_warnings && (events.m_visibleKinds & (1u << static_cast<unsigned>(event.m_kind))) &&
+          event.IsInApproachSector(position))
+      {
+        // Return a bounded ordered set: an already-announced or slow-speed event must not hide the next warning.
+        auto & warnings = result.m_warnings;
+        auto const insertion =
+            std::lower_bound(warnings.begin(), warnings.end(), distance,
+                             [](auto const & warning, double dist) { return warning.m_distance < dist; });
+        if (insertion != warnings.end() || warnings.size() < 16)
+        {
+          warnings.insert(insertion, {event, distance});
+          if (warnings.size() > 16)
+            warnings.pop_back();
+        }
+      }
+      // Filter before choosing the nearest speed camera; other enforcement and dummy points must not mask it.
+      if (IsSpeedCamera(event.m_kind) && (result.m_cameraDistance < 0 || distance < result.m_cameraDistance))
+      {
+        result.m_cameraDistance = distance;
+        result.m_cameraLimitMps = event.m_speedKmh / 3.6;
+        result.m_cameraPosition = event.m_position;
+      }
+    }
+    passed += length;
+    IRoadGraph::EdgeListT outgoing;
+    m_graph.GetOutgoingEdges(edge.GetEndJunction(), outgoing);
+    std::set<Edge> choices;
+    for (auto const & next : outgoing)
+      if (!next.IsFake() && next != edge.GetReverseEdge())
+        choices.insert(next);
+    if (choices.size() != 1)
+      break;
+    edge = *choices.begin();
+  }
 }
 }  // namespace routing

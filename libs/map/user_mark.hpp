@@ -52,6 +52,7 @@ public:
     COLORED,
     ROUTE_ALT,  // ETA balloon attached to a route variant (active or alternative).
     USER_MARK_TYPES_COUNT,
+    EXTERNAL = kml::kExternalMarkGroupId,
     USER_MARK_TYPES_COUNT_MAX = 1000,
   };
   static_assert(BOOKMARK == 0);

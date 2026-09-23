@@ -20,6 +20,7 @@ set(SRC
   mwm_url_tests.cpp
   power_manager_tests.cpp
   road_warning_tests.cpp
+  road_event_layer_tests.cpp
   share_tests.cpp
   search_api_tests.cpp
   search_viewport_tests.cpp

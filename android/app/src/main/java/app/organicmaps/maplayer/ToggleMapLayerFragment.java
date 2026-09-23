@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
+import app.organicmaps.road.RoadDataManager;
 import app.organicmaps.sdk.maplayer.Mode;
 import app.organicmaps.sdk.util.SharedPropertiesUtils;
 import app.organicmaps.util.ThemeSwitcher;
@@ -64,6 +65,18 @@ public class ToggleMapLayerFragment extends Fragment
     {
       items.add(LayerBottomSheetItem.create(requireContext(), layer, this::onItemClick));
     }
+    if (RoadDataManager.available())
+      items.add(new LayerBottomSheetItem(
+          R.drawable.ic_layers_road_events, R.string.road_events_title,
+          context -> RoadDataManager.get(context).enabled(), (view, item) -> {
+            Context context = view.getContext();
+            RoadDataManager manager = RoadDataManager.get(context);
+            MwmApplication.prefs(context).edit().putBoolean(RoadDataManager.ENABLED, !manager.enabled()).apply();
+            manager.configure();
+            mAdapter.notifyDataSetChanged();
+            if (mMapButtonsController != null)
+              mMapButtonsController.updateLayerButton();
+          }));
     return items;
   }
 

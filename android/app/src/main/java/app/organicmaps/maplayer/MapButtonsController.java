@@ -24,6 +24,7 @@ import androidx.lifecycle.ViewModelProvider;
 import app.organicmaps.BuildConfig;
 import app.organicmaps.MwmActivity;
 import app.organicmaps.R;
+import app.organicmaps.road.RoadDataManager;
 import app.organicmaps.routing.RoutingPlanViewModel;
 import app.organicmaps.sdk.Framework;
 import app.organicmaps.sdk.downloader.MapManager;
@@ -330,7 +331,8 @@ public class MapButtonsController extends Fragment
     final boolean buttonSelected = TrafficManager.INSTANCE.isEnabled() || IsolinesManager.isEnabled()
                                 || SubwayManager.isEnabled() || Framework.nativeIsOutdoorsLayerEnabled()
                                 || Framework.nativeIsHikingLayerEnabled() || Framework.nativeIsCyclingLayerEnabled()
-                                || Framework.nativeIsBackgroundTilesEnabled();
+                                || Framework.nativeIsBackgroundTilesEnabled()
+                                || (RoadDataManager.available() && RoadDataManager.get(requireContext()).enabled());
     mToggleMapLayerButton.setHasActiveLayers(buttonSelected);
   }
 

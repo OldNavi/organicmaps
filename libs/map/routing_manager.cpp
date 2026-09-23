@@ -493,7 +493,7 @@ void RoutingManager::OnVehicleSpeed(double speedMps, double ageSeconds, bool val
 std::unique_ptr<routing::RoadInfoReader> RoutingManager::CreateRoadInfoReader()
 {
   return std::make_unique<routing::RoadInfoReader>(m_callbacks.m_dataSourceGetter(),
-                                                   m_callbacks.m_countryParentNameGetterFn);
+                                                   m_callbacks.m_countryParentNameGetterFn, m_roadEvents);
 }
 
 RouterType RoutingManager::GetBestRouter(m2::PointD const & startPoint, m2::PointD const & finalPoint) const

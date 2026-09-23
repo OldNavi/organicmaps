@@ -6,6 +6,8 @@
 #include "geometry/clipping.hpp"
 #include "geometry/mercator.hpp"
 
+#include <algorithm>
+
 namespace df
 {
 namespace
@@ -30,6 +32,7 @@ UserMarkGenerator::UserMarkGenerator(TFlushFn const & flushFn) : m_flushFn(flush
 
 void UserMarkGenerator::RemoveGroup(kml::MarkGroupId groupId)
 {
+  m_areasDirty |= HasAreas(groupId);
   m_groupsVisibility.erase(groupId);
   m_groups.erase(groupId);
   UpdateIndex(groupId);
@@ -37,6 +40,8 @@ void UserMarkGenerator::RemoveGroup(kml::MarkGroupId groupId)
 
 void UserMarkGenerator::SetGroup(kml::MarkGroupId groupId, drape_ptr<IDCollections> && ids)
 {
+  m_areasDirty |= HasAreas(groupId) ||
+                  std::any_of(ids->m_lineIds.begin(), ids->m_lineIds.end(), [this](auto id) { return IsArea(id); });
   m_groups[groupId] = std::move(ids);
   UpdateIndex(groupId);
 }
@@ -48,7 +53,10 @@ void UserMarkGenerator::SetRemovedUserMarks(drape_ptr<IDCollections> && ids)
   for (auto const & id : ids->m_markIds)
     m_marks.erase(id);
   for (auto const & id : ids->m_lineIds)
+  {
+    m_areasDirty |= IsArea(id);
     m_lines.erase(id);
+  }
 }
 
 void UserMarkGenerator::SetJustCreatedUserMarks(drape_ptr<IDCollections> && ids)
@@ -68,7 +76,10 @@ void UserMarkGenerator::SetUserMarks(drape_ptr<UserMarksRenderCollection> && mar
 void UserMarkGenerator::SetUserLines(drape_ptr<UserLinesRenderCollection> && lines)
 {
   for (auto & pair : *lines)
+  {
+    m_areasDirty |= IsArea(pair.first) || pair.second->m_fill != nullptr;
     m_lines.insert_or_assign(pair.first, std::move(pair.second));
+  }
 }
 
 void UserMarkGenerator::UpdateIndex(kml::MarkGroupId groupId)
@@ -193,10 +204,56 @@ void UserMarkGenerator::CleanIndex()
 
 void UserMarkGenerator::SetGroupVisibility(kml::MarkGroupId groupId, bool isVisible)
 {
+  if (m_groupsVisibility.contains(groupId) != isVisible)
+    m_areasDirty |= HasAreas(groupId);
   if (isVisible)
     m_groupsVisibility.insert(groupId);
   else
     m_groupsVisibility.erase(groupId);
+}
+
+bool UserMarkGenerator::IsArea(kml::MarkId id) const
+{
+  auto const it = m_lines.find(id);
+  return it != m_lines.end() && it->second->m_fill != nullptr;
+}
+
+bool UserMarkGenerator::HasAreas(kml::MarkGroupId groupId) const
+{
+  auto const group = m_groups.find(groupId);
+  return group != m_groups.end() && std::any_of(group->second->m_lineIds.begin(), group->second->m_lineIds.end(),
+                                                [this](auto id) { return IsArea(id); });
+}
+
+void UserMarkGenerator::GenerateUserAreasGeometry(ref_ptr<dp::GraphicsContext> context,
+                                                  ref_ptr<dp::TextureManager> textures, TFlushFn const & flush)
+{
+  if (!m_areasDirty)
+    return;
+  TUserMarksRenderData data;
+  std::set<kml::MarkId> visited;
+  for (auto const & [groupId, ids] : m_groups)
+  {
+    if (!m_groupsVisibility.contains(groupId))
+      continue;
+    for (auto id : ids->m_lineIds)
+    {
+      if (!IsArea(id) || !visited.insert(id).second)
+        continue;
+      auto const & params = *m_lines.at(id);
+      if (!params.m_visible)
+        continue;
+      // A stable local origin preserves float precision without attaching the fill to a map tile.
+      auto const origin = GetTileKeyByPoint(params.m_fill->m_textureRect.Center(), 15);
+      auto const batchSize = static_cast<uint32_t>(std::clamp<size_t>(params.m_fill->m_triangles.size(), 3, 65000));
+      dp::Batcher batcher(batchSize, batchSize);
+      dp::SessionGuard guard(context, batcher, [&](auto const & state, drape_ptr<dp::RenderBucket> && bucket)
+      { data.emplace_back(state, std::move(bucket), origin, params.m_minZoom); });
+      CacheUserArea(context, origin, textures, params, batcher);
+    }
+  }
+  m_areasDirty = false;
+  flush(std::move(data));
 }
 
 template <class SourceT, class LevelsT>

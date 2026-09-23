@@ -7,7 +7,8 @@
 namespace
 {
 uint32_t constexpr kMarkIdTypeBitsCount = 4;
-static_assert(UserMark::USER_MARK_TYPES_COUNT <= (1 << kMarkIdTypeBitsCount));
+static_assert(UserMark::USER_MARK_TYPES_COUNT <= UserMark::EXTERNAL);
+static_assert(UserMark::EXTERNAL < (1 << kMarkIdTypeBitsCount));
 
 std::string const kLastBookmarkId = "LastBookmarkId";
 std::string const kLastTrackId = "LastTrackId";

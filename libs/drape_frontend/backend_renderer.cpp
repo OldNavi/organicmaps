@@ -286,6 +286,7 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   {
     ref_ptr<ChangeUserMarkGroupVisibilityMessage> msg = message;
     m_userMarkGenerator->SetGroupVisibility(msg->GetGroupId(), msg->IsVisible());
+    RecacheUserAreas();
     break;
   }
 
@@ -311,11 +312,14 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   {
     ref_ptr<ClearUserMarkGroupMessage> msg = message;
     m_userMarkGenerator->RemoveGroup(msg->GetGroupId());
+    RecacheUserAreas();
     break;
   }
 
   case Message::Type::InvalidateUserMarks:
   {
+    ref_ptr<InvalidateUserMarksMessage> msg = message;
+    RecacheUserAreas(msg->NeedRecacheAreas());
     m_commutator->PostMessage(ThreadsCommutator::RenderThread, make_unique_dp<InvalidateUserMarksMessage>(),
                               MessagePriority::Normal);
     break;
@@ -373,6 +377,7 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
 
     CHECK(m_context != nullptr, ());
     m_texMng->OnSwitchMapStyle(m_context);
+    RecacheUserAreas(true);
     RecacheMapShapes();
     RecacheGui(m_lastWidgetsInfo, false /* needResetOldGui */);
 #ifdef RENDER_DEBUG_INFO_LABELS
@@ -402,6 +407,7 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
 #endif  // BUILD_DESIGNER
 
     m_texMng->OnVisualScaleChanged(m_context, params);
+    RecacheUserAreas(true);
 
     RecacheMapShapes();
     RecacheGui(m_lastWidgetsInfo, false /* needResetOldGui */);
@@ -841,6 +847,7 @@ void BackendRenderer::OnContextCreate()
 
   m_readManager->Start();
   InitContextDependentResources();
+  RecacheUserAreas(true);
 }
 
 void BackendRenderer::OnContextDestroy()
@@ -972,6 +979,17 @@ void BackendRenderer::FlushTrafficRenderData(TrafficRenderData && renderData)
 {
   m_commutator->PostMessage(ThreadsCommutator::RenderThread,
                             make_unique_dp<FlushTrafficDataMessage>(std::move(renderData)), MessagePriority::Normal);
+}
+
+void BackendRenderer::RecacheUserAreas(bool force)
+{
+  if (force)
+    m_userMarkGenerator->InvalidateUserAreas();
+  m_userMarkGenerator->GenerateUserAreasGeometry(m_context, m_texMng, [this](TUserMarksRenderData && data)
+  {
+    m_commutator->PostMessage(ThreadsCommutator::RenderThread, make_unique_dp<FlushUserAreasMessage>(std::move(data)),
+                              MessagePriority::Normal);
+  });
 }
 
 void BackendRenderer::FlushUserMarksRenderData(TUserMarksRenderData && renderData)

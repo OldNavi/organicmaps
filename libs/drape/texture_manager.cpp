@@ -495,6 +495,20 @@ void TextureManager::Init(ref_ptr<dp::GraphicsContext> context, Params const & p
         make_unique_dp<SymbolsTexture>(context, m_resPostfix, texName, make_ref(m_textureAllocator)));
   }
 
+  // Flavor-specific assets may supply extra atlases without changing the shared map symbols.
+  std::string additionalTextures;
+  try
+  {
+    ReaderPtr<Reader>(GetPlatform().GetReader("additional-symbols.txt", "r")).ReadAsString(additionalTextures);
+  }
+  catch (FileAbsentException const &)
+  {}
+  strings::Tokenize(additionalTextures, "\r\n", [&](std::string_view name)
+  {
+    m_symbolTextures.push_back(
+        make_unique_dp<SymbolsTexture>(context, m_resPostfix, std::string(name), make_ref(m_textureAllocator)));
+  });
+
   // Initialize static textures.
   m_trafficArrowTexture = make_unique_dp<StaticTexture>(context, "traffic-arrow.png", m_resPostfix,
                                                         dp::TextureFormat::RGBA8, make_ref(m_textureAllocator));

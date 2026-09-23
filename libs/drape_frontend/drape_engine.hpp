@@ -45,6 +45,7 @@ class GraphicsContextFactory;
 namespace df
 {
 class UserMarksProvider;
+class ExternalMarks;
 class MapDataProvider;
 
 class DrapeEngine
@@ -90,6 +91,7 @@ public:
       , m_renderInjectionHandler(std::move(renderInjectionHandler))
     {}
 
+    std::shared_ptr<ExternalMarks> m_externalMarks;
     dp::ApiVersion m_apiVersion;
     ref_ptr<dp::GraphicsContextFactory> m_factory;
     dp::Viewport m_viewport;
@@ -157,6 +159,7 @@ public:
   void ClearUserMarksGroup(kml::MarkGroupId groupId);
   void ChangeVisibilityUserMarksGroup(kml::MarkGroupId groupId, bool isVisible);
   void InvalidateUserMarks();
+  void RefreshExternalMarks();
   void UpdateBookmarksTextPlacement(UserMarksProvider * provider);
   void UpdateUserMarks(UserMarksProvider * provider, bool firstTime);
 
@@ -305,6 +308,12 @@ private:
   std::atomic<double> m_currentZoomLevel{0.0};
   std::atomic<double> m_currentTilt{0.0};
   ModelViewChangedHandler m_modelViewChangedHandler;
+  std::shared_ptr<ExternalMarks> m_externalMarks;
+  uint64_t m_externalMarksRevision = 0;
+  m2::RectD m_externalMarksRect;
+  int m_externalMarksZoom = -1;
+  kml::MarkIdCollection m_externalMarkIds;
+  kml::TrackIdCollection m_externalLineIds;
   TapEventInfoHandler m_tapEventInfoHandler;
   UserPositionChangedHandler m_userPositionChangedHandler;
 

@@ -24,7 +24,9 @@ std::string_view DebugPrint(Message::Type msgType)
   case Message::Type::ClearUserMarkGroup: return "ClearUserMarkGroup";
   case Message::Type::ChangeUserMarkGroupVisibility: return "ChangeUserMarkGroupVisibility";
   case Message::Type::UpdateUserMarks: return "UpdateUserMarks";
+  case Message::Type::RefreshExternalMarks: return "RefreshExternalMarks";
   case Message::Type::InvalidateUserMarks: return "InvalidateUserMarks";
+  case Message::Type::FlushUserAreas: return "FlushUserAreas";
   case Message::Type::FlushUserMarks: return "FlushUserMarks";
   case Message::Type::GuiLayerRecached: return "GuiLayerRecached";
   case Message::Type::GuiRecache: return "GuiRecache";

@@ -29,6 +29,37 @@
 
 namespace place_page
 {
+void Info::FillRoadEventInfo()
+{
+  auto const & event = *m_buildInfo.m_roadEvent;
+  SetSelectedObject(df::SelectionShape::OBJECT_POI);
+  static constexpr char const * keys[] = {"road_event_camera",
+                                          "road_event_dummy",
+                                          "road_event_video",
+                                          "road_event_red_light",
+                                          "road_event_lane_control",
+                                          "road_event_mobile",
+                                          "road_event_police",
+                                          "road_event_average_start",
+                                          "road_event_average_end",
+                                          "road_event_speed_limit",
+                                          "road_event_settlement_start",
+                                          "road_event_settlement_end",
+                                          "road_event_bump",
+                                          "road_event_crossing",
+                                          "road_event_children",
+                                          "road_event_railway",
+                                          "road_event_bad_road",
+                                          "road_event_bend",
+                                          "road_event_intersection",
+                                          "road_event_danger",
+                                          "road_event_no_overtaking"};
+  static_assert(std::size(keys) == static_cast<size_t>(routing::RoadEventKind::Count));
+  SetMercator(event.m_position);
+  SetCanEditOrAdd(false);
+  SetCustomNames(platform::GetLocalizedString(keys[static_cast<size_t>(event.m_kind)]), {});
+}
+
 namespace
 {
 // Each wrapper formats one coordinate system's value for the given point. Returns an empty string when

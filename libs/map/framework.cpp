@@ -5,6 +5,7 @@
 #include "map/place_page_info.hpp"
 #include "map/raster_tile_provider.hpp"
 #include "map/relation_track.hpp"
+#include "map/road_event_layer.hpp"
 #include "map/track_mark.hpp"
 #include "map/user_mark.hpp"
 
@@ -1841,6 +1842,7 @@ void Framework::CreateDrapeEngine(ref_ptr<dp::GraphicsContextFactory> contextFac
       std::move(overlaysShowStatsFn), std::move(onGraphicsContextInitialized),
       std::move(params.m_renderInjectionHandler));
 
+  p.m_externalMarks = std::make_shared<RoadEventLayer>(m_routingManager.GetRoadEvents());
   m_drapeEngine = make_unique_dp<df::DrapeEngine>(std::move(p));
   m_drapeEngine->SetModelViewListener([this](ScreenBase const & screen)
   { GetPlatform().RunTask(Platform::Thread::Gui, [this, screen]() { OnViewportChanged(screen); }); });
@@ -1907,6 +1909,7 @@ drape_ptr<df::DrapeEngine> Framework::CreateNavigationRenderer(ref_ptr<dp::Graph
                                  allow3dBuildings, false, false, true, false, {}, false, false, false,
                                  dp::BackgroundMode::Default, 1.0f, std::nullopt,
                                  [](std::list<df::OverlayShowEvent> &&) {}, [] {}, {});
+  params.m_externalMarks = std::make_shared<RoadEventLayer>(m_routingManager.GetRoadEvents());
   auto engine = make_unique_dp<df::DrapeEngine>(std::move(params));
   engine->SetVisibleViewport(m2::RectD(0, 0, width, height));
   engine->Allow3dMode(true, allow3dBuildings);
@@ -2338,8 +2341,9 @@ void Framework::DeactivateHotelSearchMark()
     m_searchMarks.OnDeactivate(m_currentPlacePageInfo->GetID());
 }
 
-void Framework::OnTapEvent(place_page::BuildInfo const & buildInfo)
+void Framework::OnTapEvent(place_page::BuildInfo const & tapInfo)
 {
+  auto buildInfo = tapInfo;
   if (buildInfo.m_isLongTap)
   {
     SwitchFullScreen();
@@ -2351,6 +2355,17 @@ void Framework::OnTapEvent(place_page::BuildInfo const & buildInfo)
   auto const umID = buildInfo.m_userMarkId;
   if (umID != kml::kInvalidMarkId)
   {
+    if (UserMark::GetMarkType(umID) == UserMark::EXTERNAL)
+    {
+      buildInfo.m_roadEvent = RoadEventLayer::Resolve(*m_routingManager.GetRoadEvents(), umID);
+      if (!buildInfo.m_roadEvent)
+        return;
+      // Keep the selected snapshot for subsequent place-page refreshes, independent of later imports.
+      buildInfo.m_mercator = buildInfo.m_roadEvent->m_position;
+      buildInfo.m_userMarkId = kml::kInvalidMarkId;
+      buildInfo.m_featureId = {};
+      buildInfo.m_match = place_page::BuildInfo::Match::Nothing;
+    }
     if (UserMark::GetMarkType(umID) == UserMark::Type::ROUTE_ALT)
     {
       if (auto const * mark = static_cast<RouteAltMark const *>(GetBookmarkManager().GetUserMark(umID)))
@@ -2520,6 +2535,13 @@ place_page::Info Framework::BuildPlacePageInfo(place_page::BuildInfo const & bui
       outInfo = {};
       outInfo.SetBuildInfo(buildInfo);
     }
+  }
+
+  if (buildInfo.m_roadEvent)
+  {
+    outInfo.FillRoadEventInfo();
+    GetSelectionProcessor().SetPlacePageLocation(outInfo);
+    return outInfo;
   }
 
   auto const & sp = GetSelectionProcessor();

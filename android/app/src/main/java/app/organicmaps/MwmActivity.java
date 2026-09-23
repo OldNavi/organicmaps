@@ -67,6 +67,7 @@ import app.organicmaps.location.TrackRecordingService;
 import app.organicmaps.maplayer.MapButtonsController;
 import app.organicmaps.maplayer.MapButtonsViewModel;
 import app.organicmaps.maplayer.ToggleMapLayerFragment;
+import app.organicmaps.road.RoadDataPrompt;
 import app.organicmaps.routing.NavigationController;
 import app.organicmaps.routing.NavigationService;
 import app.organicmaps.routing.RoutePointLabels;
@@ -507,6 +508,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
     setContentView(R.layout.activity_map);
     makeNavigationBarTransparentInLightMode();
+    RoadDataPrompt.attach(this);
 
     mRoutingPlanViewModel = new ViewModelProvider(this).get(RoutingPlanViewModel.class);
     mPlacePageViewModel = new ViewModelProvider(this).get(PlacePageViewModel.class);

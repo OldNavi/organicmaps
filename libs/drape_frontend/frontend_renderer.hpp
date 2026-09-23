@@ -317,6 +317,12 @@ private:
   drape_ptr<gpu::ProgramManager> m_gpuProgramManager;
 
   std::array<RenderLayer, static_cast<size_t>(DepthLayer::LayersCount)> m_layers;
+  struct UserAreaGroup
+  {
+    drape_ptr<UserMarkRenderGroup> m_group;
+    int m_minZoom = 1;
+  };
+  std::vector<UserAreaGroup> m_userAreas;
 
   drape_ptr<gui::LayerRenderer> m_guiRenderer;
   gui::TWidgetsLayoutInfo m_lastWidgetsLayout;

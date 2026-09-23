@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="16.00000" id="svg2" version="1.1" viewBox="0 0 1050.0 350.0">
+  <defs id="defs4" />
+  <g id="layer1" transform="translate(0,-702.36218)">
+    <rect y="702.36218" x="0" height="350" width="1050" id="rect8314" style="color:#262626;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3.54299998;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" rx="45" ry="45" />
+    <path style="color:#262626;fill:#1a1a1a;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3.54299998;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" d="M 45,10 C 25.61,10 10,25.61 10,45 l 0,260 c 0,19.39 15.61,35 35,35 l 960,0 c 19.39,0 35,-15.61 35,-35 l 0,-260 c 0,-19.39 -15.61,-35 -35,-35 L 45,10 z m 0,10 960,0 c 13.85,0 25,11.15 25,25 l 0,260 c 0,13.85 -11.15,25 -25,25 L 45,330 C 31.15,330 20,318.85 20,305 L 20,45 C 20,31.15 31.15,20 45,20 z" transform="translate(0,702.36218)" id="rect8316" />
+    <rect ry="44" rx="44" style="color:#262626;fill:none;stroke:#262626;stroke-width:2;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" id="rect8382" width="1048" height="348" x="1" y="703.36218" />
+    <path id="path8308-9" d="m 69.99998,894.8622 0,105 910,0 0,-192.5 -61.25,-17.5 -61.25,17.5 0,122.5 -17.5,0 0,-35 -87.5,-43.75 -87.5,43.75 0,35 -17.50001,0 1e-5,-17.5 -43.75,-35 -52.5,0 0,-8.75 -52.5,0 0,8.75 -52.5,0 -43.75,35 0,17.5 -17.5,0 0,-26.25 -70,-148.75 -70,148.75 0,26.25 -17.5,0 0,-35 -78.75,-26.25 z" style="fill:#262626;fill-opacity:1;stroke:none" />
+  </g>
+</svg>

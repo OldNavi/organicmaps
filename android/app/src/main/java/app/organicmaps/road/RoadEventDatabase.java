@@ -11,10 +11,12 @@ import app.organicmaps.sdk.road.RoadEvents;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /** Country/source replacement is atomic. Rendering never queries SQLite or blocks on its writer. */
 final class RoadEventDatabase extends SQLiteOpenHelper
@@ -52,6 +54,12 @@ final class RoadEventDatabase extends SQLiteOpenHelper
 
   int importFile(RoadDataProvider provider, String country, InputStream input) throws IOException
   {
+    return importFile(provider, country, input, () -> false);
+  }
+
+  int importFile(RoadDataProvider provider, String country, InputStream input, BooleanSupplier cancelled)
+      throws IOException
+  {
     if (!country.matches("[A-Z]{2}"))
       throw new IllegalArgumentException("Invalid country code");
     try (RoadEventImporter importer = provider.newImporter())
@@ -68,6 +76,8 @@ final class RoadEventDatabase extends SQLiteOpenHelper
         RoadEventBatch batch;
         while ((batch = importer.nextBatch()) != null)
         {
+          if (cancelled.getAsBoolean())
+            throw new InterruptedIOException("Road import cancelled");
           if (batch.identities.length == 0)
             throw new IOException("Empty importer batch");
           for (int i = 0; i < batch.identities.length; ++i)
@@ -81,6 +91,8 @@ final class RoadEventDatabase extends SQLiteOpenHelper
           }
           count += batch.identities.length;
         }
+        if (cancelled.getAsBoolean())
+          throw new InterruptedIOException("Road import cancelled");
         ContentValues metadata = new ContentValues();
         metadata.put("provider", provider.id());
         metadata.put("country", country);
@@ -115,6 +127,15 @@ final class RoadEventDatabase extends SQLiteOpenHelper
                                                         new String[] {provider, country}))
     {
       return cursor.moveToFirst();
+    }
+  }
+
+  long importedAt(String provider, String country)
+  {
+    try (Cursor cursor = getReadableDatabase().rawQuery(
+             "SELECT imported_at FROM imports WHERE provider=? AND country=?", new String[] {provider, country}))
+    {
+      return cursor.moveToFirst() ? cursor.getLong(0) : 0;
     }
   }
 

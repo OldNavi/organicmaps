@@ -10,9 +10,11 @@ set(SRC
   batcher_tests.cpp
   bingind_info_tests.cpp
   buffer_tests.cpp
+  gl_buffer_pool_tests.cpp
   color_tests.cpp
   dummy_texture.hpp
   font_texture_tests.cpp
+  frame_cadence_tests.cpp
   gl_functions.cpp
   gl_mock_functions.cpp
   gl_mock_functions.hpp

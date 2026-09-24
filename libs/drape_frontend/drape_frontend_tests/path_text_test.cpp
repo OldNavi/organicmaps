@@ -186,3 +186,25 @@ UNIT_CLASS_TEST(VisualParamsFixture, Rounding_Spline_Visual)
 }
 
 }  // namespace path_text_test
+
+UNIT_TEST(PathText_DirectionHysteresis)
+{
+  std::optional<bool> direction;
+  auto update = [&](double x, double y)
+  {
+    direction = df::UpdatePathTextDirection({x, y}, direction);
+    return *direction;
+  };
+  TEST(!update(1, 100), ("Initial placement keeps the ordinary readable orientation"));
+  for (int i = 0; i < 100; ++i)
+    TEST(!update(i % 2 ? -3 : 3, 100), ("Repeated heading jitter across vertical"));
+  TEST(update(-10, 100), ("Switch beyond five degrees"));
+  TEST(update(3, 100), ("Returning across zero stays in the new orientation"));
+  TEST(!update(10, 100), ());
+  TEST(update(-100, 0), ("Large rotation flips immediately"));
+  TEST(update(0, -100), ("Both vertical orientations have the same deadband"));
+  TEST(!update(100, 0), ());
+  TEST(df::UpdatePathTextDirection({-100, 0}, {}), ("Placements have independent state"));
+  TEST(!df::UpdatePathTextDirection({100, 0}, {}), ());
+  TEST(df::UpdatePathTextDirection({0, 0}, true), ("A degenerate projection keeps its previous orientation"));
+}

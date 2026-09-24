@@ -100,7 +100,7 @@ std::string GetSymbolNameForZoomLevel(ref_ptr<UserPointMark::SymbolNameZoomInfo>
     return {};
 
   for (auto itName = symbolNames->crbegin(); itName != symbolNames->crend(); ++itName)
-    if (itName->first <= tileKey.m_zoomLevel)
+    if (itName->first <= tileKey.GetRenderZoom())
       return itName->second;
   return {};
 }
@@ -113,7 +113,7 @@ m2::PointF GetSymbolOffsetForZoomLevel(ref_ptr<UserPointMark::SymbolOffsets> sym
   CHECK_GREATER(tileKey.m_zoomLevel, 0, ());
   CHECK_LESS_OR_EQUAL(tileKey.m_zoomLevel, scales::UPPER_STYLE_SCALE, ());
 
-  auto const offsetIndex = static_cast<size_t>(tileKey.m_zoomLevel - 1);
+  auto const offsetIndex = static_cast<size_t>(tileKey.GetRenderZoom() - 1);
   return symbolOffsets->operator[](offsetIndex);
 }
 
@@ -163,7 +163,7 @@ void GenerateColoredSymbolShapes(ref_ptr<dp::GraphicsContext> context, ref_ptr<d
   {
     for (auto const & e : renderInfo.m_coloredSymbols->m_zoomInfo)
     {
-      if (e.first <= tileKey.m_zoomLevel)
+      if (e.first <= tileKey.GetRenderZoom())
       {
         params = e.second;
         break;
@@ -241,7 +241,7 @@ void GenerateTextShapes(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::Textur
                         UserMarkRenderParams const & renderInfo, TileKey const & tileKey, m2::PointD const & tileCenter,
                         m2::PointF const & symbolOffset, m2::PointF const & symbolSize, dp::Batcher & batcher)
 {
-  if (renderInfo.m_minTitleZoom > tileKey.m_zoomLevel)
+  if (renderInfo.m_minTitleZoom > tileKey.GetRenderZoom())
     return;
 
   auto const vs = static_cast<float>(df::VisualParams::Instance().GetVisualScale());

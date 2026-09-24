@@ -86,6 +86,7 @@ class Loader;
 // #define FIXED_LOCATION
 
 class RasterTileProvider;
+class MwmRoadEvents;
 
 struct FrameworkParams
 {
@@ -139,6 +140,8 @@ class Framework
 private:
   // Must be first member in Framework and must be destroyed first in Framework destructor.
   std::unique_ptr<Platform::ThreadRunner> m_threadRunner = std::make_unique<Platform::ThreadRunner>();
+  std::shared_ptr<MwmRoadEvents> m_mwmRoadEvents;
+  std::shared_ptr<int> m_roadEventsLifetime = std::make_shared<int>(0);
 
 protected:
   using TDrapeFunction = std::function<void(df::DrapeEngine *)>;

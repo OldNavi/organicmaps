@@ -378,6 +378,9 @@ RoutingManager::RoutingManager(Callbacks && callbacks, Delegate & delegate)
       if (m_routeSpeedCamShowCallback)
         m_routeSpeedCamShowCallback(point, cameraSpeedKmPH);
 
+      // Automotive cameras (including MWM) share the external layer's symbols, sectors and deduplication.
+      if (m_roadEvents->Get().m_useMapCameras)
+        return;
       auto editSession = m_bmManager->GetEditSession();
       auto mark = editSession.CreateUserMark<SpeedCameraMark>(point);
 

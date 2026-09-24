@@ -66,13 +66,32 @@ and never contribute a camera gradient or `/speed_camera` entry.
 From zoom 15, directional cameras also show their approach sectors as light-orange,
 translucent ground fills with a radial fade. These use the source warning distance
 (capped at the existing 2 km look-ahead horizon), direction and angle. Two-way
-cameras get two sectors; missing direction/angle is not guessed. Fills use the
+cameras get two sectors; missing provider direction/angle is not guessed. Fills use the
 same immutable source and active type visibility as icons. They are uploaded as one
 complete, untiled snapshot and replaced atomically: old/new zoom tiles must not
 blend the same translucent sector twice. A fixed local origin keeps GPU coordinate
 precision; map zoom changes only its transform. The snapshot is recached on data,
 visibility, style or graphics-context changes. The gradient texture is generated
 in the automotive atlas, not rebuilt each frame.
+
+In the auto flavor, MWM speed-camera sections are read once per encountered map on
+the file thread and published as a shared immutable index. Road geometry supplies
+the bearing; a stored forward/backward hint selects the approach, while unknown
+or bidirectional cameras use both approaches. Their conventional sector uses
+500 m and a 15-degree half-angle, not a measured detection range. Map updates and
+removals invalidate this cache. Reading and indexing never run in a render frame.
+
+Both sources use the same camera symbol and speed badge (in the selected units).
+An imported speed camera takes priority over an MWM camera within 50 m with a
+matching direction (10-degree tolerance; bidirectional cameras compare road axes).
+This merge affects presentation only. Camera POIs without a routing-section entry
+retain a point symbol; auto atlas aliases give them the same camera artwork.
+Other flavors retain the stock symbols and camera rendering.
+
+Cluster symbol visibility and size use camera zoom, independent of the coarser
+terrain tiles selected in perspective. Pending mark invalidations survive viewport
+updates until the backend consumes them. Road-label direction retains its previous
+orientation within five degrees of vertical, and switches beyond that deadband.
 
 External mark IDs and the group are reserved separately from BookmarkManager-owned layers.
 

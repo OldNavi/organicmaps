@@ -336,7 +336,7 @@ bool PathTextHandle::Update(ScreenBase const & screen)
   if (!m_context->GetPivot(m_textIndex, screen, m_globalPivot, centerPointIter))
     return false;
 
-  if (!m_context->GetLayout()->CacheDynamicGeometry(centerPointIter, m_depth, m_globalPivot, m_buffer))
+  if (!m_context->GetLayout()->CacheDynamicGeometry(centerPointIter, m_depth, m_globalPivot, m_buffer, m_reversed))
     return false;
 
   m_hasDynamicGeometry = true;

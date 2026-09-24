@@ -1353,8 +1353,8 @@ public class ClusterRenderingTest
         long secondBefore = second.checksum.get();
         main(() -> {
           Framework.nativeCloseRouting();
-          Framework.nativeAddRoutePoint("Start", "", RouteMarkType.Start, 0, false, 0, -0.002, false);
-          Framework.nativeAddRoutePoint("Finish", "", RouteMarkType.Finish, 0, false, 0, 0.002, false);
+          Framework.nativeAddRoutePoint("Start", "", RouteMarkType.Start, false, 0, -0.002, false);
+          Framework.nativeAddRoutePoint("Finish", "", RouteMarkType.Finish, false, 0, 0.002, false);
           Framework.nativeBuildRoute();
         });
         awaitChanged(first, before);

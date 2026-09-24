@@ -67,6 +67,18 @@ public class RoadShieldDrawable extends Drawable
   );
   // clang-format on
 
+  @ColorInt
+  public static int getTextColor(@NonNull RoadShieldType type)
+  {
+    return Objects.requireNonNull(SHIELD_TEXT_COLORS.get(type));
+  }
+
+  @ColorInt
+  public static int getBackgroundColor(@NonNull RoadShieldType type)
+  {
+    return Objects.requireNonNull(SHIELD_BACKGROUND_COLORS.get(type));
+  }
+
   private final RoadShield mShield;
   private final boolean mDrawOutline;
 
@@ -131,9 +143,9 @@ public class RoadShieldDrawable extends Drawable
   private void init(float textSize)
   {
     @ColorInt
-    final int textColor = Objects.requireNonNull(SHIELD_TEXT_COLORS.get(mShield.type));
+    final int textColor = getTextColor(mShield.type);
     @ColorInt
-    final int backgroundColor = Objects.requireNonNull(SHIELD_BACKGROUND_COLORS.get(mShield.type));
+    final int backgroundColor = getBackgroundColor(mShield.type);
 
     mTextPaint.setColor(textColor);
     mTextPaint.setTextAlign(Paint.Align.CENTER);

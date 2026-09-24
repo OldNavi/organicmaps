@@ -36,6 +36,7 @@ import app.organicmaps.sdk.location.LocationHelper;
 import app.organicmaps.sdk.road.RoadEvents;
 import app.organicmaps.sdk.routing.RoutingController;
 import app.organicmaps.sdk.routing.RoutingInfo;
+import app.organicmaps.sdk.widget.roadshield.RoadShieldDrawable;
 import app.organicmaps.settings.SpeedWarningSettings;
 import java.util.Arrays;
 import java.util.Objects;
@@ -336,9 +337,10 @@ public final class NavigationProvider extends ContentProvider
                                          "background_color", "distance_unit", "display_distance_unit"});
       if (info != null && info.nextStreetRoadShields != null && info.nextStreetRoadShields.hasTargetRoadShields())
         for (var shield : info.nextStreetRoadShields.targetRoadShields)
-          result.addRow(new Object[] {NavigationSnapshot.action(info.carDirection), info.distToTurn.mDistanceStr,
-                                      "road", (int) Math.round(snapshot.metrics[2]), "", shield.text, 0xff000000,
-                                      0xffffffff, "m", NavigationSnapshot.unit(info.distToTurn)});
+          result.addRow(new Object[] {
+              NavigationSnapshot.action(info.carDirection), info.distToTurn.mDistanceStr, "road",
+              (int) Math.round(snapshot.metrics[2]), "", shield.text, RoadShieldDrawable.getTextColor(shield.type),
+              RoadShieldDrawable.getBackgroundColor(shield.type), "m", NavigationSnapshot.unit(info.distToTurn)});
       break;
     case "/routes":
       result = new MatrixCursor(new String[] {"index", "distance", "unit", "travel_time", "is_selected"});

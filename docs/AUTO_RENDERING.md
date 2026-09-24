@@ -22,17 +22,22 @@ Unspecified fields inherit. Each display is configured independently.
 ```xml
 <render_config>
   <profile name="default">
-    <main render_scale="1.0" max_fps="30" msaa_samples="0" />
-    <cluster render_scale="1.0" max_fps="20" msaa_samples="0" />
+    <main render_scale="1.0" max_fps="0" msaa_samples="0" />
+    <cluster render_scale="1.0" max_fps="0" msaa_samples="0" />
   </profile>
   <profile name="rox" type="car" family="rox">
-    <main render_scale="0.75" msaa_samples="2" />
-    <cluster render_scale="0.75" msaa_samples="2" />
+    <main render_scale="1.0" max_fps="30" msaa_samples="0" />
+    <cluster render_scale="1.0" max_fps="20" msaa_samples="0" />
   </profile>
 </render_config>
 ```
 
-A more specific profile adds `car_type` with the value supplied by the detector.
+The default profile uses native resolution without a software FPS limit or MSAA.
+ROX uses native resolution at 30 FPS on the main display and 20 FPS
+on the cluster, both without MSAA. Default displays require an explicit `max_fps`;
+use `0` to disable the limiter.
+Device overrides can add `type="car"` and `family` using the detector's identifiers;
+a model-specific profile also adds `car_type` with the value supplied by the detector.
 The parser rejects missing defaults, duplicate selectors, unknown attributes and
 out-of-range values, including profiles not selected on the current device.
 Ordinary app flavors retain their existing rendering settings.

@@ -82,6 +82,10 @@ Framebuffer::~Framebuffer()
 
 void Framebuffer::Destroy()
 {
+#ifdef OMIM_AUTO
+  GLFunctions::DeleteMultisampleFramebuffer(m_multisample);
+  m_multisample = {};
+#endif
   m_colorTexture.reset();
 
   if (m_depthStencil != nullptr)
@@ -158,6 +162,19 @@ void Framebuffer::SetSize(ref_ptr<dp::GraphicsContext> context, uint32_t width, 
       LOG(LWARNING, ("Framebuffer is unsupported. Framebuffer status =", status));
     }
 
+#ifdef OMIM_AUTO
+    if (m_isSupported && m_requestedSamples > 0)
+    {
+      CHECK_EQUAL(m_colorFormat, TextureFormat::RGBA8, ());
+      CHECK(m_depthStencilRef == m_depthStencil.get(), ("MSAA requires an owned depth/stencil attachment"));
+      m_multisample = GLFunctions::CreateMultisampleFramebuffer(m_width, m_height, m_requestedSamples,
+                                                                depthAttachmentId != 0, stencilAttachmentId != 0);
+      GLFunctions::glBindFramebuffer(m_framebufferId);
+      if (m_multisample.m_samples != m_requestedSamples)
+        LOG(LWARNING, ("MSAA level reduced from", m_requestedSamples, "to", m_multisample.m_samples));
+    }
+#endif
+
     if (m_framebufferFallback != nullptr)
       m_framebufferFallback();
   }
@@ -177,8 +194,27 @@ void Framebuffer::Bind()
 {
   ASSERT(m_isSupported, ());
   ASSERT_NOT_EQUAL(m_framebufferId, 0, ());
+#ifdef OMIM_AUTO
+  GLFunctions::glBindFramebuffer(m_multisample.m_framebuffer != 0 ? m_multisample.m_framebuffer : m_framebufferId);
+#else
   GLFunctions::glBindFramebuffer(m_framebufferId);
+#endif
 }
+
+#ifdef OMIM_AUTO
+void Framebuffer::SetSamples(uint32_t samples)
+{
+  CHECK_EQUAL(m_framebufferId, 0, ("Configure samples before allocating the framebuffer"));
+  CHECK(samples == 0 || samples == 2 || samples == 4, (samples));
+  m_requestedSamples = samples;
+}
+
+void Framebuffer::Resolve()
+{
+  if (m_multisample.m_framebuffer != 0)
+    GLFunctions::ResolveMultisampleFramebuffer(m_multisample.m_framebuffer, m_framebufferId, m_width, m_height);
+}
+#endif
 
 void Framebuffer::ApplyFallback()
 {

@@ -18,9 +18,14 @@
 class RoadEventLayer : public df::ExternalMarks
 {
 public:
-  explicit RoadEventLayer(std::shared_ptr<routing::RoadEventSource> source, std::shared_ptr<MwmRoadEvents> maps = {})
+  static constexpr uint32_t kClusterExcludedKinds = (1u << static_cast<unsigned>(routing::RoadEventKind::Dummy)) |
+                                                    (1u << static_cast<unsigned>(routing::RoadEventKind::Video));
+
+  explicit RoadEventLayer(std::shared_ptr<routing::RoadEventSource> source, std::shared_ptr<MwmRoadEvents> maps = {},
+                          uint32_t excludedKinds = 0)
     : m_source(std::move(source))
     , m_maps(std::move(maps))
+    , m_excludedKinds(excludedKinds)
   {}
   uint64_t Revision() const override { return m_source->Get().m_revision; }
   kml::MarkGroupId GroupId() const override { return UserMark::EXTERNAL; }
@@ -38,7 +43,29 @@ public:
       return {};
     return store->Get(index);
   }
-  RenderData Query(m2::RectD const & rect, int zoom) const override
+  RenderData Query(m2::RectD const & viewport, int zoom) const override
+  {
+    // Renderers may follow a world copy outside [-180, 180]; the index stores canonical longitudes.
+    auto rect = mercator::WrapRectX(viewport);
+    double constexpr kMinX = mercator::Bounds::kMinX, kMaxX = mercator::Bounds::kMaxX;
+    if (rect.SizeX() >= mercator::Bounds::kRangeX)
+      return QueryCanonical({kMinX, rect.minY(), kMaxX, rect.maxY()}, zoom);
+    if (rect.minX() >= kMinX && rect.maxX() <= kMaxX)
+      return QueryCanonical(rect, zoom);
+
+    auto const left = rect.minX() < kMinX;
+    auto result =
+        QueryCanonical({left ? kMinX : rect.minX(), rect.minY(), left ? rect.maxX() : kMaxX, rect.maxY()}, zoom);
+    rect.Offset(left ? mercator::Bounds::kRangeX : -mercator::Bounds::kRangeX, 0);
+    auto remainder =
+        QueryCanonical({left ? rect.minX() : kMinX, rect.minY(), left ? kMaxX : rect.maxX(), rect.maxY()}, zoom);
+    result.m_marks->merge(*remainder.m_marks);
+    result.m_lines->merge(*remainder.m_lines);
+    return result;
+  }
+
+private:
+  RenderData QueryCanonical(m2::RectD const & rect, int zoom) const
   {
     RenderData result;
     auto const state = m_source->Get();
@@ -51,7 +78,8 @@ public:
     auto const visualScale = static_cast<float>(df::VisualParams::Instance().GetVisualScale());
     // Use POI-sized symbols at overview zooms; reserve the larger variant for street detail.
     float const symbolSize = zoom >= 17 ? 22.0f : zoom >= 15 ? 18.0f : 14.0f;
-    uint32_t hiddenKinds = ~state.m_visibleKinds | (1u << static_cast<unsigned>(routing::RoadEventKind::SettlementEnd));
+    uint32_t hiddenKinds =
+        ~state.m_visibleKinds | m_excludedKinds | (1u << static_cast<unsigned>(routing::RoadEventKind::SettlementEnd));
     for (size_t kind = 0; kind < state.m_minZooms.size(); ++kind)
       if (zoom < state.m_minZooms[kind])
         hiddenKinds |= 1u << kind;
@@ -176,7 +204,6 @@ public:
     return result;
   }
 
-private:
   struct Candidate
   {
     routing::RoadEvent const * m_event;
@@ -269,4 +296,5 @@ private:
   }
   std::shared_ptr<routing::RoadEventSource> m_source;
   std::shared_ptr<MwmRoadEvents> m_maps;
+  uint32_t const m_excludedKinds;
 };

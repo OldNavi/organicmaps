@@ -1,5 +1,6 @@
 #include "drape/gpu_buffer.hpp"
 #include "drape/drape_diagnostics.hpp"
+#include "drape/gl_buffer_pool.hpp"
 #include "drape/gl_functions.hpp"
 #include "drape/utils/gpu_mem_tracker.hpp"
 
@@ -38,13 +39,35 @@ GPUBuffer::GPUBuffer(Target t, void const * data, uint8_t elementSize, uint32_t 
 #endif
 {
   UNUSED_VALUE(batcherHash);
+#ifdef OMIM_AUTO
+  auto const cached = GLBufferPool::Instance().Acquire(glTarget(m_t), capacity * elementSize);
+  if (cached.m_id != 0)
+  {
+    m_bufferID = cached.m_id;
+    m_storageBytes = cached.m_bytes;
+    Bind();
+    if (data != nullptr)
+    {
+      GLFunctions::glBufferSubData(glTarget(m_t), capacity * elementSize, data, 0);
+      SetDataSize(capacity);
+    }
+#ifdef TRACK_GPU_MEM
+    dp::GPUMemTracker::Inst().AddAllocated("VBO", m_bufferID, m_storageBytes);
+    dp::GPUMemTracker::Inst().SetUsed("VBO", m_bufferID, GetCurrentSize() * elementSize);
+#endif
+    return;
+  }
+#endif
   m_bufferID = GLFunctions::glGenBuffer();
   Resize(data, capacity);
 }
 GPUBuffer::~GPUBuffer()
 {
   GLFunctions::glBindBuffer(0, glTarget(m_t));
-  GLFunctions::glDeleteBuffer(m_bufferID);
+#ifdef OMIM_AUTO
+  if (!GLBufferPool::Instance().Recycle({m_bufferID, m_storageBytes, glTarget(m_t)}))
+#endif
+    GLFunctions::glDeleteBuffer(m_bufferID);
 
 #if defined(TRACK_GPU_MEM)
   dp::GPUMemTracker::Inst().RemoveDeallocated("VBO", m_bufferID);
@@ -108,7 +131,11 @@ void GPUBuffer::UpdateData(void * gpuPtr, void const * data, uint32_t elementOff
 
 #if defined(CHECK_VBO_BOUNDS)
   int32_t size = GLFunctions::glGetBufferParameter(glTarget(m_t), gl_const::GLBufferSize);
+#ifdef OMIM_AUTO
+  ASSERT_EQUAL(size, m_storageBytes, ());
+#else
   ASSERT_EQUAL(size, byteCapacity, ());
+#endif
   ASSERT_LESS_OR_EQUAL(byteOffset + byteCount, size, ());
 #endif
 
@@ -120,8 +147,18 @@ void GPUBuffer::UpdateData(void * gpuPtr, void const * data, uint32_t elementOff
   else
   {
     ASSERT(gpuPtr == nullptr, ());
-    if (byteOffset == 0 && byteCount == byteCapacity)
+#ifdef OMIM_AUTO
+    if (GLBufferPool::Instance().IsEnabled())
+      GLFunctions::glBufferSubData(glTarget(m_t), byteCount, data, byteOffset);
+    else
+#endif
+        if (byteOffset == 0 && byteCount == byteCapacity)
+    {
       GLFunctions::glBufferData(glTarget(m_t), byteCount, data, gl_const::GLDynamicDraw);
+#ifdef OMIM_AUTO
+      m_storageBytes = byteCount;
+#endif
+    }
     else
       GLFunctions::glBufferSubData(glTarget(m_t), byteCount, data, byteOffset);
   }
@@ -144,6 +181,9 @@ void GPUBuffer::Resize(void const * data, uint32_t elementCount)
   TBase::Resize(elementCount);
   Bind();
   GLFunctions::glBufferData(glTarget(m_t), GetCapacity() * GetElementSize(), data, gl_const::GLDynamicDraw);
+#ifdef OMIM_AUTO
+  m_storageBytes = GetCapacity() * GetElementSize();
+#endif
 
   // If we have set up data already (in glBufferData), we have to call SetDataSize.
   if (data != nullptr)

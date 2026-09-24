@@ -9,6 +9,7 @@
 
 #include "base/buffer_vector.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -19,6 +20,8 @@ class OverlayHandle;
 
 namespace df
 {
+bool UpdatePathTextDirection(m2::PointD const & direction, std::optional<bool> previous);
+
 class TextLayout
 {
 public:
@@ -101,7 +104,7 @@ public:
                            gpu::TTextStaticVertexBuffer & staticBuffer) const;
 
   bool CacheDynamicGeometry(m2::Spline::iterator const & iter, float depth, m2::PointD const & globalPivot,
-                            gpu::TTextDynamicVertexBuffer & buffer) const;
+                            gpu::TTextDynamicVertexBuffer & buffer, std::optional<bool> & reversed) const;
 
   static void CalculatePositions(double splineLength, double splineScaleToPixel, double textPixelLength,
                                  std::vector<double> & offsets);

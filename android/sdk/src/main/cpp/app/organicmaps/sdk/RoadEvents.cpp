@@ -93,6 +93,7 @@ JNIEXPORT void Java_app_organicmaps_sdk_road_RoadEvents_nativeConfigure(JNIEnv *
   routing::RoadEventMinZooms zooms;
   CHECK_EQUAL(static_cast<size_t>(env->GetArrayLength(minZooms)), zooms.size(), ());
   env->GetIntArrayRegion(minZooms, 0, zooms.size(), zooms.data());
+  frm()->GetRoutingManager().GetRoadEvents()->EnableMapCameras();
   frm()->GetRoutingManager().GetRoadEvents()->Configure(enabled, warnings, visibleKinds, zooms);
   frm()->GetRoutingManager().GetSpeedCamManager().SetExternalNotifications(true);
   frm()->GetRoutingManager().GetSpeedCamManager().SetCameraVisible(

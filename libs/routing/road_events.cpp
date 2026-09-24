@@ -159,4 +159,26 @@ void RoadEventSource::Configure(bool enabled, bool warnings, uint32_t visibleKin
   m_state.m_minZooms = minZooms;
   ++m_state.m_revision;
 }
+
+void RoadEventSource::ReplaceMapCameras(std::shared_ptr<RoadEventStore const> store)
+{
+  std::lock_guard lock(m_mutex);
+  m_state.m_mapCameras = std::move(store);
+  ++m_state.m_revision;
+}
+
+void RoadEventSource::EnableMapCameras()
+{
+  std::lock_guard lock(m_mutex);
+  if (!m_state.m_useMapCameras)
+  {
+    m_state.m_useMapCameras = true;
+    ++m_state.m_revision;
+  }
+}
+void RoadEventSource::InvalidateMapCameras()
+{
+  std::lock_guard lock(m_mutex);
+  ++m_state.m_revision;
+}
 }  // namespace routing

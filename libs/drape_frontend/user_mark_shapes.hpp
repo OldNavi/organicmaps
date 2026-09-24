@@ -128,7 +128,7 @@ public:
           continue;
 
         auto const & rp = *it->second;
-        if (rp.m_isVisible && rp.m_minZoom <= tileKey.m_zoomLevel && tileRect.IsPointInside(rp.m_pivot))
+        if (rp.m_isVisible && rp.m_minZoom <= tileKey.GetRenderZoom() && tileRect.IsPointInside(rp.m_pivot))
           fn(rp);
       }
     });

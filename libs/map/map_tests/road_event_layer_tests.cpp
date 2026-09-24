@@ -1,10 +1,21 @@
 #include "testing/testing.hpp"
 
+#include "base/file_name_utils.hpp"
+#include "coding/files_container.hpp"
+#include "defines.hpp"
+#include "generator/generator_tests_support/test_feature.hpp"
+#include "generator/generator_tests_support/test_mwm_builder.hpp"
+#include "indexer/classificator_loader.hpp"
 #include "map/place_page_info.hpp"
 #include "map/road_event_layer.hpp"
+#include "platform/platform.hpp"
+#include "platform/platform_tests_support/scoped_dir.hpp"
+#include "platform/platform_tests_support/scoped_file.hpp"
+#include "routing/speed_camera_ser_des.hpp"
 
 UNIT_TEST(RoadEventLayer_OverviewAndCameraAreas)
 {
+  classificator::Load();
   df::VisualParams::Init(1, 1024);
   auto source = std::make_shared<routing::RoadEventSource>();
   auto store = std::make_shared<routing::RoadEventStore>();
@@ -53,6 +64,7 @@ UNIT_TEST(RoadEventLayer_OverviewAndCameraAreas)
 
 UNIT_TEST(RoadEventLayer_DenseViewportIsNotTruncated)
 {
+  classificator::Load();
   df::VisualParams::Init(1, 1024);
   auto source = std::make_shared<routing::RoadEventSource>();
   auto store = std::make_shared<routing::RoadEventStore>();
@@ -77,6 +89,7 @@ UNIT_TEST(RoadEventLayer_DenseViewportIsNotTruncated)
 
 UNIT_TEST(RoadEventLayer_SelectionUsesRenderedSnapshot)
 {
+  classificator::Load();
   df::VisualParams::Init(1, 1024);
   auto source = std::make_shared<routing::RoadEventSource>();
   auto store = std::make_shared<routing::RoadEventStore>();
@@ -134,6 +147,7 @@ UNIT_TEST(RoadEventLayer_SelectionUsesRenderedSnapshot)
 
 UNIT_TEST(RoadEventLayer_PerKindZoomThresholds)
 {
+  classificator::Load();
   df::VisualParams::Init(1, 1024);
   auto source = std::make_shared<routing::RoadEventSource>();
   auto store = std::make_shared<routing::RoadEventStore>();
@@ -185,6 +199,7 @@ UNIT_TEST(RoadEventLayer_PerKindZoomThresholds)
 
 UNIT_TEST(RoadEventLayer_CameraDeclutteringRespectsAzimuthZoomAndSpeedPriority)
 {
+  classificator::Load();
   df::VisualParams::Init(1, 1024);
   auto source = std::make_shared<routing::RoadEventSource>();
   auto store = std::make_shared<routing::RoadEventStore>();
@@ -228,6 +243,7 @@ UNIT_TEST(RoadEventLayer_CameraDeclutteringRespectsAzimuthZoomAndSpeedPriority)
 
 UNIT_TEST(RoadEventLayer_VideoSurveillanceHasItsOwnSymbolAndNoSector)
 {
+  classificator::Load();
   df::VisualParams::Init(1, 1024);
   auto source = std::make_shared<routing::RoadEventSource>();
   auto store = std::make_shared<routing::RoadEventStore>();
@@ -251,4 +267,109 @@ UNIT_TEST(RoadEventLayer_VideoSurveillanceHasItsOwnSymbolAndNoSector)
   TEST_EQUAL(data.m_marks->size(), 1, ());
   TEST_EQUAL(data.m_marks->begin()->second->m_symbolNames->at(15), "road-event-video-m", ());
   TEST(data.m_lines->empty(), ());
+}
+
+UNIT_TEST(RoadEventLayer_MwmCameraMergeAndBadges)
+{
+  classificator::Load();
+  df::VisualParams::Init(1, 1024);
+  auto source = std::make_shared<routing::RoadEventSource>();
+  auto imported = std::make_shared<routing::RoadEventStore>();
+  auto native = std::make_shared<routing::RoadEventStore>();
+  auto const point = mercator::FromLatLon(55, 38);
+  routing::RoadEvent camera;
+  camera.m_sourceId = "example.org:RU:camera";
+  camera.m_position = point;
+  camera.m_speedKmh = 90;
+  camera.m_directionType = 1;
+  camera.m_direction = 359;
+  camera.m_distance = 500;
+  camera.m_angle = 15;
+  imported->Add(routing::RoadEvent(camera));
+  camera.m_sourceId = "OpenStreetMap:Region:1";
+  camera.m_position = mercator::GetSmPoint(point, 20, 0);
+  camera.m_direction = 1;
+  native->Add(routing::RoadEvent(camera));
+  camera.m_direction = 180;
+  camera.m_sourceId = "OpenStreetMap:Region:2";
+  native->Add(routing::RoadEvent(camera));
+  camera.m_position = mercator::GetSmPoint(point, 100, 0);
+  camera.m_direction = 0;
+  camera.m_sourceId = "OpenStreetMap:Region:3";
+  native->Add(routing::RoadEvent(camera));
+  source->Replace(imported);
+  source->ReplaceMapCameras(native);
+  source->Configure(true, true, routing::kAllRoadEventKinds);
+  RoadEventLayer layer(source);
+  auto const rect = mercator::RectByCenterXYAndSizeInMeters(point, 1000);
+  TEST_EQUAL(layer.Query(rect, 19).m_marks->size(), 1, ("Stock flavor does not opt into MWM replacement"));
+  source->EnableMapCameras();
+  auto data = layer.Query(rect, 19);
+  TEST_EQUAL(data.m_marks->size(), 3, ("Only nearby cameras with matching direction are duplicates"));
+  TEST_EQUAL(data.m_lines->size(), 3, ("One sector per retained camera"));
+  for (auto const & [id, mark] : *data.m_marks)
+  {
+    auto const selected = RoadEventLayer::Resolve(*source, id);
+    TEST(selected, ());
+    TEST_NOT_EQUAL(selected->m_sourceId, "OpenStreetMap:Region:1", ("Imported camera takes precedence"));
+    TEST_EQUAL(mark->m_symbolNames->at(17), "road-event-camera-l", ());
+    TEST_EQUAL(mark->m_titleDecl->front().m_primaryText, "90", ());
+    TEST(mark->m_coloredSymbols && mark->m_coloredSymbols->m_addTextSize, ("Same speed badge as native cameras"));
+  }
+  source->Configure(true, true, 0);
+  TEST(layer.Query(rect, 19).m_marks->empty(), ("Profile visibility applies to both sources"));
+  for (auto const & [id, mark] : *data.m_marks)
+    TEST(!RoadEventLayer::Resolve(*source, id), ("Stale selection cannot read another snapshot"));
+}
+
+UNIT_TEST(RoadEventLayer_ReadMwmCameraDirectionsAndFallbackSectors)
+{
+  classificator::Load();
+  using namespace generator::tests_support;
+  using namespace routing;
+  platform::tests_support::ScopedDirCleanup directory(
+      base::JoinPath(GetPlatform().WritableDir(), "road_event_mwm_test"));
+  platform::LocalCountryFile country(base::JoinPath(GetPlatform().WritableDir(), "road_event_mwm_test"),
+                                     platform::CountryFile("RoadEventTestLand"), 0);
+  {
+    TestMwmBuilder builder(country, feature::DataHeader::MapType::Country);
+    builder.Add(TestStreet({{38, 55}, {38.01, 55}}, "Camera road", "en"));
+  }
+  platform::tests_support::ScopedFile section("road_event_cameras.bin", "");
+  {
+    FileWriter writer(section.GetFullPath());
+    SpeedCameraMwmHeader header;
+    header.SetAmount(4);
+    header.Serialize(writer);
+    uint32_t previous = 0;
+    for (auto direction : {SpeedCameraDirection::Unknown, SpeedCameraDirection::Forward, SpeedCameraDirection::Backward,
+                           SpeedCameraDirection::Both})
+    {
+      SpeedCameraMetadata metadata({}, 60, {{0, 0, 0.5}});
+      metadata.m_direction = direction;
+      SerializeSpeedCamera(writer, metadata, previous);
+    }
+  }
+  {
+    FilesContainerW container(country.GetPath(MapFileType::Map), FileWriter::OP_WRITE_EXISTING);
+    container.Write(section.GetFullPath(), CAMERAS_INFO_FILE_TAG);
+  }
+  FrozenDataSource data;
+  auto const [id, registered] = data.RegisterMap(country);
+  TEST(registered == MwmSet::RegResult::Success, ());
+  auto store = MwmRoadEvents::Read(data, id);
+  TEST_EQUAL(store->Size(), 4, ());
+  for (size_t i = 0; i < store->Size(); ++i)
+  {
+    auto const & event = store->Get(i);
+    TEST_EQUAL(event.m_speedKmh, 60, ());
+    TEST_ALMOST_EQUAL_ABS(event.m_position.x, 38.005, 1e-5, ());
+    TEST_EQUAL(event.m_direction, i == 2 ? 270 : 90, ());
+    TEST_EQUAL(event.m_directionType, i == 1 || i == 2 ? 1 : 2, ());
+    TEST(!BuildCameraApproachArea(event).m_triangles.empty(), ());
+    TEST_EQUAL(event.m_distance, 500, ());
+    TEST_EQUAL(event.m_angle, 15, ());
+  }
+  data.Deregister(country.GetCountryFile());
+  data.ClearCache();
 }

@@ -46,6 +46,16 @@ for theme in ("light", "dark"):
                 ], check=True, env={**os.environ, "QT_QPA_PLATFORM": "offscreen"})
                 target = assets / "symbols" / density / theme
                 target.mkdir(parents=True, exist_ok=True)
-                for suffix in ("png", "xml"):
-                    shutil.copyfile(folder / f"symbols.{suffix}", target / f"road-events.{suffix}")
+                shutil.copyfile(folder / "symbols.png", target / "road-events.png")
+                index = ET.parse(folder / "symbols.xml")
+                sheet = index.getroot().find("file")
+                # Aliases share atlas rectangles: no duplicated bitmap data or stock asset changes.
+                aliases = []
+                for stock, variant in {"speedcam-s": "s", "speedcam-m": "m", "speedcam-alert-l": "l"}.items():
+                    original = sheet.find(f"symbol[@name='road-event-camera-{variant}']")
+                    alias = ET.Element("symbol", {**original.attrib, "name": stock})
+                    aliases.append("  " + ET.tostring(alias, encoding="unicode").replace(" />", "/>") + "\n")
+                # Preserve the skin generator's format so regenerated diffs contain only aliases.
+                xml = (folder / "symbols.xml").read_text()
+                (target / "road-events.xml").write_text(xml.replace(" </file>", "".join(aliases) + " </file>"))
 (assets / "additional-symbols.txt").write_text("road-events\n")

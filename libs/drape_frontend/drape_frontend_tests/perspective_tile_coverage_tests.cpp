@@ -98,3 +98,22 @@ UNIT_TEST(PerspectiveTiles_ReenteredCellInvalidatesCoalescedCoverage)
   TEST(requests.CheckTileKey(*first.begin()), ());
   TEST(!requests.CheckTileKey(*second.begin()), ());
 }
+
+UNIT_TEST(PerspectiveTiles_CoalescedFramesPreserveInvalidations)
+{
+  for (bool passive : {false, true})
+  {
+    df::RequestedTiles requests(passive);
+    ScreenBase screen;
+    bool buildings, force, marks;
+    df::TTilesCollection const tiles{df::TileKey(0, 0, 18)};
+    requests.Set(screen, false, false, true, df::TTilesCollection(tiles));
+    requests.Set(screen, false, true, false, df::TTilesCollection(tiles));
+    requests.Set(screen, true, false, false, df::TTilesCollection(tiles));
+    requests.Get(screen, buildings, force, marks);
+    TEST(force && marks && buildings, ("The last viewport must retain earlier invalidations"));
+    requests.Set(screen, false, false, false, df::TTilesCollection(tiles));
+    requests.Get(screen, buildings, force, marks);
+    TEST(!force && !marks, ("Consume invalidations exactly once"));
+  }
+}

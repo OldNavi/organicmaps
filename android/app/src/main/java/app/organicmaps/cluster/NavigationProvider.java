@@ -155,6 +155,13 @@ public final class NavigationProvider extends ContentProvider
     double[] camera = navigating ? nativeCamera : road.camera;
     if (external && road.camera.length == 5 && (camera.length != 5 || road.camera[0] < camera[0]))
       camera = road.camera;
+    if (SpeedWarningSettings.isAvailable() && camera.length == 5)
+    {
+      // Routing and road lookup use different native tolerances. Publish the same threshold as the map UI.
+      var speed = MwmApplication.from(context).getLocationHelper().getDisplaySpeed();
+      camera = camera.clone();
+      camera[4] = speed != null && SpeedWarningController.isExceeded(context, speed.speedMps(), camera[1]) ? 1 : 0;
+    }
     sSnapshot = new NavigationSnapshot(info, camera, navigating ? ClusterMap.nativeGetRouteMetrics() : new double[3],
                                        road, navigating ? sFixNanos : sRoadFixNanos);
     // Compare with the last published effective state, not an old snapshot re-evaluated at the new time:
@@ -250,6 +257,12 @@ public final class NavigationProvider extends ContentProvider
                       new Object[] {speedValue, speedValid, speedSource, "m/s", speedAge});
       break;
     case "/guidance":
+      int roadSpeedExceeded = speed != null
+                                   && SpeedWarningController.isExceeded(
+                                       providerContext(), speed.speedMps(),
+                                       snapshot.currentSpeedLimitMps(SystemClock.elapsedRealtimeNanos()))
+                                ? 1
+                                : 0;
       result = cursor(new String[] {"state",
                                     "speed_limit",
                                     "distance_left",
@@ -270,7 +283,8 @@ public final class NavigationProvider extends ContentProvider
                                     "speed_valid",
                                     "speed_source",
                                     "speed_unit",
-                                    "speed_age_ms"},
+                                    "speed_age_ms",
+                                    "speed_limit_exceeded"},
                       info == null
                           ? new Object[] {"none",      snapshot.roadInfo.speedLimitMps,
                                           0,           0,
@@ -282,7 +296,7 @@ public final class NavigationProvider extends ContentProvider
                                           fixAge,      snapshot.roadInfo.matched ? 1 : 0,
                                           speedValue,  speedValid,
                                           speedSource, "m/s",
-                                          speedAge}
+                                          speedAge,    roadSpeedExceeded}
                           : new Object[] {"active",
                                           snapshot.currentSpeedLimitMps(SystemClock.elapsedRealtimeNanos()),
                                           (int) Math.round(snapshot.metrics[0]),
@@ -306,7 +320,8 @@ public final class NavigationProvider extends ContentProvider
                                           speedValid,
                                           speedSource,
                                           "m/s",
-                                          speedAge});
+                                          speedAge,
+                                          roadSpeedExceeded});
       break;
     case "/maneuver":
       result = new MatrixCursor(new String[] {"action", "distance", "distance_unit", "display_distance",

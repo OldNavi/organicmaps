@@ -45757,6 +45757,30 @@ uk = Пошук уздовж маршруту не підтримується.
     en = Speed camera ahead
     ru = Впереди камера контроля скорости
 
+  [road_warning_speed_camera_limit]
+    tags = android-app
+    comment = Spoken speed camera warning. The placeholder is the speed limit spelled out in the voice language, in the user's selected speed units.
+    en = Speed camera ahead, limit %s
+    ru = Впереди камера на %s
+
+  [road_warning_number_small]
+    tags = android-app
+    comment = Cardinal number spellout table for camera warnings. Keep exactly 20 pipe-separated entries for 0 through 19.
+    en = zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen
+    ru = ноль|один|два|три|четыре|пять|шесть|семь|восемь|девять|десять|одиннадцать|двенадцать|тринадцать|четырнадцать|пятнадцать|шестнадцать|семнадцать|восемнадцать|девятнадцать
+
+  [road_warning_number_tens]
+    tags = android-app
+    comment = Cardinal number spellout table for camera warnings. Keep exactly 8 pipe-separated entries for 20, 30, 40, 50, 60, 70, 80, 90.
+    en = twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety
+    ru = двадцать|тридцать|сорок|пятьдесят|шестьдесят|семьдесят|восемьдесят|девяносто
+
+  [road_warning_number_hundreds]
+    tags = android-app
+    comment = Cardinal number spellout table for camera warnings. Keep exactly 4 pipe-separated entries for 100, 200, 300, 400.
+    en = one hundred|two hundred|three hundred|four hundred
+    ru = сто|двести|триста|четыреста
+
   [road_warning_speed_limit]
     tags = android-app
     en = Speed limit %s ahead

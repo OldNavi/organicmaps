@@ -97,7 +97,8 @@ void SerializeSpeedCamera(FileWriter & writer, SpeedCameraMetadata const & data,
 
 template <typename Reader>
 std::pair<SegmentCoord, RouteSegment::SpeedCamera> DeserializeSpeedCamera(ReaderSource<Reader> & src,
-                                                                          uint32_t & prevFeatureId)
+                                                                          uint32_t & prevFeatureId,
+                                                                          SpeedCameraDirection * direction = nullptr)
 {
   uint32_t featureId = ReadVarUint<uint32_t>(src);
   featureId += prevFeatureId;  // delta coding
@@ -113,8 +114,10 @@ std::pair<SegmentCoord, RouteSegment::SpeedCamera> DeserializeSpeedCamera(Reader
   if (speed == 0)
     speed = routing::SpeedCameraOnRoute::kNoSpeedInfo;
 
-  // We don't use direction of camera, because of bad data in OSM.
-  UNUSED_VALUE(ReadPrimitiveFromSource<uint8_t>(src));  // direction
+  // Routing retains its existing direction-independent warnings; map rendering can use this hint.
+  auto const storedDirection = static_cast<SpeedCameraDirection>(ReadPrimitiveFromSource<uint8_t>(src));
+  if (direction)
+    *direction = storedDirection;
 
   // Number of time conditions of camera.
   auto const conditionsNumber = ReadVarUint<uint32_t>(src);

@@ -460,7 +460,7 @@ void DrapeEngine::ModelViewChanged(ScreenBase const & screen)
 {
   if (m_externalMarks && m_externalMarks->Revision() != 0)
   {
-    int const zoom = df::GetZoomLevel(screen.GetScale());
+    int const zoom = std::clamp(df::GetDrawTileScale(screen), 1, scales::GetUpperStyleScale());
     auto const revision = m_externalMarks->Revision();
     auto const rect = screen.ClipRect();
     if (revision != m_externalMarksRevision || zoom != m_externalMarksZoom || !m_externalMarksRect.IsRectInside(rect))

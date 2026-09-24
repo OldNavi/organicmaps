@@ -175,6 +175,7 @@ class SpeedCameraMark : public UserMark
 {
 public:
   explicit SpeedCameraMark(m2::PointD const & ptOrg);
+  static void ConfigureBadge(dp::TitleDecl & title, ColoredSymbolZoomInfo & background, int minZoom);
 
   void SetTitle(std::string const & title);
   std::string const & GetTitle() const;

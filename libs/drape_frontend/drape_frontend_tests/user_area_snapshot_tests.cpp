@@ -110,6 +110,11 @@ public:
     generator.SetGroupVisibility(kml::kExternalMarkGroupId, true);
     generator.GenerateUserMarksGeometry(context, df::GetTileKeyByPoint({1, 1}, 16), textures);
     TEST_EQUAL(selected, 2, ("Both textured and numeric signs need selection geometry"));
+    selected = 0;
+    auto coarse = df::GetTileKeyByPoint({1, 1}, 11);
+    coarse.m_renderZoom = 16;
+    generator.GenerateUserMarksGeometry(context, coarse, textures);
+    TEST_EQUAL(selected, 2, ("Cluster terrain LOD must not hide symbols eligible at camera zoom"));
   }
 };
 }  // namespace

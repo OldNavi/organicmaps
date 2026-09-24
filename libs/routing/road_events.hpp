@@ -113,6 +113,8 @@ public:
   struct Snapshot
   {
     std::shared_ptr<RoadEventStore const> m_store;
+    std::shared_ptr<RoadEventStore const> m_mapCameras;
+    bool m_useMapCameras = false;
     uint64_t m_revision = 0;
     uint32_t m_visibleKinds = kAllRoadEventKinds;
     bool m_enabled = false;
@@ -121,6 +123,9 @@ public:
   };
   Snapshot Get() const;
   void Replace(std::shared_ptr<RoadEventStore const> store);
+  void ReplaceMapCameras(std::shared_ptr<RoadEventStore const> store);
+  void EnableMapCameras();
+  void InvalidateMapCameras();
   void Configure(bool enabled, bool warnings, uint32_t visibleKinds,
                  RoadEventMinZooms const & minZooms = kDefaultRoadEventMinZooms);
 

@@ -370,7 +370,15 @@ void GetFullRoadName(RouteSegment::RoadNameInfo const & road, FollowingInfo::Roa
     }
 
     if (!road.m_destination.empty())
-      name += std::string(name.empty() ? "" : " ") + "> " + road.m_destination;
+    {
+      if (!name.empty())
+        name += " ";
+#ifndef OMIM_AUTO
+      // Automotive maneuver widgets already show the direction with an icon.
+      name += "> ";
+#endif
+      name += road.m_destination;
+    }
     else if (!road.m_name.empty())
       name += (roadShields.m_targetRoadShields.empty() ? std::string(name.empty() ? "" : " ") : " : ") + road.m_name;
   }

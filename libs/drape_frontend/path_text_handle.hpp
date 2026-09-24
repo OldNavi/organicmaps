@@ -85,6 +85,7 @@ private:
   uint32_t const m_textIndex;
   float const m_depth;
 
+  std::optional<bool> m_reversed;
   bool m_hasDynamicGeometry = false;
   mutable bool m_dynamicGeometryDirty = true;
 };

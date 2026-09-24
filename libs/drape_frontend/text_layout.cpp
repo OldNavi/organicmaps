@@ -410,8 +410,19 @@ void PathTextLayout::CacheStaticGeometry(dp::TextureManager::ColorRegion const &
     gen(m_glyphRegions[i], m_shapedGlyphs.m_glyphs[i]);
 }
 
+bool UpdatePathTextDirection(m2::PointD const & direction, std::optional<bool> previous)
+{
+  // Keep the last readable direction within five degrees of vertical. GPS heading jitter must
+  // not flip the label by 180 degrees each frame; large rotations still switch immediately.
+  constexpr double kSinDeadband = 0.08715574274765817;  // sin(5 degrees).
+  if (previous && std::abs(direction.x) <= direction.Length() * kSinDeadband)
+    return *previous;
+  return direction.x < 0.0;
+}
+
 bool PathTextLayout::CacheDynamicGeometry(m2::Spline::iterator const & iter, float depth,
-                                          m2::PointD const & globalPivot, gpu::TTextDynamicVertexBuffer & buffer) const
+                                          m2::PointD const & globalPivot, gpu::TTextDynamicVertexBuffer & buffer,
+                                          std::optional<bool> & reversed) const
 {
   float const halfLength = 0.5f * GetPixelLength();
 
@@ -425,7 +436,9 @@ bool PathTextLayout::CacheDynamicGeometry(m2::Spline::iterator const & iter, flo
   float const halfFontSize = 0.5f * GetPixelHeight();
   float advanceSign = 1.0f;
   m2::Spline::iterator penIter = beginIter;
-  if (beginIter.m_pos.x > endIter.m_pos.x)
+  auto const direction = endIter.m_pos - beginIter.m_pos;
+  bool const reverse = UpdatePathTextDirection(direction, reversed);
+  if (reverse)
   {
     advanceSign = -advanceSign;
     penIter = endIter;
@@ -477,6 +490,7 @@ bool PathTextLayout::CacheDynamicGeometry(m2::Spline::iterator const & iter, flo
     }
     prevTangent = newTangent;
   }
+  reversed = reverse;
   return true;
 }
 

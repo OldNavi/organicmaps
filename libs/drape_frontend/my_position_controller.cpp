@@ -594,7 +594,7 @@ void MyPositionController::Render(ref_ptr<dp::GraphicsContext> context, ref_ptr<
     bool const fixedArrow = m_hints.m_isPassiveNavigation && IsRouteFollowingActive();
     auto const position =
         fixedArrow ? screen.PtoG(screen.P3dtoP(GetRoutingRotationPixelCenter())) : GetDrawablePosition();
-    m_shape->SetPosition(m2::PointF(position));
+    m_shape->SetPosition(MyPosition::PositionPoint(position));
     m_shape->SetAzimuth(static_cast<float>(fixedArrow ? -screen.GetAngle() : GetDrawableAzimut()));
     m_shape->SetIsValidAzimuth(IsRotationAvailable());
     m_shape->SetAccuracy(static_cast<float>(m_errorRadius));

@@ -60,6 +60,9 @@ public:
   void OnChangedRouteFollowingMode(ref_ptr<dp::GraphicsContext> context, bool isRouteFollowingActive);
 
   bool BeginFrame(ref_ptr<dp::GraphicsContext> context, ScreenBase const & modelView, bool activeFrame);
+#ifdef OMIM_AUTO
+  bool RestoreFrameTarget(ref_ptr<dp::GraphicsContext> context);
+#endif
   bool EndFrame(ref_ptr<dp::GraphicsContext> context, ref_ptr<gpu::ProgramManager> gpuProgramManager,
                 dp::Viewport const & viewport);
 

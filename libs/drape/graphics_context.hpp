@@ -5,6 +5,10 @@
 
 #include <string>
 
+#ifdef OMIM_AUTO
+#include <functional>
+#endif
+
 namespace dp
 {
 enum ClearBits : uint32_t
@@ -53,6 +57,10 @@ public:
   virtual ~GraphicsContext() = default;
   virtual bool BeginRendering() { return true; }
   virtual void EndRendering() {}
+#ifdef OMIM_AUTO
+  // False leaves pacing to the renderer on platforms without a display clock.
+  virtual bool WaitForFrame(double /* minFrameTime */, std::function<bool()> const & /* cancelled */) { return false; }
+#endif
   virtual void Present() = 0;
   virtual void MakeCurrent() = 0;
   virtual void DoneCurrent() {}

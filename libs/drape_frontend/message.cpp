@@ -8,6 +8,9 @@ std::string_view DebugPrint(Message::Type msgType)
 {
   switch (msgType)
   {
+#ifdef OMIM_AUTO
+  case Message::Type::ReadTileBatch: return "ReadTileBatch";
+#endif
   case Message::Type::Unknown: return "Unknown";
   case Message::Type::TileReadStarted: return "TileReadStarted";
   case Message::Type::TileReadEnded: return "TileReadEnded";

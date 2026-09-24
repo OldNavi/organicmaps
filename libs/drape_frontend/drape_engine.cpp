@@ -35,6 +35,9 @@ DrapeEngine::DrapeEngine(Params && params)
   dp::RenderContext::Scope scope(m_renderContext);
   m_externalMarks = std::move(params.m_externalMarks);
   m_isPassiveNavigation = params.m_hints.m_isPassiveNavigation;
+#ifdef OMIM_AUTO
+  m_poiVisible = params.m_hints.m_showPoi;
+#endif
   dp::DrapeRoutine::Init();
 
   VisualParams::Init(params.m_vs, df::CalculateTileSize(m_viewport.GetWidth(), m_viewport.GetHeight()));
@@ -551,6 +554,10 @@ void DrapeEngine::SetCompassInfo(location::CompassInfo const & info)
 void DrapeEngine::SetGpsInfo(location::GpsInfo const & info, bool isNavigable,
                              location::RouteMatchingInfo const & routeInfo)
 {
+#ifdef OMIM_AUTO
+  if (m_drivingPoiPolicy.Update(info.m_speed, DrivingPoiPolicy::Clock::now()))
+    SetPoiVisible(m_poiVisible);
+#endif
   m_threadCommutator->PostMessage(ThreadsCommutator::RenderThread,
                                   make_unique_dp<GpsInfoMessage>(info, isNavigable, routeInfo),
                                   MessagePriority::Normal);
@@ -749,8 +756,15 @@ void DrapeEngine::SetCluster3dBuildings(bool enabled)
 
 void DrapeEngine::SetPoiVisible(bool visible)
 {
+#ifdef OMIM_AUTO
+  m_poiVisible = visible;
+  m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                                  make_unique_dp<SetPoiVisibilityMessage>(visible, m_drivingPoiPolicy.IsDriving()),
+                                  MessagePriority::Normal);
+#else
   m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
                                   make_unique_dp<SetPoiVisibilityMessage>(visible), MessagePriority::Normal);
+#endif
 }
 
 void DrapeEngine::SetMapLangIndex(int8_t mapLangIndex)

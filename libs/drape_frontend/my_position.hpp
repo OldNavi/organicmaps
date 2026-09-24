@@ -27,8 +27,14 @@ public:
   bool InitArrow(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::TextureManager> mng,
                  Arrow3d::PreloadedData && preloadedData);
 
-  // pt - mercator point.
-  void SetPosition(m2::PointF const & pt);
+#ifdef OMIM_AUTO
+  // Keep world coordinates precise; conversion to float belongs after subtracting the local origin.
+  using PositionPoint = m2::PointD;
+#else
+  using PositionPoint = m2::PointF;
+#endif
+  void SetPosition(PositionPoint const & pt);
+  m2::PointD GetPosition() const { return m2::PointD(m_position); }
   void SetAzimuth(float azimut);
   void SetIsValidAzimuth(bool isValid);
   void SetAccuracy(float accuracy);
@@ -59,7 +65,7 @@ private:
   void CacheSymbol(ref_ptr<dp::GraphicsContext> context, dp::TextureManager::SymbolRegion const & symbol,
                    dp::RenderState const & state, dp::Batcher & batcher, EMyPositionPart part);
 
-  m2::PointF m_position;
+  PositionPoint m_position;
   float m_azimuth;
   float m_accuracy;
   bool m_showAzimuth;

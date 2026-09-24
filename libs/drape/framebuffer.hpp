@@ -4,6 +4,9 @@
 #include "drape/graphics_context.hpp"
 #include "drape/pointers.hpp"
 #include "drape/texture.hpp"
+#ifdef OMIM_AUTO
+#include "drape/gl_functions.hpp"
+#endif
 
 #include <cstdint>
 #include <functional>
@@ -46,6 +49,12 @@ public:
   void SetSize(ref_ptr<dp::GraphicsContext> context, uint32_t width, uint32_t height);
   void SetDepthStencilRef(ref_ptr<DepthStencil> depthStencilRef);
   void ApplyOwnDepthStencil();
+#ifdef OMIM_AUTO
+  void SetSamples(uint32_t samples);
+  uint32_t GetSamples() const { return m_multisample.m_samples; }
+  // Resolve color and leave the texture-backed framebuffer bound for subsequent use/readback.
+  void Resolve();
+#endif
 
   void Bind() override;
   void ApplyFallback();
@@ -64,6 +73,10 @@ private:
   uint32_t m_width = 0;
   uint32_t m_height = 0;
   uint32_t m_framebufferId = 0;
+#ifdef OMIM_AUTO
+  uint32_t m_requestedSamples = 0;
+  GLFunctions::MultisampleFramebuffer m_multisample;
+#endif
   TextureFormat m_colorFormat;
   FramebufferFallback m_framebufferFallback;
   bool m_isSupported = true;

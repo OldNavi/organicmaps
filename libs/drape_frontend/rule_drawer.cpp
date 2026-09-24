@@ -1,4 +1,5 @@
 #include "drape_frontend/rule_drawer.hpp"
+#include "drape_frontend/driving_poi_policy.hpp"
 
 #include "drape_frontend/apply_feature_functors.hpp"
 #include "drape_frontend/engine_context.hpp"
@@ -435,8 +436,11 @@ void RuleDrawer::operator()(FeatureType & f)
     Stylist roadStyle(f, m_zoomLevel, m_deviceLang, forceOutdoorStyle);
     s.m_lineRules = std::move(roadStyle.m_lineRules);
   }
-  if (!m_context->IsPoiVisible() && ftypes::IsPoiChecker::Instance()(types) &&
-      !ftypes::IsLocalityChecker::Instance()(types))
+  bool hidePoi = !m_context->IsPoiVisible();
+#ifdef OMIM_AUTO
+  hidePoi |= m_context->IsDrivingPoiFilterEnabled() && !IsDrivingPoi(types);
+#endif
+  if (hidePoi && ftypes::IsPoiChecker::Instance()(types) && !ftypes::IsLocalityChecker::Instance()(types))
   {
     // Keep area geometry and house numbers on buildings that also contain a POI.
     s.m_symbolRule = nullptr;

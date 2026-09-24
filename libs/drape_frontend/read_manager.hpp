@@ -47,10 +47,27 @@ public:
   void InvalidateAll();
 
   bool CheckTileKey(TileKey const & tileKey) const;
+#ifdef OMIM_AUTO
+  // Coverage keys have no generation; only completed reads may use this stricter check.
+  bool CheckTileGeneration(TileKey const & key) const
+  {
+    return key.m_generation == m_generationCounter && CheckTileKey(key);
+  }
+#endif
   void Allow3dBuildings(bool allow3dBuildings);
 
   void SetMapLangIndex(int8_t mapLangIndex);
   bool SetPoiVisible(bool visible);
+#ifdef OMIM_AUTO
+  bool SetDrivingPoiFilter(bool enabled)
+  {
+    if (m_drivingPoiFilter == enabled)
+      return false;
+    m_drivingPoiFilter = enabled;
+    m_modeChanged = true;
+    return true;
+  }
+#endif
 
   void SetTrafficEnabled(bool trafficEnabled);
   void SetIsolinesEnabled(bool isolinesEnabled);
@@ -86,6 +103,9 @@ private:
   bool m_trafficEnabled;
   bool m_isolinesEnabled;
   bool m_poiVisible;
+#ifdef OMIM_AUTO
+  bool m_drivingPoiFilter = false;
+#endif
   bool const m_trackTileHistory;
   TTilesCollection m_seenTiles;
   bool m_modeChanged;

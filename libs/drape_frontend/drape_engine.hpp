@@ -6,6 +6,7 @@
 #include "drape_frontend/custom_features_context.hpp"
 #include "drape_frontend/drape_engine_params.hpp"
 #include "drape_frontend/drape_hints.hpp"
+#include "drape_frontend/driving_poi_policy.hpp"
 #include "drape_frontend/frontend_renderer.hpp"
 #include "drape_frontend/overlays_tracker.hpp"
 #include "drape_frontend/postprocess_renderer.hpp"
@@ -309,6 +310,10 @@ private:
   std::atomic<double> m_currentTilt{0.0};
   ModelViewChangedHandler m_modelViewChangedHandler;
   std::shared_ptr<ExternalMarks> m_externalMarks;
+#ifdef OMIM_AUTO
+  DrivingPoiPolicy m_drivingPoiPolicy;
+  bool m_poiVisible = true;
+#endif
   uint64_t m_externalMarksRevision = 0;
   m2::RectD m_externalMarksRect;
   int m_externalMarksZoom = -1;

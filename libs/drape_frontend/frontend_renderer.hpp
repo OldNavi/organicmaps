@@ -349,6 +349,13 @@ private:
   drape_ptr<TrafficRenderer> m_trafficRenderer;
   drape_ptr<TransitSchemeRenderer> m_transitSchemeRenderer;
   drape_ptr<dp::Framebuffer> m_buildingsFramebuffer;
+#ifdef OMIM_AUTO
+  drape_ptr<dp::Framebuffer> m_scaledBackground;
+  double m_renderScale = 1.0;
+  uint32_t m_msaaSamples = 0;
+  bool UseScaledBackground() const;
+  m2::PointU GetScaledRenderSize() const;
+#endif
   drape_ptr<ScreenQuadRenderer> m_screenQuadRenderer;
   drape_ptr<GpsTrackRenderer> m_gpsTrackRenderer;
   drape_ptr<DrapeApiRenderer> m_drapeApiRenderer;

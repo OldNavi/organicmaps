@@ -53,5 +53,8 @@
   <symbol maxX="180" maxY="148" minX="149" minY="135" name="road-event-settlement-start-m"/>
   <symbol maxX="198" maxY="147" minX="180" minY="135" name="road-event-railway-s"/>
   <symbol maxX="223" maxY="146" minX="198" minY="135" name="road-event-settlement-start-s"/>
+  <symbol maxX="203" maxY="134" minX="185" minY="116" name="speedcam-s"/>
+  <symbol maxX="150" maxY="116" minX="128" minY="94" name="speedcam-m"/>
+  <symbol maxX="52" maxY="94" minX="26" minY="68" name="speedcam-alert-l"/>
  </file>
 </root>

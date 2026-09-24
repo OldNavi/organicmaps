@@ -6,6 +6,7 @@ import app.organicmaps.R;
 import app.organicmaps.sdk.cluster.RoadInfo;
 import app.organicmaps.sdk.road.RoadEventAhead;
 import app.organicmaps.sdk.road.RoadEventKind;
+import app.organicmaps.sdk.sound.TtsPlayer;
 import app.organicmaps.sdk.util.StringUtils;
 import app.organicmaps.settings.SpeedWarningSettings;
 
@@ -14,12 +15,14 @@ public final class RoadEventWarnings
 {
   private final MwmApplication mApp;
   private final RoadWarningAudio mAudio;
+  private final SpeedCameraAnnouncement mCameraAnnouncement;
   private final RoadEventWarningPolicy mPolicy = new RoadEventWarningPolicy();
 
   public RoadEventWarnings(MwmApplication app, RoadWarningAudio audio)
   {
     mApp = app;
     mAudio = audio;
+    mCameraAnnouncement = new SpeedCameraAnnouncement(app);
   }
 
   public void update(RoadInfo road, double[] camera)
@@ -64,13 +67,14 @@ public final class RoadEventWarnings
 
   private String message(RoadEventAhead event)
   {
+    if (event.kind() == RoadEventKind.CAMERA)
+      return mCameraAnnouncement.format(event.speedMps(), TtsPlayer.INSTANCE.getSelectedLocale());
     int resource = switch (event.kind())
     {
       case RoadEventKind.BUMP -> R.string.road_warning_bump;
       case RoadEventKind.CHILDREN -> R.string.road_warning_children;
       case RoadEventKind.LANE_CONTROL -> R.string.road_warning_lane_camera;
       case RoadEventKind.RED_LIGHT -> R.string.road_warning_cross_camera;
-      case RoadEventKind.CAMERA -> R.string.road_warning_speed_camera;
       default -> 0;
     };
     if (resource != 0)

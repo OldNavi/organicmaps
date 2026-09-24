@@ -232,6 +232,10 @@ void UserMarkGenerator::GenerateUserAreasGeometry(ref_ptr<dp::GraphicsContext> c
     return;
   TUserMarksRenderData data;
   std::set<kml::MarkId> visited;
+#ifdef OMIM_AUTO
+  using AreaGroup = std::pair<TileKey, int>;
+  std::map<AreaGroup, std::vector<UserLineRenderParams const *>> groups;
+#endif
   for (auto const & [groupId, ids] : m_groups)
   {
     if (!m_groupsVisibility.contains(groupId))
@@ -245,13 +249,29 @@ void UserMarkGenerator::GenerateUserAreasGeometry(ref_ptr<dp::GraphicsContext> c
         continue;
       // A stable local origin preserves float precision without attaching the fill to a map tile.
       auto const origin = GetTileKeyByPoint(params.m_fill->m_textureRect.Center(), 15);
+#ifdef OMIM_AUTO
+      groups[{origin, params.m_minZoom}].push_back(&params);
+#else
       auto const batchSize = static_cast<uint32_t>(std::clamp<size_t>(params.m_fill->m_triangles.size(), 3, 65000));
       dp::Batcher batcher(batchSize, batchSize);
       dp::SessionGuard guard(context, batcher, [&](auto const & state, drape_ptr<dp::RenderBucket> && bucket)
       { data.emplace_back(state, std::move(bucket), origin, params.m_minZoom); });
       CacheUserArea(context, origin, textures, params, batcher);
+#endif
     }
   }
+#ifdef OMIM_AUTO
+  // Share buffers within a local origin/visibility level, but still replace the complete snapshot once.
+  for (auto const & [key, areas] : groups)
+  {
+    auto const & [origin, minZoom] = key;
+    dp::Batcher batcher(65000, 65000);
+    dp::SessionGuard guard(context, batcher, [&](auto const & state, drape_ptr<dp::RenderBucket> && bucket)
+    { data.emplace_back(state, std::move(bucket), origin, minZoom); });
+    for (auto const * area : areas)
+      CacheUserArea(context, origin, textures, *area, batcher);
+  }
+#endif
   m_areasDirty = false;
   flush(std::move(data));
 }

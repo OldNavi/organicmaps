@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import app.organicmaps.sdk.display.DisplayType;
 import app.organicmaps.sdk.location.LocationHelper;
+import app.organicmaps.sdk.rendering.RenderConfig;
 import app.organicmaps.sdk.util.Assert;
 import app.organicmaps.sdk.util.Config;
 import app.organicmaps.sdk.util.ROMUtils;
@@ -185,8 +186,10 @@ public final class Map
     setupWidgets(context, surfaceFrame.width(), surfaceFrame.height());
 
     final boolean firstStart = mLocationHelper.isInFirstRun();
+    var rendering = RenderConfig.get(context).main();
     if (!nativeCreateEngine(surface, surfaceDpi, firstStart, mLaunchByDeepLink, Config.getVersionCode(),
-                            ROMUtils.isCustomROM(), Config.isAuto()))
+                            ROMUtils.isCustomROM(), Config.isAuto(), rendering.renderScale(), rendering.maxFps(),
+                            rendering.msaaSamples()))
     {
       if (mCallbackUnsupported != null)
         mCallbackUnsupported.report();
@@ -379,7 +382,7 @@ public final class Map
   // Engine
   private static native boolean nativeCreateEngine(Surface surface, int density, boolean firstLaunch,
                                                    boolean isLaunchByDeepLink, int appVersionCode, boolean isCustomROM,
-                                                   boolean isAuto);
+                                                   boolean isAuto, double renderScale, int maxFps, int msaaSamples);
 
   private static native boolean nativeIsEngineCreated();
 

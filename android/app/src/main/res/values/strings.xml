@@ -1038,6 +1038,14 @@
     <string name="road_warning_lane_camera">Lane enforcement camera ahead</string>
     <string name="road_warning_cross_camera">Intersection camera ahead</string>
     <string name="road_warning_speed_camera">Speed camera ahead</string>
+    <!-- Spoken speed camera warning. The placeholder is the speed limit spelled out in the voice language, in the user's selected speed units. -->
+    <string name="road_warning_speed_camera_limit">Speed camera ahead, limit %s</string>
+    <!-- Cardinal number spellout table for camera warnings. Keep exactly 20 pipe-separated entries for 0 through 19. -->
+    <string name="road_warning_number_small">zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen</string>
+    <!-- Cardinal number spellout table for camera warnings. Keep exactly 8 pipe-separated entries for 20, 30, 40, 50, 60, 70, 80, 90. -->
+    <string name="road_warning_number_tens">twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety</string>
+    <!-- Cardinal number spellout table for camera warnings. Keep exactly 4 pipe-separated entries for 100, 200, 300, 400. -->
+    <string name="road_warning_number_hundreds">one hundred|two hundred|three hundred|four hundred</string>
     <string name="road_warning_speed_limit">Speed limit %s ahead</string>
     <string name="road_events_auto_update">Automatic updates</string>
     <string name="road_events_auto_summary">Refresh previously downloaded data for your current country</string>

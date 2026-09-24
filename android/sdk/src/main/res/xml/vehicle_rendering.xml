@@ -2,12 +2,12 @@
 <render_config>
   <!-- FPS 0 disables the automotive limiter. Scale affects ground/buildings, not labels or UI. -->
   <profile name="default">
-    <main render_scale="1.0" max_fps="30" msaa_samples="0" />
-    <cluster render_scale="1.0" max_fps="20" msaa_samples="0" />
+    <main render_scale="1.0" max_fps="0" msaa_samples="0" />
+    <cluster render_scale="1.0" max_fps="0" msaa_samples="0" />
   </profile>
   <!-- DeviceDetector uses the same family and car_type identifiers as vehicle_sensors.xml. -->
   <profile name="rox" type="car" family="rox">
-    <main render_scale="0.75" msaa_samples="2" />
-    <cluster render_scale="0.75" msaa_samples="2" />
+    <main render_scale="1.0" max_fps="30" msaa_samples="0" />
+    <cluster render_scale="1.0" max_fps="20" msaa_samples="0" />
   </profile>
 </render_config>

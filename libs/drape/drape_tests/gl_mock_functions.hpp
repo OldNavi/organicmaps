@@ -2,6 +2,7 @@
 
 #include "drape/drape_global.hpp"
 #include "drape/gl_constants.hpp"
+#include "drape/gl_functions.hpp"
 
 #include <gmock/gmock.h>
 
@@ -28,6 +29,15 @@ public:
   MOCK_METHOD0(glGenBuffer, uint32_t());
   MOCK_METHOD2(glBindBuffer, void(uint32_t vbo, glConst target));
   MOCK_METHOD1(glDeleteBuffer, void(uint32_t vbo));
+#ifdef OMIM_AUTO
+  MOCK_METHOD0(CreateFence, void *());
+  MOCK_METHOD1(IsFenceSignaled, bool(void *));
+  MOCK_METHOD1(DeleteFence, void(void *));
+  MOCK_METHOD5(CreateMultisampleFramebuffer,
+               GLFunctions::MultisampleFramebuffer(uint32_t, uint32_t, uint32_t, bool, bool));
+  MOCK_METHOD1(DeleteMultisampleFramebuffer, void(GLFunctions::MultisampleFramebuffer const &));
+  MOCK_METHOD4(ResolveMultisampleFramebuffer, void(uint32_t, uint32_t, uint32_t, uint32_t));
+#endif
   MOCK_METHOD4(glBufferData, void(glConst target, uint32_t size, void const * data, glConst usage));
   MOCK_METHOD4(glBufferSubData, void(glConst target, uint32_t size, void const * data, uint32_t offset));
   MOCK_METHOD2(glGetBufferParameter, int32_t(glConst target, glConst name));

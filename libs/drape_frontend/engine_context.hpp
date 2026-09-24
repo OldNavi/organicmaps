@@ -33,6 +33,10 @@ public:
   bool IsTrafficEnabled() const { return m_trafficEnabled; }
   bool IsolinesEnabled() const { return m_isolinesEnabled; }
   bool IsPoiVisible() const { return m_poiVisible; }
+#ifdef OMIM_AUTO
+  bool IsDrivingPoiFilterEnabled() const { return m_drivingPoiFilter; }
+  void SetDrivingPoiFilter(bool enabled) { m_drivingPoiFilter = enabled; }
+#endif
   int8_t GetMapLangIndex() const { return m_mapLangIndex; }
   dp::BackgroundMode GetBackgroundMode() const { return m_backgroundMode; }
   // Area-fill opacity used in Satellite mode (0..1). Only consulted when GetBackgroundMode() == Satellite.
@@ -69,5 +73,8 @@ private:
   int8_t m_mapLangIndex;
   dp::BackgroundMode m_backgroundMode;
   float m_areaOpacity;
+#ifdef OMIM_AUTO
+  bool m_drivingPoiFilter = false;
+#endif
 };
 }  // namespace df

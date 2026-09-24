@@ -1,6 +1,8 @@
 #include "drape_frontend/gui/drape_gui.hpp"
 
 #include "drape_frontend/backend_renderer.hpp"
+
+#include "drape/gl_buffer_pool.hpp"
 #include "drape_frontend/batchers_pool.hpp"
 #include "drape_frontend/circles_pack_shape.hpp"
 #include "drape_frontend/color_constants.hpp"
@@ -206,12 +208,20 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   case Message::Type::FinishTileRead:
   {
     ref_ptr<FinishTileReadMessage> msg = message;
+    auto tiles = msg->MoveTiles();
+#ifdef OMIM_AUTO
+    // Old completion messages must not recreate marks for a discarded zoom/generation.
+    std::erase_if(tiles, [this](auto const & key)
+    { return !m_readManager->CheckTileGeneration(key); });
+    if (tiles.empty())
+      break;
+#endif
     CHECK(m_context != nullptr, ());
     if (msg->NeedForceUpdateUserMarks())
-      for (auto const & tileKey : msg->GetTiles())
+      for (auto const & tileKey : tiles)
         m_userMarkGenerator->GenerateUserMarksGeometry(m_context, tileKey, m_texMng);
     m_commutator->PostMessage(ThreadsCommutator::RenderThread,
-                              make_unique_dp<FinishTileReadMessage>(msg->MoveTiles(), msg->NeedForceUpdateUserMarks()),
+                              make_unique_dp<FinishTileReadMessage>(std::move(tiles), msg->NeedForceUpdateUserMarks()),
                               MessagePriority::Normal);
     break;
   }
@@ -450,7 +460,11 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   case Message::Type::SetPoiVisibility:
   {
     ref_ptr<SetPoiVisibilityMessage> const msg = message;
-    if (m_readManager->SetPoiVisible(msg->IsVisible()))
+    bool changed = m_readManager->SetPoiVisible(msg->IsVisible());
+#ifdef OMIM_AUTO
+    changed |= m_readManager->SetDrivingPoiFilter(msg->IsDriving());
+#endif
+    if (changed)
       m_commutator->PostMessage(ThreadsCommutator::RenderThread,
                                 make_unique_dp<SetPoiVisibilityMessage>(msg->IsVisible()), MessagePriority::Normal);
     break;
@@ -852,6 +866,10 @@ void BackendRenderer::ReleaseResources()
 
   // Here m_context can be nullptr, so call the method
   // for the context from the factory.
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Clear();
+#endif
   m_contextFactory->GetResourcesUploadContext()->DoneCurrent();
   m_context = nullptr;
 }
@@ -863,6 +881,10 @@ void BackendRenderer::OnContextCreate()
   m_contextFactory->WaitForInitialization(m_context.get());
   m_context->MakeCurrent();
   m_context->Init(m_apiVersion);
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Enable();
+#endif
   dp::SupportManager::Instance().Init(m_context);
 
   m_readManager->Start();
@@ -883,6 +905,10 @@ void BackendRenderer::OnContextDestroy()
   // Here we have to erase weak pointer to the context, since it
   // can be destroyed after this method.
   CHECK(m_context != nullptr, ());
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Clear();
+#endif
   m_context->DoneCurrent();
   m_context = nullptr;
 }
@@ -924,6 +950,10 @@ void BackendRenderer::RenderFrame()
   TraceMessageQueue("backend");
 #endif
   m_context->CollectMemory();
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().EndFrame();
+#endif
 }
 
 void BackendRenderer::InitContextDependentResources()

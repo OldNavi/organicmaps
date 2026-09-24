@@ -608,14 +608,18 @@ void TransitMark::GetDefaultTransitTitle(dp::TitleDecl & titleDecl)
 
 SpeedCameraMark::SpeedCameraMark(m2::PointD const & ptOrg) : UserMark(ptOrg, Type::SPEED_CAM)
 {
+  ConfigureBadge(m_titleDecl, m_textBg, kMinSpeedCameraTitleZoom);
+  m_symbolNames.emplace(kMinSpeedCameraZoom, "speedcam-alert-l");
+}
+
+void SpeedCameraMark::ConfigureBadge(dp::TitleDecl & title, ColoredSymbolZoomInfo & background, int minZoom)
+{
   auto const vs = static_cast<float>(df::VisualParams::Instance().GetVisualScale());
 
-  m_titleDecl.m_primaryTextFont.m_color = df::GetColorConstant(kSpeedCameraMarkText);
-  m_titleDecl.m_primaryTextFont.m_size = kSpeedCameraMarkTextSize;
-  m_titleDecl.m_primaryOffset.x = kSpeedCameraOutlineWidth + kSpeedCameraMarkTextMargin;
-  m_titleDecl.m_anchor = dp::Left;
-
-  m_symbolNames.insert(std::make_pair(kMinSpeedCameraZoom, "speedcam-alert-l"));
+  title.m_primaryTextFont.m_color = df::GetColorConstant(kSpeedCameraMarkText);
+  title.m_primaryTextFont.m_size = kSpeedCameraMarkTextSize;
+  title.m_primaryOffset.x = kSpeedCameraOutlineWidth + kSpeedCameraMarkTextMargin;
+  title.m_anchor = dp::Left;
 
   df::ColoredSymbolViewParams params;
   params.m_color = df::GetColorConstant(kSpeedCameraMarkBg);
@@ -626,8 +630,8 @@ SpeedCameraMark::SpeedCameraMark(m2::PointD const & ptOrg) : UserMark(ptOrg, Typ
   params.m_sizeInPixels = m2::PointF(minSize, minSize) * vs;
   params.m_outlineColor = df::GetColorConstant(kSpeedCameraMarkOutline);
   params.m_outlineWidth = kSpeedCameraOutlineWidth;
-  m_textBg.m_zoomInfo[kMinSpeedCameraTitleZoom] = params;
-  m_textBg.m_addTextSize = true;
+  background.m_zoomInfo[minZoom] = params;
+  background.m_addTextSize = true;
 }
 
 void SpeedCameraMark::SetTitle(std::string const & title)

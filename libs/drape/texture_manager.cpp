@@ -652,8 +652,10 @@ std::vector<drape_ptr<HWTexture>> TextureManager::GetTexturesToCleanup()
 bool TextureManager::GetSymbolRegionSafe(std::string const & symbolName, SymbolRegion & region)
 {
   CHECK(m_isInitialized, ());
-  for (size_t i = 0; i < m_symbolTextures.size(); ++i)
+  // Flavor atlases may override a stock name while reusing the same packed camera pixels.
+  for (size_t remaining = m_symbolTextures.size(); remaining > 0;)
   {
+    size_t const i = --remaining;
     ref_ptr<SymbolsTexture> symbolsTexture = make_ref(m_symbolTextures[i]);
     ASSERT(symbolsTexture != nullptr, ());
     if (symbolsTexture->IsSymbolContained(symbolName))

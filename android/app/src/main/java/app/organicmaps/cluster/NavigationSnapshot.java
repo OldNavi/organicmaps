@@ -147,7 +147,7 @@ final class NavigationSnapshot
     if (!sameTurnDistance(previous) || !action(info.carDirection).equals(action(previous.info.carDirection)))
       return false;
     for (int i = 0; i < count; ++i)
-      if (!Objects.equals(shields[i].text, oldShields[i].text))
+      if (shields[i].type != oldShields[i].type || !Objects.equals(shields[i].text, oldShields[i].text))
         return false;
     return true;
   }

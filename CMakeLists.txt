@@ -12,6 +12,10 @@ endif()
 project(omim C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
+option(OMIM_AUTO "Enable automotive rendering optimizations" OFF)
+if (OMIM_AUTO)
+  add_compile_definitions(OMIM_AUTO)
+endif()
 set(CMAKE_C_STANDARD 17)
 # Our code does not rely on gnu extensions.
 set(CMAKE_CXX_EXTENSIONS OFF)

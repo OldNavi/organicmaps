@@ -7,13 +7,12 @@
 
 extern "C"
 {
-JNIEXPORT jlong Java_app_organicmaps_sdk_cluster_ClusterMap_nativeCreate(JNIEnv * env, jclass, jobject surface,
-                                                                         jint dpi, jdouble scale, jint zoom,
-                                                                         jboolean showPoi, jboolean buildings3d,
-                                                                         jdouble tilt, jdouble anchorX, jdouble anchorY)
+JNIEXPORT jlong Java_app_organicmaps_sdk_cluster_ClusterMap_nativeCreate(
+    JNIEnv * env, jclass, jobject surface, jint dpi, jdouble scale, jint zoom, jboolean showPoi, jboolean buildings3d,
+    jdouble tilt, jdouble anchorX, jdouble anchorY, jdouble renderScale, jint maxFps, jint msaaSamples)
 {
-  return g_framework->CreateNavigationView(env, surface, dpi, scale, zoom, showPoi, buildings3d, tilt, anchorX,
-                                           anchorY);
+  return g_framework->CreateNavigationView(env, surface, dpi, scale, zoom, showPoi, buildings3d, tilt, anchorX, anchorY,
+                                           renderScale, maxFps, msaaSamples);
 }
 JNIEXPORT void Java_app_organicmaps_sdk_cluster_ClusterMap_nativeDestroy(JNIEnv *, jclass, jlong handle)
 {

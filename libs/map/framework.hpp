@@ -431,7 +431,8 @@ public:
   void DestroyDrapeEngine();
   drape_ptr<df::DrapeEngine> CreateNavigationRenderer(ref_ptr<dp::GraphicsContextFactory> factory, int width,
                                                       int height, double visualScale, bool showPoi = false,
-                                                      bool allow3dBuildings = false);
+                                                      bool allow3dBuildings = false, double renderScale = 1.0,
+                                                      int maxFps = 20, int msaaSamples = 0);
   /// Called when graphics engine should be temporarily paused and then resumed.
   void SetRenderingEnabled(ref_ptr<dp::GraphicsContextFactory> contextFactory = nullptr);
   void SetRenderingDisabled(bool destroySurface);

@@ -37,17 +37,27 @@ ref_ptr<MetalineManager> EngineContext::GetMetalineManager() const
 
 void EngineContext::BeginReadTile()
 {
+#ifndef OMIM_AUTO
   PostMessage(make_unique_dp<TileReadStartMessage>(m_tileKey));
+#endif
 }
 
 void EngineContext::Flush(TMapShapes && shapes)
 {
+#ifdef OMIM_AUTO
+  std::move(shapes.begin(), shapes.end(), std::back_inserter(m_geometry));
+#else
   PostMessage(make_unique_dp<MapShapeReadedMessage>(m_tileKey, std::move(shapes)));
+#endif
 }
 
 void EngineContext::FlushOverlays(TMapShapes && shapes)
 {
+#ifdef OMIM_AUTO
+  std::move(shapes.begin(), shapes.end(), std::back_inserter(m_overlays));
+#else
   PostMessage(make_unique_dp<OverlayMapShapeReadedMessage>(m_tileKey, std::move(shapes)));
+#endif
 }
 
 void EngineContext::FlushTrafficGeometry(TrafficSegmentsGeometry && geometry)
@@ -57,9 +67,17 @@ void EngineContext::FlushTrafficGeometry(TrafficSegmentsGeometry && geometry)
                             MessagePriority::Low);
 }
 
-void EngineContext::EndReadTile()
+void EngineContext::EndReadTile(bool cancelled)
 {
+#ifdef OMIM_AUTO
+  if (!cancelled)
+    PostMessage(make_unique_dp<TileReadBatchMessage>(m_tileKey, std::move(m_geometry), std::move(m_overlays)));
+  m_geometry.clear();
+  m_overlays.clear();
+#else
+  UNUSED_VALUE(cancelled);
   PostMessage(make_unique_dp<TileReadEndMessage>(m_tileKey));
+#endif
 }
 
 void EngineContext::PostMessage(drape_ptr<Message> && message)

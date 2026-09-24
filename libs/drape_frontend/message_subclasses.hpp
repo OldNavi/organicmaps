@@ -948,12 +948,20 @@ private:
 class SetPoiVisibilityMessage : public Message
 {
 public:
+#ifdef OMIM_AUTO
+  explicit SetPoiVisibilityMessage(bool visible, bool driving = false) : m_visible(visible), m_driving(driving) {}
+  bool IsDriving() const { return m_driving; }
+#else
   explicit SetPoiVisibilityMessage(bool visible) : m_visible(visible) {}
+#endif
   Type GetType() const override { return Type::SetPoiVisibility; }
   bool IsVisible() const { return m_visible; }
 
 private:
   bool const m_visible;
+#ifdef OMIM_AUTO
+  bool const m_driving;
+#endif
 };
 
 class SetMapLangIndexMessage : public Message

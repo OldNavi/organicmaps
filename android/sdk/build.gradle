@@ -14,6 +14,18 @@ android {
     buildConfig = true
   }
 
+  flavorDimensions 'default'
+  productFlavors {
+    standard {
+      dimension 'default'
+      externalNativeBuild.cmake.arguments '-DOMIM_AUTO=OFF'
+    }
+    auto {
+      dimension 'default'
+      externalNativeBuild.cmake.arguments '-DOMIM_AUTO=ON'
+    }
+  }
+
   defaultConfig {
     externalNativeBuild {
       def pchFlag = 'OFF'
@@ -132,3 +144,8 @@ Publish(project, [
     'name'       : 'Organic Maps SDK',
     'description': 'An open-source Android library for building fully offline, privacy-respecting map and navigation applications powered by OpenStreetMap data and Organic Maps'
 ])
+
+mavenPublishing {
+  def defaults = new com.vanniktech.maven.publish.AndroidSingleVariantLibrary()
+  configure(defaults.copy(defaults.javadocJar, defaults.sourcesJar, 'standardRelease'))
+}

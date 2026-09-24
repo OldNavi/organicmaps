@@ -1920,12 +1920,15 @@ void Framework::CreateDrapeEngine(ref_ptr<dp::GraphicsContextFactory> contextFac
 
 drape_ptr<df::DrapeEngine> Framework::CreateNavigationRenderer(ref_ptr<dp::GraphicsContextFactory> factory, int width,
                                                                int height, double visualScale, bool showPoi,
-                                                               bool allow3dBuildings)
+                                                               bool allow3dBuildings, double renderScale, int maxFps,
+                                                               int msaaSamples)
 {
   dp::RenderContext::Scope scope(std::make_shared<dp::RenderContext>());
   df::Hints hints;
   hints.m_isPassiveNavigation = true;
-  hints.m_maxFps = 20;
+  hints.m_maxFps = maxFps;
+  hints.m_renderScale = renderScale;
+  hints.m_msaaSamples = msaaSamples;
   hints.m_showPoi = showPoi;
   df::MapDataProvider provider([this](auto const & fn, m2::RectD const & rect, int scale)
   { m_featuresFetcher.ForEachFeatureID(rect, fn, scale); }, [this](auto const & fn, std::vector<FeatureID> const & ids)
@@ -1944,7 +1947,8 @@ drape_ptr<df::DrapeEngine> Framework::CreateNavigationRenderer(ref_ptr<dp::Graph
                                  allow3dBuildings, false, false, true, false, {}, false, false, false,
                                  dp::BackgroundMode::Default, 1.0f, std::nullopt,
                                  [](std::list<df::OverlayShowEvent> &&) {}, [] {}, {});
-  params.m_externalMarks = std::make_shared<RoadEventLayer>(m_routingManager.GetRoadEvents(), m_mwmRoadEvents);
+  params.m_externalMarks = std::make_shared<RoadEventLayer>(m_routingManager.GetRoadEvents(), m_mwmRoadEvents,
+                                                            RoadEventLayer::kClusterExcludedKinds);
   auto engine = make_unique_dp<df::DrapeEngine>(std::move(params));
   engine->SetVisibleViewport(m2::RectD(0, 0, width, height));
   engine->Allow3dMode(true, allow3dBuildings);

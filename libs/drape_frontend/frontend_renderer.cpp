@@ -1,5 +1,7 @@
 #include "drape_frontend/frontend_renderer.hpp"
 
+#include "drape/gl_buffer_pool.hpp"
+
 #include "drape_frontend/animation/interpolation_holder.hpp"
 #include "drape_frontend/animation_system.hpp"
 #include "drape_frontend/debug_rect_renderer.hpp"
@@ -187,6 +189,11 @@ FrontendRenderer::FrontendRenderer(Params && params)
   , m_minFrameTime(params.m_myPositionParams.m_hints.m_maxFps > 0 ? 1.0 / params.m_myPositionParams.m_hints.m_maxFps
                                                                   : 0.0)
 {
+#ifdef OMIM_AUTO
+  m_renderScale = params.m_myPositionParams.m_hints.m_renderScale;
+  m_msaaSamples = params.m_myPositionParams.m_hints.m_msaaSamples;
+  CHECK(m_renderScale >= 0.5 && m_renderScale <= 1.0, (m_renderScale));
+#endif
 #ifdef DEBUG
   m_isTeardowned = false;
 #endif
@@ -1303,7 +1310,19 @@ void FrontendRenderer::OnResize(ScreenBase const & screen)
   CHECK(m_context != nullptr, ());
   // All resize methods must be protected from setting up the same size.
   m_context->Resize(sx, sy);
+#ifdef OMIM_AUTO
+  auto const buildingsSize = m_scaledBackground ? GetScaledRenderSize() : m2::PointU(sx, sy);
+  m_buildingsFramebuffer->SetSize(m_context, buildingsSize.x, buildingsSize.y);
+#else
   m_buildingsFramebuffer->SetSize(m_context, sx, sy);
+#endif
+#ifdef OMIM_AUTO
+  if (m_scaledBackground)
+  {
+    auto const size = GetScaledRenderSize();
+    m_scaledBackground->SetSize(m_context, size.x, size.y);
+  }
+#endif
   m_postprocessRenderer->Resize(m_context, sx, sy);
   m_needRestoreSize = false;
 
@@ -1531,6 +1550,19 @@ void FrontendRenderer::EndUpdateOverlayTree()
   }
 }
 
+#ifdef OMIM_AUTO
+m2::PointU FrontendRenderer::GetScaledRenderSize() const
+{
+  return {std::max(1u, static_cast<uint32_t>(m_viewport.GetWidth() * m_renderScale)),
+          std::max(1u, static_cast<uint32_t>(m_viewport.GetHeight() * m_renderScale))};
+}
+
+bool FrontendRenderer::UseScaledBackground() const
+{
+  return m_scaledBackground && m_scaledBackground->IsSupported();
+}
+#endif
+
 void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFrame)
 {
   TRACE_SECTION("[drape] RenderScene");
@@ -1555,9 +1587,23 @@ void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFram
       m_context->SetStencilReferenceValue(2 /* write this value to the stencil buffer */);
     }
 
+#ifdef OMIM_AUTO
+    bool const scaledBackground = UseScaledBackground();
+    if (scaledBackground)
+    {
+      m_context->SetFramebuffer(make_ref(m_scaledBackground));
+      auto const size = GetScaledRenderSize();
+      m_context->SetViewport(0, 0, size.x, size.y);
+    }
+    else if (m_scaledBackground)
+      m_viewport.Apply(m_context);
+#endif
     m_context->Clear(clearBits, storeBits);
     m_context->ApplyFramebuffer("Static frame");
-    m_viewport.Apply(m_context);
+#ifdef OMIM_AUTO
+    if (!m_scaledBackground)
+#endif
+      m_viewport.Apply(m_context);
 
     RenderTileBackgroundLayer(modelView);
 
@@ -1565,8 +1611,28 @@ void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFram
     RenderUserMarksLayer(modelView, DepthLayer::UserLineLayer);
     for (auto const & area : m_userAreas)
       if (GetCurrentZoom() >= area.m_minZoom)
-        RenderSingleGroup(m_context, modelView, make_ref(area.m_group));
+      {
+        // Area origins are canonical and independent of the currently requested world-copy tiles.
+        auto areaView = modelView;
+        auto origin = modelView.GetOrg();
+        origin.x = mercator::NearestWrapX(origin.x, area.m_group->GetTileKey().GetGlobalRect().Center().x);
+        areaView.SetOrg(origin);
+        RenderSingleGroup(m_context, areaView, make_ref(area.m_group));
+      }
 
+#ifdef OMIM_AUTO
+    if (scaledBackground)
+    {
+      m_scaledBackground->Resolve();
+      // Only raster resolution changes: camera, tile coverage, text and input coordinates stay native.
+      if (!m_postprocessRenderer->RestoreFrameTarget(m_context))
+        return;
+      m_context->Clear(clearBits, storeBits);
+      m_context->ApplyFramebuffer("Upscaled ground");
+      m_screenQuadRenderer->RenderTexture(m_context, make_ref(m_gpuProgramManager), m_scaledBackground->GetTexture(),
+                                          1.0f);
+    }
+#endif
     bool const hasTransitRouteData = HasTransitRouteData();
     if (m_buildingsFramebuffer->IsSupported() && !m_routeRenderer->IsRulerRoute())
     {
@@ -1688,15 +1754,32 @@ void FrontendRenderer::PreRender3dLayer(ScreenBase const & modelView)
   if (layer.m_renderGroups.empty())
     return;
 
+#ifdef OMIM_AUTO
+  auto const renderSize =
+      UseScaledBackground() ? GetScaledRenderSize() : m2::PointU(m_viewport.GetWidth(), m_viewport.GetHeight());
+  m_buildingsFramebuffer->SetSize(m_context, renderSize.x, renderSize.y);
+#endif
   m_context->SetFramebuffer(make_ref(m_buildingsFramebuffer));
   m_context->SetClearColor(dp::Color::Transparent());
+#ifdef OMIM_AUTO
+  if (m_scaledBackground)
+    m_context->SetViewport(0, 0, renderSize.x, renderSize.y);
+#endif
   m_context->Clear(dp::ClearBits::ColorBit | dp::ClearBits::DepthBit, dp::ClearBits::ColorBit /* storeBits */);
   m_context->ApplyFramebuffer("Buildings");
+#ifdef OMIM_AUTO
+  if (!m_scaledBackground)
+    m_context->SetViewport(0, 0, renderSize.x, renderSize.y);
+#else
   m_viewport.Apply(m_context);
+#endif
 
   layer.Sort(make_ref(m_overlayTree));
   for (drape_ptr<RenderGroup> const & group : layer.m_renderGroups)
     RenderSingleGroup(m_context, modelView, make_ref(group));
+#ifdef OMIM_AUTO
+  m_buildingsFramebuffer->Resolve();
+#endif
 }
 
 void FrontendRenderer::Render3dLayer(ScreenBase const & modelView)
@@ -1919,6 +2002,13 @@ void FrontendRenderer::RenderFrame()
   auto const frameStart = std::chrono::steady_clock::now();
   m_frameData.m_timer.Reset();
 
+#ifdef OMIM_AUTO
+  bool const displayPaced = m_minFrameTime > 0.0 && m_context->WaitForFrame(m_minFrameTime, [this]()
+  { return !IsRenderingEnabled() || !CanReceiveMessages(); });
+  if (!IsRenderingEnabled() || !CanReceiveMessages() || !m_context->Validate())
+    return;
+#endif
+
   bool modelViewChanged, viewportChanged, needActiveFrame;
   ScreenBase const & modelView = ProcessEvents(modelViewChanged, viewportChanged, needActiveFrame);
   if (viewportChanged || m_needRestoreSize)
@@ -2039,13 +2129,21 @@ void FrontendRenderer::RenderFrame()
     while (std::chrono::steady_clock::now() < messageDeadline);
   }
 
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().EndFrame();
+#endif
 #ifndef DISABLE_SCREEN_PRESENTATION
   m_context->Present();
 #endif
 
   // Each renderer has its own budget; rendering and presentation already count towards it.
+#ifdef OMIM_AUTO
+  double const frameTime = displayPaced ? 0.0 : m_minFrameTime;
+#else
   double const frameTime =
       std::max(m_minFrameTime, m_myPositionController->IsRouteFollowingActive() ? 1.0 / 30.0 : 0.0);
+#endif
   // The animation timer is reset after an idle wait, so use the original frame start for pacing.
   if (IsRenderingEnabled() && frameTime > 0.0 && (!canSuspend || m_minFrameTime > 0.0))
     std::this_thread::sleep_until(frameStart + std::chrono::duration<double>(frameTime));
@@ -2557,6 +2655,9 @@ void FrontendRenderer::OnContextDestroy()
   m_guiRenderer.reset();
   m_selectionShape.reset();
   m_buildingsFramebuffer.reset();
+#ifdef OMIM_AUTO
+  m_scaledBackground.reset();
+#endif
   m_screenQuadRenderer.reset();
 
   m_myPositionController->ResetRenderShape();
@@ -2577,6 +2678,10 @@ void FrontendRenderer::OnContextDestroy()
 
   // Here we have to erase weak pointer to the context, since it
   // can be destroyed after this method.
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Clear();
+#endif
   m_context->DoneCurrent();
   m_context = nullptr;
 
@@ -2598,6 +2703,10 @@ void FrontendRenderer::OnContextCreate()
   m_context->MakeCurrent();
 
   m_context->Init(m_apiVersion);
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Enable();
+#endif
 
   // Render empty frame here to avoid black initialization screen.
   RenderEmptyFrame();
@@ -2641,6 +2750,16 @@ void FrontendRenderer::OnContextCreate()
       make_unique_dp<dp::Framebuffer>(dp::TextureFormat::RGBA8, true /* depthEnabled */, false /* stencilEnabled */);
   m_buildingsFramebuffer->SetFramebufferFallback([this]()
   { return m_postprocessRenderer->OnFramebufferFallback(m_context); });
+#ifdef OMIM_AUTO
+  m_buildingsFramebuffer->SetSamples(m_msaaSamples);
+  if ((m_renderScale < 1.0 || m_msaaSamples > 0) && m_apiVersion == dp::ApiVersion::OpenGLES3)
+  {
+    m_scaledBackground = make_unique_dp<dp::Framebuffer>(dp::TextureFormat::RGBA8, true, true);
+    m_scaledBackground->SetSamples(m_msaaSamples);
+    m_scaledBackground->SetFramebufferFallback([this]()
+    { return m_postprocessRenderer->RestoreFrameTarget(m_context); });
+  }
+#endif
 
   m_transitBackground = make_unique_dp<ScreenQuadRenderer>(m_context);
   // The draw context can be recreated while the upload context and logical areas survive.
@@ -2725,6 +2844,9 @@ void FrontendRenderer::ReleaseResources()
   m_selectionShape.reset();
   m_routeRenderer.reset();
   m_buildingsFramebuffer.reset();
+#ifdef OMIM_AUTO
+  m_scaledBackground.reset();
+#endif
   m_screenQuadRenderer.reset();
   m_tileBackgroundRenderer.reset();
   m_trafficRenderer.reset();
@@ -2735,6 +2857,10 @@ void FrontendRenderer::ReleaseResources()
 
   // Here m_context can be nullptr, so call the method
   // for the context from the factory.
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Clear();
+#endif
   m_contextFactory->GetDrawContext()->DoneCurrent();
   m_context = nullptr;
 }

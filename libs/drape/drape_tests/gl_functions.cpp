@@ -19,6 +19,36 @@ void GLFunctions::glFlush() {}
 
 void GLFunctions::glFinish() {}
 
+#ifdef OMIM_AUTO
+void * GLFunctions::CreateFence()
+{
+  return MOCK_CALL(CreateFence());
+}
+bool GLFunctions::IsFenceSignaled(void * fence)
+{
+  return MOCK_CALL(IsFenceSignaled(fence));
+}
+void GLFunctions::DeleteFence(void * fence)
+{
+  MOCK_CALL(DeleteFence(fence));
+}
+
+GLFunctions::MultisampleFramebuffer GLFunctions::CreateMultisampleFramebuffer(uint32_t w, uint32_t h, uint32_t samples,
+                                                                              bool depth, bool stencil)
+{
+  return MOCK_CALL(CreateMultisampleFramebuffer(w, h, samples, depth, stencil));
+}
+void GLFunctions::DeleteMultisampleFramebuffer(MultisampleFramebuffer const & framebuffer)
+{
+  if (framebuffer.m_framebuffer != 0)
+    MOCK_CALL(DeleteMultisampleFramebuffer(framebuffer));
+}
+void GLFunctions::ResolveMultisampleFramebuffer(uint32_t source, uint32_t target, uint32_t w, uint32_t h)
+{
+  MOCK_CALL(ResolveMultisampleFramebuffer(source, target, w, h));
+}
+#endif
+
 uint32_t GLFunctions::glGenVertexArray()
 {
   return MOCK_CALL(glGenVertexArray());

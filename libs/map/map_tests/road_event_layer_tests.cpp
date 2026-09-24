@@ -62,6 +62,75 @@ UNIT_TEST(RoadEventLayer_OverviewAndCameraAreas)
   TEST_EQUAL(source->Get().m_store->Size(), 4, ());
 }
 
+UNIT_TEST(RoadEventLayer_ClusterCameraFilterKeepsRoadWarnings)
+{
+  classificator::Load();
+  df::VisualParams::Init(1, 1024);
+  auto source = std::make_shared<routing::RoadEventSource>();
+  auto store = std::make_shared<routing::RoadEventStore>();
+  for (unsigned kind = 0; kind < static_cast<unsigned>(routing::RoadEventKind::Count); ++kind)
+  {
+    routing::RoadEvent event;
+    event.m_kind = static_cast<routing::RoadEventKind>(kind);
+    event.m_position = mercator::FromLatLon(55, 38 + kind * 0.001);
+    store->Add(std::move(event));
+  }
+  source->Replace(store);
+  source->Configure(true, true, routing::kAllRoadEventKinds);
+  RoadEventLayer main(source);
+  RoadEventLayer cluster(source, {}, RoadEventLayer::kClusterExcludedKinds);
+  auto const rect = mercator::RectByCenterXYAndSizeInMeters(mercator::FromLatLon(55, 38.01), 5000);
+  auto const all = main.Query(rect, 18);
+  auto const reduced = cluster.Query(rect, 18);
+  TEST_EQUAL(all.m_marks->size(), 20, ());
+  TEST_EQUAL(reduced.m_marks->size(), 18, ());
+  for (auto const & [id, mark] : *all.m_marks)
+  {
+    auto const kind = store->Get(mark->m_index).m_kind;
+    bool const hidden = kind == routing::RoadEventKind::Dummy || kind == routing::RoadEventKind::Video;
+    TEST_EQUAL(reduced.m_marks->contains(id), !hidden, (static_cast<unsigned>(kind)));
+  }
+}
+
+UNIT_TEST(RoadEventLayer_WrappedWorldCopies)
+{
+  classificator::Load();
+  df::VisualParams::Init(1, 1024);
+  auto source = std::make_shared<routing::RoadEventSource>();
+  auto store = std::make_shared<routing::RoadEventStore>();
+  for (double lon : {38.0, 179.999, -179.999})
+  {
+    routing::RoadEvent event;
+    event.m_position = mercator::FromLatLon(55, lon);
+    event.m_kind = routing::RoadEventKind::Camera;
+    event.m_directionType = 1;
+    event.m_direction = 0;
+    event.m_angle = 15;
+    event.m_distance = 500;
+    store->Add(std::move(event));
+  }
+  source->Replace(store);
+  source->Configure(true, true, routing::kAllRoadEventKinds);
+  RoadEventLayer layer(source);
+  for (int copy : {-2, -1, 0, 1, 2})
+  {
+    auto rect = mercator::RectByCenterXYAndSizeInMeters(mercator::FromLatLon(55, 38), 1000);
+    rect.Offset(copy * mercator::Bounds::kRangeX, 0);
+    auto data = layer.Query(rect, 17);
+    TEST_EQUAL(data.m_marks->size(), 1, (copy));
+    TEST_EQUAL(data.m_lines->size(), 1, (copy));
+    TEST_ALMOST_EQUAL_ABS(data.m_marks->begin()->second->m_pivot.x, 38.0, 1e-9, ());
+    for (double lon : {-180.001, -179.999, 179.999, 180.001})
+    {
+      rect = mercator::RectByCenterXYAndSizeInMeters(mercator::FromLatLon(55, lon), 1000);
+      rect.Offset(copy * mercator::Bounds::kRangeX, 0);
+      data = layer.Query(rect, 17);
+      TEST_EQUAL(data.m_marks->size(), 2, (copy, lon));
+      TEST_EQUAL(data.m_lines->size(), 2, (copy, lon));
+    }
+  }
+}
+
 UNIT_TEST(RoadEventLayer_DenseViewportIsNotTruncated)
 {
   classificator::Load();

@@ -50,7 +50,7 @@ dp::BindingInfo GetMarkerBindingInfo()
 }  // namespace mp
 
 MyPosition::MyPosition(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::TextureManager> mng)
-  : m_position(m2::PointF::Zero())
+  : m_position(PositionPoint::Zero())
   , m_azimuth(0.0f)
   , m_accuracy(0.0f)
   , m_showAzimuth(false)
@@ -68,7 +68,7 @@ bool MyPosition::InitArrow(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::Tex
   return m_arrow3d->IsValid();
 }
 
-void MyPosition::SetPosition(m2::PointF const & pt)
+void MyPosition::SetPosition(PositionPoint const & pt)
 {
   m_position = pt;
 }
@@ -102,7 +102,7 @@ void MyPosition::SetPositionObsolete(bool obsolete)
 void MyPosition::RenderAccuracy(ref_ptr<dp::GraphicsContext> context, ref_ptr<gpu::ProgramManager> mng,
                                 ScreenBase const & screen, int zoomLevel, FrameValues const & frameValues)
 {
-  m2::PointD const adjustedPos = df::AdjustPointForViewport(m2::PointD(m_position), screen);
+  m2::PointD const adjustedPos = df::AdjustPointForViewport(GetPosition(), screen);
 
   m2::PointD accuracyPoint(adjustedPos.x + m_accuracy, adjustedPos.y);
   auto const pixelAccuracy = static_cast<float>((screen.GtoP(accuracyPoint) - screen.GtoP(adjustedPos)).Length());
@@ -123,7 +123,7 @@ void MyPosition::RenderMyPosition(ref_ptr<dp::GraphicsContext> context, ref_ptr<
                                   ScreenBase const & screen, int zoomLevel, FrameValues const & frameValues,
                                   bool screenAligned)
 {
-  m2::PointD const adjustedPos = df::AdjustPointForViewport(m2::PointD(m_position), screen);
+  m2::PointD const adjustedPos = df::AdjustPointForViewport(GetPosition(), screen);
 
   if (m_showAzimuth)
   {

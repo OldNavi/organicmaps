@@ -24,6 +24,22 @@ public:
   static void glScissor(uint32_t x, uint32_t y, uint32_t w, uint32_t h);
   static void glFlush();
   static void glFinish();
+#ifdef OMIM_AUTO
+  static void * CreateFence();
+  static bool IsFenceSignaled(void * fence);
+  static void DeleteFence(void * fence);
+  struct MultisampleFramebuffer
+  {
+    uint32_t m_framebuffer = 0;
+    uint32_t m_color = 0;
+    uint32_t m_depthStencil = 0;
+    uint32_t m_samples = 0;
+  };
+  static MultisampleFramebuffer CreateMultisampleFramebuffer(uint32_t width, uint32_t height, uint32_t samples,
+                                                             bool depth, bool stencil);
+  static void DeleteMultisampleFramebuffer(MultisampleFramebuffer const & framebuffer);
+  static void ResolveMultisampleFramebuffer(uint32_t source, uint32_t destination, uint32_t width, uint32_t height);
+#endif
 
   static void glFrontFace(glConst mode);
   static void glCullFace(glConst face);

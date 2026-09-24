@@ -319,6 +319,10 @@ def allowedPermissions = [
     ~/name='app\.organicmaps(\.web|\.auto)?(\.debug|\.beta|\.profileable)?\.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'/
 ]
 registerCheckApkPermissionsTasks(project, allowedPermissions)
+android.productFlavors.configureEach { flavor ->
+  if (flavor.name != 'auto')
+    flavor.matchingFallbacks.add('standard')
+}
 androidComponents.onVariants(androidComponents.selector().withFlavor('default', 'auto')) { variant ->
   tasks.named("check${variant.name.capitalize()}ApkPermissions").configure { task ->
     task.allowedPermissions.add(java.util.regex.Pattern.compile(

@@ -5,15 +5,19 @@ set(SRC
   area_shape_tests.cpp
   clip_splines_builder_tests.cpp
   frame_values_tests.cpp
+  driving_poi_policy_tests.cpp
   message_queue_tests.cpp
   navigator_test.cpp
+  my_position_precision_tests.cpp
   path_text_test.cpp
   perspective_tile_coverage_tests.cpp
   rainbow_line_gpu_test.cpp
   screen_operations_tests.cpp
+  scaled_render_target_tests.cpp
   shape_test_fixture.cpp
   shape_test_fixture.hpp
   stylist_tests.cpp
+  tile_read_batch_tests.cpp
   user_area_snapshot_tests.cpp
   user_event_stream_tests.cpp
   visual_params_fixture.hpp

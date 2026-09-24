@@ -87,10 +87,12 @@ public:
   void OnCompassUpdated(location::CompassInfo const & info, bool forceRedraw);
 
   bool CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi, bool firstLaunch, bool launchByDeepLink,
-                         uint32_t appVersionCode, bool isCustomROM, bool isAuto);
+                         uint32_t appVersionCode, bool isCustomROM, bool isAuto, double renderScale, int maxFps,
+                         int msaaSamples);
   bool IsDrapeEngineCreated() const;
   int64_t CreateNavigationView(JNIEnv * env, jobject surface, int dpi, double scale, int zoom, bool showPoi,
-                               bool buildings3d, double tilt, double anchorX, double anchorY);
+                               bool buildings3d, double tilt, double anchorX, double anchorY, double renderScale,
+                               int maxFps, int msaaSamples);
   void DestroyNavigationView(int64_t id);
   void ResizeNavigationView(int64_t id, int width, int height);
   void SetNavigationViewCamera(int64_t id, int zoom, double tilt, double anchorX, double anchorY);

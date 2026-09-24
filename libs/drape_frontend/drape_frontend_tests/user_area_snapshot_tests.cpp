@@ -119,6 +119,54 @@ public:
 };
 }  // namespace
 
+#ifdef OMIM_AUTO
+namespace
+{
+class BatchedAreasTestShape : public df::MapShape
+{
+public:
+  void Draw(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::Batcher>,
+            ref_ptr<dp::TextureManager> textures) const override
+  {
+    df::UserMarkGenerator generator([](df::TUserMarksRenderData &&) {});
+    auto lines = make_unique_dp<df::UserLinesRenderCollection>();
+    auto ids = make_unique_dp<df::IDCollections>();
+    for (uint64_t i = 1; i <= 4; ++i)
+    {
+      double const x = i == 4 ? 10.0 : 0.002;
+      auto area = make_unique_dp<df::UserLineRenderParams>();
+      area->m_minZoom = i == 3 ? 16 : 15;
+      area->m_fill = make_unique_dp<df::UserAreaFill>();
+      area->m_fill->m_bounds = {x - 0.001, 0.001, x + 0.001, 0.003};
+      area->m_fill->m_textureRect = area->m_fill->m_bounds;
+      area->m_fill->m_triangles = {{x - 0.001, 0.001}, {x + 0.001, 0.001}, {x, 0.003}};
+      area->m_fill->m_symbolName = "speedcam-alert-l";
+      ids->m_lineIds.push_back(i);
+      lines->emplace(i, std::move(area));
+    }
+    generator.SetUserLines(std::move(lines));
+    generator.SetGroup(15, std::move(ids));
+    generator.SetGroupVisibility(15, true);
+    generator.GenerateUserAreasGeometry(context, textures, [](df::TUserMarksRenderData && data)
+    {
+      TEST_EQUAL(data.size(), 3, ("Shared origin/zoom combines areas; other visibility levels stay separate"));
+      size_t indices = 0, zoom16 = 0, merged = 0;
+      for (auto const & item : data)
+      {
+        auto const count = item.m_bucket->GetBuffer()->GetIndexCount();
+        indices += count;
+        merged += count == 6;
+        zoom16 += item.m_minZoom == 16;
+      }
+      TEST_EQUAL(indices, 12, ("Every triangle appears exactly once"));
+      TEST_EQUAL(merged, 1, ());
+      TEST_EQUAL(zoom16, 1, ());
+    });
+  }
+};
+}  // namespace
+#endif
+
 using UserAreaFixture = df::test_support::VisualParamsFixture;
 
 UNIT_CLASS_TEST(UserAreaFixture, UserAreas_NotRebuiltByMapTileLOD)
@@ -134,3 +182,12 @@ UNIT_CLASS_TEST(UserAreaFixture, UserMarks_ExternalSymbolsVisibleBeforeFirstTap)
   fixture.Render("Selectable external symbols", 64, 64,
                  [](auto & shapes) { shapes.AddShape(make_unique_dp<SelectableSymbolsTestShape>()); });
 }
+
+#ifdef OMIM_AUTO
+UNIT_CLASS_TEST(UserAreaFixture, UserAreas_BatchCompatibleSectors)
+{
+  df::test_support::ShapeTestFixture fixture;
+  fixture.Render("Batched area snapshot", 64, 64,
+                 [](auto & shapes) { shapes.AddShape(make_unique_dp<BatchedAreasTestShape>()); });
+}
+#endif

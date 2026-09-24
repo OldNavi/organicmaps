@@ -45,7 +45,7 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
   m_context->BeginReadTile();
 
   // Reading can be interrupted by exception throwing
-  SCOPE_GUARD(ReleaseReadTile, std::bind(&EngineContext::EndReadTile, m_context.get()));
+  SCOPE_GUARD(ReleaseReadTile, [this] { m_context->EndReadTile(IsCancelled()); });
 
   ReadFeatureIndex(model);
   ThrowIfCancelled();

@@ -55,11 +55,16 @@ public class NavigationNotificationsTest
 
   private static RoadShieldInfo shields(String... texts) throws Exception
   {
+    return shields(RoadShieldType.GenericWhite, texts);
+  }
+
+  private static RoadShieldInfo shields(RoadShieldType type, String... texts) throws Exception
+  {
     var shieldConstructor = RoadShield.class.getDeclaredConstructors()[0];
     shieldConstructor.setAccessible(true);
     RoadShield[] shields = new RoadShield[texts.length];
     for (int i = 0; i < texts.length; ++i)
-      shields[i] = (RoadShield) shieldConstructor.newInstance(RoadShieldType.values()[0], texts[i], null);
+      shields[i] = (RoadShield) shieldConstructor.newInstance(type, texts[i], null);
     var constructor = RoadShieldInfo.class.getDeclaredConstructors()[0];
     constructor.setAccessible(true);
     return (RoadShieldInfo) constructor.newInstance(shields, 0, texts.length, 0, 0);
@@ -165,6 +170,19 @@ public class NavigationNotificationsTest
     data.turnMeters = 50;
     data.shields = shields();
     assertTrue(data.snapshot().hasSameData("direction_signs", absent));
+  }
+
+  @Test
+  public void signColorChangeNotifiesEvenWhenTextIsUnchanged() throws Exception
+  {
+    Data data = new Data();
+    data.shields = shields(RoadShieldType.GenericBlue, "M-5");
+    NavigationSnapshot previous = data.snapshot();
+    data.shields = shields(RoadShieldType.GenericBlue, new String("M-5"));
+    assertTrue(data.snapshot().hasSameData("direction_signs", previous));
+    data.shields = shields(RoadShieldType.GenericGreen, "M-5");
+    assertFalse(data.snapshot().hasSameData("direction_signs", previous));
+    assertTrue(data.snapshot().hasSameData("lanes", previous));
   }
 
   @Test

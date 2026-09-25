@@ -1947,8 +1947,9 @@ drape_ptr<df::DrapeEngine> Framework::CreateNavigationRenderer(ref_ptr<dp::Graph
                                  allow3dBuildings, false, false, true, false, {}, false, false, false,
                                  dp::BackgroundMode::Default, 1.0f, std::nullopt,
                                  [](std::list<df::OverlayShowEvent> &&) {}, [] {}, {});
-  params.m_externalMarks = std::make_shared<RoadEventLayer>(m_routingManager.GetRoadEvents(), m_mwmRoadEvents,
-                                                            RoadEventLayer::kClusterExcludedKinds);
+  params.m_externalMarks =
+      std::make_shared<RoadEventLayer>(m_routingManager.GetRoadEvents(), m_mwmRoadEvents,
+                                       RoadEventLayer::kClusterExcludedKinds, false /* allowSelectionPreview */);
   auto engine = make_unique_dp<df::DrapeEngine>(std::move(params));
   engine->SetVisibleViewport(m2::RectD(0, 0, width, height));
   engine->Allow3dMode(true, allow3dBuildings);
@@ -2283,6 +2284,12 @@ void Framework::ActivateMapSelection()
   if (!m_currentPlacePageInfo)
     return;
 
+#ifdef OMIM_AUTO
+  if (m_routingManager.GetRoadEvents()->SetCoveragePreview(m_currentPlacePageInfo->GetBuildInfo().m_roadEvent) &&
+      m_drapeEngine)
+    m_drapeEngine->RefreshExternalMarks();
+#endif
+
   auto & bm = GetBookmarkManager();
 
   bm.ResetRecentlyDeletedBookmark();
@@ -2311,6 +2318,11 @@ void Framework::ActivateMapSelection()
 
 bool Framework::DeactivateMapSelection()
 {
+#ifdef OMIM_AUTO
+  if (m_routingManager.GetRoadEvents()->SetCoveragePreview({}) && m_drapeEngine)
+    m_drapeEngine->RefreshExternalMarks();
+#endif
+
   if (m_routingManager.IsRoutingActive() || m_routingManager.GetRoutePointsCount() > 0)
     HideRouteTransitIfNeeded();
 

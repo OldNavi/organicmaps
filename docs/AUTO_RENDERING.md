@@ -104,19 +104,19 @@ context: a Qt plugin that skips context creation does not validate them merely
 because the runner exits successfully. Device performance comparisons use both
 actual screens and report presented frames, CPU, memory and queue recovery.
 
-## Planned camera coverage filtering
+## Camera coverage and POI density
 
-During guidance, show coverage gradients only for cameras on the selected route.
-During driving without guidance, limit gradients to cameras on the street/road
-currently being travelled. Add a settings toggle to hide camera coverage gradients
-without disabling camera icons or warnings. Implement these together in the next
-gradient-filtering session; they are not implemented here.
+Camera coverage has an independent visibility switch in Road events settings.
+During guidance, fills are restricted to directed segments of the selected route;
+without guidance, they follow the currently matched street. Selection runs on the
+road worker and is shared by both displays. See [ROAD_EVENTS.md](ROAD_EVENTS.md)
+for the local horizon, matching and cache invalidation rules.
 
-Also planned for that session: a user setting for POI density (the number of
-objects shown on the map), independent of camera coverage gradient visibility.
-
-Investigate rear-facing cameras in that session too: match the camera to the
-travelled carriageway and directed road graph, verify the provider's azimuth
-semantics, and retain applicable coverage after passing the camera. Road direction
-alone must not turn an opposing-flow camera into a rear-facing camera; individual
-lane geometry is not always available.
+General settings provide separate Few / Normal / Many POI density controls for
+the primary map and instrument cluster. Many is the default and retains existing
+spacing. Normal and Few add 8 and 24 logical pixels to POI collision padding,
+respectively; existing priorities determine which nearby objects remain visible.
+They do not change road/locality/building style rules or RoadEvent symbols.
+The driving-category filter and the cluster POI visibility switch still apply.
+Settings are persisted and applied live; recreated renderers restore their own
+screen's value. This controls visual density, not map geometry resolution.

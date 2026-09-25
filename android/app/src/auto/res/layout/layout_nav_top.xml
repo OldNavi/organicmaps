@@ -53,7 +53,7 @@
           android:layout_marginTop="@dimen/nav_next_turn_top"
           android:layout_marginBottom="@dimen/nav_next_turn_space"
           android:layout_gravity="center_horizontal"
-          android:tint="@color/auto_nav_foreground"
+          app:tint="@color/auto_nav_foreground"
           tools:src="@drawable/ic_roundabout_exit_12"/>
 
       <TextView
@@ -86,7 +86,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:padding="@dimen/margin_eighth"
-        android:tint="@color/auto_nav_foreground"
+        app:tint="@color/auto_nav_foreground"
         tools:src="@drawable/ic_turn_left_sharp"/>
     </FrameLayout>
   </RelativeLayout>

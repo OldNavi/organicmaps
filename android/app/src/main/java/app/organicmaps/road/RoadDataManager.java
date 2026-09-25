@@ -26,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +39,7 @@ public final class RoadDataManager
 {
   public static final String SETTINGS = "road_events_settings";
   public static final String ENABLED = "road_events_enabled";
+  public static final String COVERAGE = "road_events_coverage";
   public static final String WARNINGS = "road_events_warnings";
   public static final String CATEGORIES = "road_events_categories";
   public static final String COUNTRY = "road_events_country";
@@ -129,6 +129,14 @@ public final class RoadDataManager
     return mProvider.id();
   }
 
+  public String eventUrl(String identity, double latitude, double longitude)
+  {
+    String[] parts = identity.split(":", 3);
+    return parts.length == 3 && parts[0].equals(mProvider.id()) && !parts[2].isEmpty()
+      ? mProvider.eventUrl(parts[2], latitude, longitude)
+      : null;
+  }
+
   public LiveData<State> state()
   {
     return mState;
@@ -140,6 +148,10 @@ public final class RoadDataManager
   public boolean warnings()
   {
     return enabled() && SpeedWarningSettings.level(mContext) != SpeedWarningSettings.OFF;
+  }
+  public boolean coverageVisible()
+  {
+    return mPrefs.getBoolean(COVERAGE, true);
   }
   public int visibleKinds()
   {
@@ -202,6 +214,7 @@ public final class RoadDataManager
     boolean warningsChanged = mWarningsEnabled != warnings();
     mEnabled = enabled();
     mWarningsEnabled = warnings();
+    RoadEvents.nativeSetCoverageVisible(coverageVisible());
     RoadEvents.nativeConfigure(mEnabled, mWarningsEnabled, visibleKinds(), mMinZooms);
     if (wasEnabled != mEnabled || warningsChanged)
       NavigationProvider.invalidateRoadData();
@@ -488,6 +501,7 @@ public final class RoadDataManager
   {
     if (!mInitialized)
       return;
+    RoadEvents.nativeSetCoverageVisible(coverageVisible());
     RoadEvents.nativeConfigure(enabled(), warnings(), visibleKinds(), mMinZooms);
     NavigationProvider.invalidateRoadData();
   }
@@ -532,9 +546,9 @@ public final class RoadDataManager
   {
     final String country;
     final BooleanSupplier cancelled;
-    final CompletableFuture<UpdateResult> completion;
+    final RoadUpdateCompletion completion;
     long importedAt;
-    AutomaticUpdate(String country, BooleanSupplier cancelled, CompletableFuture<UpdateResult> completion)
+    AutomaticUpdate(String country, BooleanSupplier cancelled, RoadUpdateCompletion completion)
     {
       this.country = country;
       this.cancelled = cancelled;
@@ -552,7 +566,7 @@ public final class RoadDataManager
 
   // Called on main by WorkManager. Network and storage use the same executors and busy owner as manual imports.
   void updateAutomatically(String provider, String expectedCountry, BooleanSupplier cancelled,
-                           CompletableFuture<UpdateResult> completion)
+                           RoadUpdateCompletion completion)
   {
     String country = RoadUpdateSettings.currentCountry(mPrefs, System.currentTimeMillis());
     if (!providerId().equals(provider) || !country.matches("[A-Z]{2}") || cancelled.getAsBoolean()
@@ -657,7 +671,7 @@ public final class RoadDataManager
     update.completion.complete(result);
   }
 
-  void cancelAutomaticUpdate(CompletableFuture<UpdateResult> completion)
+  void cancelAutomaticUpdate(RoadUpdateCompletion completion)
   {
     if (mAutomaticUpdate != null && mAutomaticUpdate.completion == completion)
       mProvider.cancel();

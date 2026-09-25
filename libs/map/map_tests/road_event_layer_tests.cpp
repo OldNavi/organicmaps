@@ -442,3 +442,76 @@ UNIT_TEST(RoadEventLayer_ReadMwmCameraDirectionsAndFallbackSectors)
   data.Deregister(country.GetCountryFile());
   data.ClearCache();
 }
+
+UNIT_TEST(RoadEventLayer_CoverageVisibilityKeepsSymbolsAndWarnings)
+{
+  classificator::Load();
+  df::VisualParams::Init(1, 1024);
+  auto source = std::make_shared<routing::RoadEventSource>();
+  auto store = std::make_shared<routing::RoadEventStore>();
+  auto maps = std::make_shared<routing::RoadEventStore>();
+  for (int i = 0; i < 3; ++i)
+  {
+    routing::RoadEvent event;
+    event.m_position = mercator::FromLatLon(55, 38 + i * 0.005);
+    event.m_directionType = 1;
+    event.m_angle = 15;
+    event.m_distance = 500;
+    (i == 2 ? maps : store)->Add(std::move(event));
+  }
+  source->Replace(store);
+  source->ReplaceMapCameras(maps);
+  source->EnableMapCameras();
+  source->Configure(true, true, routing::kAllRoadEventKinds);
+  RoadEventLayer main(source);
+  RoadEventLayer cluster(source, {}, RoadEventLayer::kClusterExcludedKinds);
+  auto const rect = mercator::RectByCenterXYAndSizeInMeters(mercator::FromLatLon(55, 38.005), 2000);
+  TEST_EQUAL(main.Query(rect, 16).m_lines->size(), 3, ());
+  source->EnableCoverageFilter();
+  TEST(main.Query(rect, 16).m_lines->empty(), ("No matched road yet"));
+  TEST(source->SetCoverage(source->Get(), {{1}, {0}}), ());
+  for (auto * layer : {&main, &cluster})
+  {
+    auto data = layer->Query(rect, 16);
+    TEST_EQUAL(data.m_marks->size(), 3, ());
+    TEST_EQUAL(data.m_lines->size(), 2, ("Imported and map camera on the selected road"));
+  }
+  source->SetCoverageVisible(false);
+  TEST(main.Query(rect, 16).m_lines->empty(), ());
+  TEST_EQUAL(main.Query(rect, 16).m_marks->size(), 3, ());
+  TEST(source->Get().m_warnings, ());
+  source->SetCoverageVisible(true);
+  TEST_EQUAL(main.Query(rect, 16).m_lines->size(), 2, ("Re-enable without another location update"));
+}
+
+UNIT_TEST(RoadEventLayer_SelectedCameraPreviewsCoverageIndependently)
+{
+  classificator::Load();
+  df::VisualParams::Init(1, 1024);
+  auto source = std::make_shared<routing::RoadEventSource>();
+  routing::RoadEvent event;
+  event.m_position = mercator::FromLatLon(55, 38);
+  event.m_sourceId = "source:RU:camera";
+  event.m_directionType = 1;
+  event.m_angle = 15;
+  event.m_distance = 500;
+  source->EnableCoverageFilter();
+  source->SetCoverageVisible(false);
+  source->SetCoveragePreview(event);
+  RoadEventLayer main(source);
+  RoadEventLayer cluster(source, {}, RoadEventLayer::kClusterExcludedKinds, false);
+  auto const rect = mercator::RectByCenterXYAndSizeInMeters(event.m_position, 2000);
+  TEST_EQUAL(main.Query(rect, 13).m_lines->size(), 1, ("Explicit preview works without GPS or automatic fills"));
+  TEST(cluster.Query(rect, 13).m_lines->empty(), ("Main selection does not clutter the cluster"));
+  auto store = std::make_shared<routing::RoadEventStore>();
+  store->Add(routing::RoadEvent(event));
+  source->Replace(store);
+  source->Configure(true, true, routing::kAllRoadEventKinds);
+  source->SetCoverageVisible(true);
+  source->SetCoverage(source->Get(), {{0}, {}});
+  TEST_EQUAL(main.Query(rect, 16).m_lines->size(), 1, ("Selected and automatic fills do not double opacity"));
+  source->SetCoveragePreview({});
+  source->ClearCoverage();
+  TEST(main.Query(rect, 16).m_lines->empty(), ("Closing the card removes its preview"));
+  TEST_EQUAL(main.Query(rect, 16).m_marks->size(), 1, ());
+}

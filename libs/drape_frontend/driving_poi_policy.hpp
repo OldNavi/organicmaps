@@ -11,6 +11,19 @@ class TypesHolder;
 
 namespace df
 {
+enum class PoiDensity
+{
+  Low,
+  Normal,
+  High
+};
+inline constexpr char const * PoiDensitySetting(bool cluster)
+{
+  return cluster ? "AutoClusterPoiDensity" : "AutoMainPoiDensity";
+}
+PoiDensity LoadPoiDensity(bool cluster);
+double PoiDensityPadding(PoiDensity density, feature::TypesHolder const & types);
+
 class DrivingPoiPolicy
 {
 public:

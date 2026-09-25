@@ -1907,6 +1907,55 @@ void FrontendRenderer::RenderMwmBorderLayer(ScreenBase const & modelView)
     RenderSingleGroup(m_context, modelView, make_ref(group));
 }
 
+#ifdef OMIM_AUTO
+void FrontendRenderer::UpdateRoadEventBadges(ScreenBase const & modelView)
+{
+  m_externalSymbols.clear();
+  m_externalBadges.clear();
+  m_externalBadgeHandles.clear();
+  m_unreadyExternalBadges.clear();
+  auto const & groups = m_layers[static_cast<size_t>(DepthLayer::UserMarkLayer)].m_renderGroups;
+  for (auto const & group : groups)
+    group->ForEachOverlay([&](ref_ptr<dp::OverlayHandle> const & handle)
+    {
+      auto const id = handle->GetOverlayID().m_markId;
+      if ((id >> 60) != kml::kExternalMarkGroupId)
+        return;
+      handle->BeforeUpdate();
+      bool const ready = handle->Update(modelView);
+      if (handle->IsBadge())
+      {
+        m_externalBadgeHandles.push_back(handle);
+        if (!ready)
+        {
+          m_unreadyExternalBadges.push_back(id);
+          return;
+        }
+        if (handle->IndexesRequired())
+        {
+          auto const rect = handle->GetPixelRect(modelView, modelView.isPerspective());
+          if (!modelView.IsReverseProjection3d(rect.Center()))
+            m_externalBadges.push_back({id, rect});
+        }
+      }
+      else if (!handle->HasDynamicAttributes())
+      {
+        auto const rect = handle->GetPixelRect(modelView, modelView.isPerspective());
+        if (!modelView.IsReverseProjection3d(rect.Center()))
+          m_externalSymbols.push_back({id, rect});
+      }
+    });
+  PlaceUserMarkBadges(m_externalSymbols, m_externalBadges, m_visibleExternalBadges);
+  std::sort(m_unreadyExternalBadges.begin(), m_unreadyExternalBadges.end());
+  for (auto const & handle : m_externalBadgeHandles)
+  {
+    auto const id = handle->GetOverlayID().m_markId;
+    handle->SetIsVisible(std::binary_search(m_visibleExternalBadges.begin(), m_visibleExternalBadges.end(), id) &&
+                         !std::binary_search(m_unreadyExternalBadges.begin(), m_unreadyExternalBadges.end(), id));
+  }
+}
+#endif
+
 void FrontendRenderer::RenderUserMarksLayer(ScreenBase const & modelView, DepthLayer layerId)
 {
   TRACE_SECTION("[drape] RenderUserMarksLayer");
@@ -1917,6 +1966,10 @@ void FrontendRenderer::RenderUserMarksLayer(ScreenBase const & modelView, DepthL
   CHECK(m_context != nullptr, ());
   DEBUG_LABEL(m_context, "User Marks: " + DebugPrint(layerId));
   m_context->Clear(dp::ClearBits::DepthBit, dp::kClearBitsStoreAll);
+#ifdef OMIM_AUTO
+  if (layerId == DepthLayer::UserMarkLayer)
+    UpdateRoadEventBadges(modelView);
+#endif
 
   for (drape_ptr<RenderGroup> const & group : renderGroups)
   {
@@ -1924,7 +1977,11 @@ void FrontendRenderer::RenderUserMarksLayer(ScreenBase const & modelView, DepthL
       group->ForEachOverlay([&modelView](ref_ptr<dp::OverlayHandle> const & handle)
       {
         // External numeric sign labels are not managed by the POI displacement tree.
-        if ((handle->GetOverlayID().m_markId >> 60) == kml::kExternalMarkGroupId && handle->HasDynamicAttributes())
+        if ((handle->GetOverlayID().m_markId >> 60) == kml::kExternalMarkGroupId && handle->HasDynamicAttributes()
+#ifdef OMIM_AUTO
+            && !handle->IsBadge()
+#endif
+        )
         {
           handle->SetIsVisible(true);
           handle->BeforeUpdate();
@@ -3055,12 +3112,24 @@ void FrontendRenderer::SearchInNonDisplaceableUserMarksLayer(ScreenBase const & 
     UpdateSearchMarkTextOverlay(modelView);
   else
     layer.Sort(nullptr);
+#ifdef OMIM_AUTO
+  if (layerId == DepthLayer::UserMarkLayer)
+    UpdateRoadEventBadges(modelView);
+#endif
 
   for (drape_ptr<RenderGroup> & group : layer.m_renderGroups)
   {
     if (layerId != DepthLayer::SearchMarkLayer)
     {
+#ifdef OMIM_AUTO
+      group->ForEachOverlay([](ref_ptr<dp::OverlayHandle> const & handle)
+      {
+        if (!handle->IsBadge())
+          handle->SetIsVisible(true);
+      });
+#else
       group->SetOverlayVisibility(true);
+#endif
       group->Update(modelView);
     }
     group->ForEachOverlay(

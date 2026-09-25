@@ -1,5 +1,7 @@
 #pragma once
 
+#include "drape_frontend/user_mark_badge_layout.hpp"
+
 #include "drape_frontend/base_renderer.hpp"
 #include "drape_frontend/drape_api_renderer.hpp"
 #include "drape_frontend/frame_values.hpp"
@@ -203,6 +205,14 @@ private:
   void RenderMwmBorderLayer(ScreenBase const & modelView);
   void RenderOverlayLayer(ScreenBase const & modelView);
   void RenderUserMarksLayer(ScreenBase const & modelView, DepthLayer layerId);
+#ifdef OMIM_AUTO
+  void UpdateRoadEventBadges(ScreenBase const & modelView);
+  std::vector<UserMarkFootprint> m_externalSymbols;
+  std::vector<UserMarkFootprint> m_externalBadges;
+  std::vector<ref_ptr<dp::OverlayHandle>> m_externalBadgeHandles;
+  std::vector<kml::MarkId> m_visibleExternalBadges;
+  std::vector<kml::MarkId> m_unreadyExternalBadges;
+#endif
   void RenderNonDisplaceableUserMarksLayer(ScreenBase const & modelView, DepthLayer layerId);
   void RenderTransitSchemeLayer(ScreenBase const & modelView);
   void RenderTrafficLayer(ScreenBase const & modelView);

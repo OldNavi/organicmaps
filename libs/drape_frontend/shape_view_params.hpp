@@ -47,6 +47,7 @@ struct CommonOverlayViewParams : public CommonViewParams
 
   FeatureID m_featureId;
   kml::MarkId m_markId = kml::kInvalidMarkId;
+  bool m_isBadge = false;
 };
 
 struct PoiSymbolViewParams : CommonOverlayViewParams

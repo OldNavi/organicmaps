@@ -74,6 +74,7 @@ public class SettingsPrefsFragment extends BaseXmlSettingsFragment implements La
     initShowOnLockScreenPrefsCallbacks();
     initNightNavigationPrefsCallbacks();
     SpeedWarningSettings.addPreferences(this);
+    PoiDensitySettings.addPreferences(this);
     if (RoadDataManager.available())
     {
       PreferenceCategory general = findPreference(getString(R.string.pref_settings_general));

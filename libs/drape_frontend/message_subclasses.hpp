@@ -5,6 +5,7 @@
 #include "drape_frontend/drape_api.hpp"
 #include "drape_frontend/drape_api_builder.hpp"
 #include "drape_frontend/drape_engine_params.hpp"
+#include "drape_frontend/driving_poi_policy.hpp"
 #include "drape_frontend/gps_track_point.hpp"
 #include "drape_frontend/gui/layer_render.hpp"
 #include "drape_frontend/gui/skin.hpp"
@@ -949,8 +950,13 @@ class SetPoiVisibilityMessage : public Message
 {
 public:
 #ifdef OMIM_AUTO
-  explicit SetPoiVisibilityMessage(bool visible, bool driving = false) : m_visible(visible), m_driving(driving) {}
+  explicit SetPoiVisibilityMessage(bool visible, bool driving = false, PoiDensity density = PoiDensity::High)
+    : m_visible(visible)
+    , m_driving(driving)
+    , m_density(density)
+  {}
   bool IsDriving() const { return m_driving; }
+  PoiDensity GetDensity() const { return m_density; }
 #else
   explicit SetPoiVisibilityMessage(bool visible) : m_visible(visible) {}
 #endif
@@ -961,6 +967,7 @@ private:
   bool const m_visible;
 #ifdef OMIM_AUTO
   bool const m_driving;
+  PoiDensity const m_density;
 #endif
 };
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "routing/camera_coverage.hpp"
 #include "routing/data_source.hpp"
 #include "routing/features_road_graph.hpp"
 #include "routing/maxspeeds.hpp"
@@ -20,6 +21,7 @@ struct ApproachingRoadEvent
 
 struct RoadInfoSnapshot
 {
+  bool m_coverageChanged = false;
   bool m_matched = false;
   double m_speedLimitMps = 0.0;
   std::string m_road;
@@ -35,9 +37,15 @@ struct RoadInfoSnapshot
 // Pure selection policy, shared with tests. Ambiguous parallel roads are not a match.
 std::optional<IRoadGraph::EdgeProjectionT> MatchRoad(m2::PointD const & position, m2::PointD const & direction,
                                                      double accuracy,
-                                                     std::vector<IRoadGraph::EdgeProjectionT> const & candidates);
+                                                     std::vector<IRoadGraph::EdgeProjectionT> const & candidates,
+                                                     double maximumDistance = 0, bool allowJunctionOverlap = false);
 
 using RoadCameraGetter = std::function<std::vector<RouteSegment::SpeedCamera>(Edge const &)>;
+#ifdef OMIM_AUTO
+bool AreConsecutiveRoadEdges(Edge const & a, Edge const & b);
+std::optional<double> ProjectRoadEvent(m2::PointD const & position, Edge const & edge,
+                                       double maximumDistance = kRoadEventRoadDistanceMeters);
+#endif
 void FindRoadCamera(IRoadGraph const & graph, Edge edge, m2::PointD const & position, RoadCameraGetter const & cameras,
                     RoadInfoSnapshot & result);
 
@@ -50,6 +58,15 @@ public:
   RoadInfoSnapshot Read(location::GpsInfo const & location);
 
 private:
+#ifdef OMIM_AUTO
+  bool UpdateCoverage(CameraCoverageFix const & fix, bool continuous,
+                      std::optional<IRoadGraph::EdgeProjectionT> const & match,
+                      RoadEventSource::Snapshot const & events);
+  RoadEventSource::Snapshot m_coverageInput;
+  std::optional<IRoadGraph::EdgeProjectionT> m_coverageMatch;
+  std::optional<m2::PointD> m_coveragePosition;
+  std::optional<CameraCoverageFix> m_coverageLastFix;
+#endif
   void ReadEvents(IRoadGraph::EdgeProjectionT const & match, m2::PointD const & previous,
                   RoadEventSource::Snapshot const & events, RoadInfoSnapshot & result);
   std::shared_ptr<RoadEventSource> m_events;

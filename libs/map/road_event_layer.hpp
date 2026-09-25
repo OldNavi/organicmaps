@@ -22,10 +22,11 @@ public:
                                                     (1u << static_cast<unsigned>(routing::RoadEventKind::Video));
 
   explicit RoadEventLayer(std::shared_ptr<routing::RoadEventSource> source, std::shared_ptr<MwmRoadEvents> maps = {},
-                          uint32_t excludedKinds = 0)
+                          uint32_t excludedKinds = 0, bool allowSelectionPreview = true)
     : m_source(std::move(source))
     , m_maps(std::move(maps))
     , m_excludedKinds(excludedKinds)
+    , m_allowSelectionPreview(allowSelectionPreview)
   {}
   uint64_t Revision() const override { return m_source->Get().m_revision; }
   kml::MarkGroupId GroupId() const override { return UserMark::EXTERNAL; }
@@ -73,7 +74,8 @@ private:
     if (state.m_useMapCameras && m_maps && zoom >= state.m_minZooms[cameraKind] &&
         (state.m_visibleKinds & (1u << cameraKind)))
       m_maps->Request(rect);
-    if ((!state.m_enabled || !state.m_store) && (!state.m_useMapCameras || !state.m_mapCameras))
+    if ((!state.m_enabled || !state.m_store) && (!state.m_useMapCameras || !state.m_mapCameras) &&
+        !(m_allowSelectionPreview && state.m_coveragePreview))
       return result;
     auto const visualScale = static_cast<float>(df::VisualParams::Instance().GetVisualScale());
     // Use POI-sized symbols at overview zooms; reserve the larger variant for street detail.
@@ -174,7 +176,7 @@ private:
       auto const id = mark->m_markId;
       result.m_marks->emplace(id, std::move(mark));
     }
-    if (zoom >= 15)
+    if (state.m_coverageVisible && zoom >= 15)
     {
       auto areaRect = rect;
       areaRect.Add(mercator::RectByCenterXYAndSizeInMeters(rect.LeftBottom(), 2000));
@@ -184,7 +186,19 @@ private:
       for (auto const & candidate : cameraIndices)
       {
         auto const index = candidate.m_index;
+        if (state.m_filterCoverage)
+        {
+          if (!state.m_coverage)
+            continue;
+          auto const & allowed = (index & kMapCameraBit) ? state.m_coverage->m_map : state.m_coverage->m_imported;
+          if (!std::binary_search(allowed.begin(), allowed.end(), index & ~kMapCameraBit))
+            continue;
+        }
         auto const & event = *candidate.m_event;
+        if (m_allowSelectionPreview && state.m_coveragePreview &&
+            event.m_sourceId == state.m_coveragePreview->m_sourceId &&
+            event.m_position == state.m_coveragePreview->m_position)
+          continue;
         auto const id = MakeMarkId(state.m_revision, index);
         if (rect.IsPointInside(event.m_position) && !result.m_marks->contains(id))
           continue;
@@ -199,6 +213,21 @@ private:
         line->m_fill->m_textureRect = area.m_textureRect;
         line->m_fill->m_symbolName = "road-event-coverage";
         result.m_lines->emplace(id, std::move(line));
+      }
+    }
+    if (m_allowSelectionPreview && state.m_coveragePreview)
+    {
+      auto area = routing::BuildCameraApproachArea(*state.m_coveragePreview);
+      if (!area.m_triangles.empty() && area.m_bounds.IsIntersect(rect))
+      {
+        auto line = make_unique_dp<df::UserLineRenderParams>();
+        line->m_minZoom = 1;
+        line->m_fill = make_unique_dp<df::UserAreaFill>();
+        line->m_fill->m_triangles = std::move(area.m_triangles);
+        line->m_fill->m_bounds = area.m_bounds;
+        line->m_fill->m_textureRect = area.m_textureRect;
+        line->m_fill->m_symbolName = "road-event-coverage";
+        result.m_lines->emplace(MakeMarkId(state.m_revision, std::numeric_limits<uint32_t>::max()), std::move(line));
       }
     }
     return result;
@@ -297,4 +326,5 @@ private:
   std::shared_ptr<routing::RoadEventSource> m_source;
   std::shared_ptr<MwmRoadEvents> m_maps;
   uint32_t const m_excludedKinds;
+  bool const m_allowSelectionPreview;
 };

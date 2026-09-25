@@ -344,6 +344,20 @@ void Framework::SetNavigationViewPoiVisible(int64_t id, bool visible)
     it->second.m_engine->SetPoiVisible(visible);
 }
 
+void Framework::SetPoiDensity(bool cluster, int density)
+{
+#ifdef OMIM_AUTO
+  CHECK(density >= 0 && density <= static_cast<int>(df::PoiDensity::High), (density));
+  settings::Set(df::PoiDensitySetting(cluster), density);
+  auto const value = static_cast<df::PoiDensity>(density);
+  if (cluster)
+    for (auto const & [id, view] : m_navigationViews)
+      view.m_engine->SetPoiDensity(value);
+  else if (auto engine = m_work.GetDrapeEngine())
+    engine->SetPoiDensity(value);
+#endif
+}
+
 std::array<uint32_t, 4> Framework::GetNavigationViewTileStats(int64_t id) const
 {
   auto const it = m_navigationViews.find(id);
@@ -2066,3 +2080,18 @@ jint RegisterNativeMethods(JNIEnv * env)
   return env->RegisterNatives(clazz, frameworkMethods, std::size(frameworkMethods));
 }
 }  // namespace android::framework
+
+extern "C" JNIEXPORT jint Java_app_organicmaps_sdk_rendering_PoiDensity_nativeGet(JNIEnv *, jclass, jboolean cluster)
+{
+#ifdef OMIM_AUTO
+  return static_cast<jint>(df::LoadPoiDensity(cluster));
+#else
+  return 2;
+#endif
+}
+
+extern "C" JNIEXPORT void Java_app_organicmaps_sdk_rendering_PoiDensity_nativeSet(JNIEnv *, jclass, jboolean cluster,
+                                                                                  jint density)
+{
+  g_framework->SetPoiDensity(cluster, density);
+}

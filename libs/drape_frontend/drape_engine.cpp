@@ -128,6 +128,9 @@ DrapeEngine::DrapeEngine(Params && params)
     EnableChoosePositionMode(true, std::move(params.m_boundAreaTriangles), nullptr);
 
   ResizeImpl(m_viewport.GetWidth(), m_viewport.GetHeight());
+#ifdef OMIM_AUTO
+  SetPoiDensity(LoadPoiDensity(m_isPassiveNavigation));
+#endif
 }
 
 DrapeEngine::~DrapeEngine()
@@ -754,13 +757,24 @@ void DrapeEngine::SetCluster3dBuildings(bool enabled)
                                   make_unique_dp<Allow3dModeMessage>(true, enabled), MessagePriority::Normal);
 }
 
+#ifdef OMIM_AUTO
+void DrapeEngine::SetPoiDensity(PoiDensity density)
+{
+  if (m_poiDensity == density)
+    return;
+  m_poiDensity = density;
+  SetPoiVisible(m_poiVisible);
+}
+#endif
+
 void DrapeEngine::SetPoiVisible(bool visible)
 {
 #ifdef OMIM_AUTO
   m_poiVisible = visible;
-  m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
-                                  make_unique_dp<SetPoiVisibilityMessage>(visible, m_drivingPoiPolicy.IsDriving()),
-                                  MessagePriority::Normal);
+  m_threadCommutator->PostMessage(
+      ThreadsCommutator::ResourceUploadThread,
+      make_unique_dp<SetPoiVisibilityMessage>(visible, m_drivingPoiPolicy.IsDriving(), m_poiDensity),
+      MessagePriority::Normal);
 #else
   m_threadCommutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
                                   make_unique_dp<SetPoiVisibilityMessage>(visible), MessagePriority::Normal);

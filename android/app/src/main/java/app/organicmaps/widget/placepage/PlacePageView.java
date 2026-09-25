@@ -2,6 +2,7 @@ package app.organicmaps.widget.placepage;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static app.organicmaps.sdk.R.string.open_in_app;
 import static app.organicmaps.sdk.util.Utils.getLocalizedFeatureType;
 import static app.organicmaps.sdk.util.Utils.getTagValueLocalized;
 
@@ -522,6 +523,23 @@ public class PlacePageView extends Fragment implements View.OnClickListener, Vie
       UiUtils.hide(mTvSubtitle);
   }
 
+  @Nullable
+  private String roadEventUrl()
+  {
+    var event = mMapObject.getRoadEvent();
+    return RoadDataManager.available() && event != null
+      ? RoadDataManager.get(requireContext()).eventUrl(event.identity(), mMapObject.getLat(), mMapObject.getLon())
+      : null;
+  }
+
+  private String openInUri()
+  {
+    String source = roadEventUrl();
+    return source != null ? source
+                          : Framework.nativeGetGeoUri(mMapObject.getLat(), mMapObject.getLon(), mMapObject.getScale(),
+                                                      mMapObject.getName());
+  }
+
   private void refreshPreview()
   {
     UiUtils.hideIf(mMapObject.isTrackRecording(), closeButton);
@@ -540,6 +558,8 @@ public class PlacePageView extends Fragment implements View.OnClickListener, Vie
     if (showRoadEvent)
       ((TextView) mFrame.findViewById(R.id.road_event_info))
           .setText(RoadEventLabels.details(requireContext(), roadEvent));
+    ((TextView) mFrame.findViewById(R.id.tv__place_open_in))
+        .setText(roadEventUrl() == null ? open_in_app : R.string.road_event_open_source);
 
     final String osmDescription = mMapObject.getOsmDescription();
     if (osmDescription.isEmpty())
@@ -888,8 +908,7 @@ public class PlacePageView extends Fragment implements View.OnClickListener, Vie
     }
     else if (id == R.id.ll__place_open_in)
     {
-      final String uri = Framework.nativeGetGeoUri(mMapObject.getLat(), mMapObject.getLon(), mMapObject.getScale(),
-                                                   mMapObject.getName());
+      final String uri = openInUri();
       Utils.openUri(requireContext(), Uri.parse(uri), R.string.uri_open_location_failed);
     }
     else if (id == R.id.direction_frame)
@@ -1022,8 +1041,7 @@ public class PlacePageView extends Fragment implements View.OnClickListener, Vie
     }
     else if (id == R.id.ll__place_open_in)
     {
-      final String uri = Framework.nativeGetGeoUri(mMapObject.getLat(), mMapObject.getLon(), mMapObject.getScale(),
-                                                   mMapObject.getName());
+      final String uri = openInUri();
       PlacePageUtils.copyToClipboard(requireContext(), mFrame, uri);
     }
     else if (id == R.id.ll__place_operator)

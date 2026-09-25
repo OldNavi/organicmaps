@@ -324,6 +324,9 @@ private:
   /// \returns true if the active route has an avoidable warning (toll/ferry/dirty) on a car route,
   /// i.e. one that should surface the "driving options" affordance (RouterResultCode::HasWarnings).
   bool InsertRoute(routing::RoutesResult const & result);
+#ifdef OMIM_AUTO
+  void UpdateCameraCoverageRoute();
+#endif
 
   // Helper: build drape subroutes for a single route. |isActive| controls styling
   // (alternatives are dimmed). |roadWarnings| is appended for every route (active and alternatives)

@@ -1,6 +1,8 @@
 project(routing)
 
 set(SRC
+  camera_coverage.cpp
+  camera_coverage.hpp
   absent_regions_finder.cpp
   absent_regions_finder.hpp
   async_router.cpp

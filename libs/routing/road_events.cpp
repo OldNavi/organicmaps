@@ -130,11 +130,99 @@ std::vector<size_t> RoadEventStore::Query(m2::RectD const & rect, uint32_t categ
   return result;
 }
 
+bool RoadEvent::MatchesRoadBearing(double travelBearing) const
+{
+  if (!IsSpeedCamera(m_kind) && m_kind != RoadEventKind::RedLight && m_kind != RoadEventKind::LaneControl)
+    return MatchesBearing(travelBearing);
+  if (m_directionType == 0)
+    return true;
+  double const period = m_directionType == 2 ? 180.0 : 360.0;
+  // FOV constrains the vehicle's position, not the road tangent. Reject traffic moving away from the sector.
+  return std::abs(std::remainder(travelBearing - m_direction, period)) < 90.0;
+}
+
+double RoadEventMatchRadius(RoadEvent const & event)
+{
+  if (!event.m_directionType || !event.m_distance || !event.m_angle ||
+      (!IsSpeedCamera(event.m_kind) && event.m_kind != RoadEventKind::RedLight &&
+       event.m_kind != RoadEventKind::LaneControl))
+    return kRoadEventRoadDistanceMeters;
+  // Source coordinates may describe a pole or building beside the controlled road.
+  // Bound association by the sector's lateral extent; the actual warning still requires entering that sector.
+  double const lateral =
+      std::min<double>(2000, event.m_distance) * std::sin(math::DegToRad(std::min<double>(90, event.m_angle)));
+  return std::clamp(lateral, kRoadEventRoadDistanceMeters, kMaxCameraRoadDistanceMeters);
+}
+
 RoadEventSource::Snapshot RoadEventSource::Get() const
 {
   std::lock_guard lock(m_mutex);
   return m_state;
 }
+bool RoadEventSource::SetCoverageVisible(bool visible)
+{
+  std::lock_guard lock(m_mutex);
+  if (m_state.m_coverageVisible == visible)
+    return false;
+  m_state.m_coverageVisible = visible;
+  ++m_state.m_revision;
+  return true;
+}
+void RoadEventSource::EnableCoverageFilter()
+{
+  std::lock_guard lock(m_mutex);
+  if (!m_state.m_filterCoverage)
+  {
+    m_state.m_filterCoverage = true;
+    ++m_state.m_revision;
+  }
+}
+void RoadEventSource::SetCoverageRoute(std::shared_ptr<CameraCoveragePath const> route)
+{
+  std::lock_guard lock(m_mutex);
+  if (m_state.m_coverageRoute == route)
+    return;
+  m_state.m_coverageRoute = std::move(route);
+  m_state.m_coverage.reset();
+  ++m_state.m_coverageGeneration;
+  ++m_state.m_revision;
+}
+bool RoadEventSource::ClearCoverage()
+{
+  std::lock_guard lock(m_mutex);
+  ++m_state.m_coverageGeneration;
+  if (!m_state.m_coverage)
+    return false;
+  m_state.m_coverage.reset();
+  ++m_state.m_revision;
+  return true;
+}
+bool RoadEventSource::SetCoverage(Snapshot const & input, Coverage coverage)
+{
+  std::sort(coverage.m_imported.begin(), coverage.m_imported.end());
+  std::sort(coverage.m_map.begin(), coverage.m_map.end());
+  std::lock_guard lock(m_mutex);
+  // A location worker may finish after a reroute, map replacement or GPS expiry.
+  if (input.m_coverageGeneration != m_state.m_coverageGeneration || input.m_store != m_state.m_store ||
+      input.m_mapCameras != m_state.m_mapCameras)
+    return false;
+  if (m_state.m_coverage && *m_state.m_coverage == coverage)
+    return false;
+  m_state.m_coverage = std::make_shared<Coverage const>(std::move(coverage));
+  ++m_state.m_revision;
+  return true;
+}
+bool RoadEventSource::SetCoveragePreview(std::optional<RoadEvent> const & event)
+{
+  std::lock_guard lock(m_mutex);
+  if ((!event && !m_state.m_coveragePreview) ||
+      (event && m_state.m_coveragePreview && *event == *m_state.m_coveragePreview))
+    return false;
+  m_state.m_coveragePreview = event ? std::make_shared<RoadEvent const>(*event) : nullptr;
+  ++m_state.m_revision;
+  return true;
+}
+
 void RoadEventSource::Replace(std::shared_ptr<RoadEventStore const> store)
 {
   std::shared_ptr<RoadEventStore const> previous;
@@ -142,6 +230,7 @@ void RoadEventSource::Replace(std::shared_ptr<RoadEventStore const> store)
     std::lock_guard lock(m_mutex);
     previous = std::move(m_state.m_store);
     m_state.m_store = std::move(store);
+    m_state.m_coverage.reset();
     ++m_state.m_revision;
   }
   // Releasing a country's spatial index must not hold up renderer snapshots.
@@ -164,6 +253,7 @@ void RoadEventSource::ReplaceMapCameras(std::shared_ptr<RoadEventStore const> st
 {
   std::lock_guard lock(m_mutex);
   m_state.m_mapCameras = std::move(store);
+  m_state.m_coverage.reset();
   ++m_state.m_revision;
 }
 

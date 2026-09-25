@@ -91,7 +91,7 @@ final class OpenSpeedCamImporter implements RoadEventImporter
       int kind = kind((int) integer(fields[3], 1000), description[1].trim());
       double speed = integer(fields[4], 400);
       double directionType = integer(fields[5], 2);
-      // This source points towards approaching traffic. Store travel bearing, shared by all consumers.
+      // Reverse the source azimuth to point from the approach sector towards the event.
       double direction = (integer(fields[6], 360) + 180) % 360;
       double distance = integer(fields[7], 65535);
       double angle = integer(fields[8], 180);

@@ -1,4 +1,5 @@
 #include "routing/road_info.hpp"
+#include "routing/camera_coverage.hpp"
 
 #include "routing/index_graph_loader.hpp"
 #include "routing/speed_camera_prohibition.hpp"
@@ -15,9 +16,38 @@
 
 namespace routing
 {
+#ifdef OMIM_AUTO
+bool AreConsecutiveRoadEdges(Edge const & a, Edge const & b)
+{
+  if (a.IsFake() || b.IsFake() || (a.GetEndPoint() != b.GetStartPoint() && b.GetEndPoint() != a.GetStartPoint()))
+    return false;
+  auto const da = a.GetDirection(), db = b.GetDirection();
+  if (da.IsAlmostZero() || db.IsAlmostZero())
+    return false;
+  // Adjacent near-straight fragments describe one approach, not competing parallel roads.
+  return DotProduct(da, db) >= std::cos(math::DegToRad(15.0)) * da.Length() * db.Length();
+}
+
+std::optional<double> ProjectRoadEvent(m2::PointD const & position, Edge const & edge, double maximumDistance)
+{
+  auto const direction = edge.GetDirection();
+  if (direction.IsAlmostZero())
+    return {};
+  double const rawCoefficient = DotProduct(position - edge.GetStartPoint(), direction) / direction.SquaredLength();
+  double const coefficient = std::clamp(rawCoefficient, 0.0, 1.0);
+  if (mercator::DistanceOnEarth(edge.GetStartPoint() + direction * coefficient,
+                                edge.GetStartPoint() + direction * rawCoefficient) > kRoadEventRoadDistanceMeters)
+    return {};
+  if (mercator::DistanceOnEarth(edge.GetStartPoint() + direction * coefficient, position) > maximumDistance)
+    return {};
+  return coefficient;
+}
+#endif
+
 std::optional<IRoadGraph::EdgeProjectionT> MatchRoad(m2::PointD const & position, m2::PointD const & direction,
                                                      double accuracy,
-                                                     std::vector<IRoadGraph::EdgeProjectionT> const & candidates)
+                                                     std::vector<IRoadGraph::EdgeProjectionT> const & candidates,
+                                                     double maximumDistance, bool allowJunctionOverlap)
 {
   if (direction.IsAlmostZero() || !std::isfinite(accuracy) || accuracy <= 0 || accuracy > 30)
     return {};
@@ -35,7 +65,8 @@ std::optional<IRoadGraph::EdgeProjectionT> MatchRoad(m2::PointD const & position
       continue;
     double const cosine = DotProduct(d, direction) / (d.Length() * direction.Length());
     double const distance = mercator::DistanceOnEarth(position, candidate.second.GetPoint());
-    if (cosine < 0.7 || distance > std::clamp(accuracy * 2.0, 10.0, 40.0))
+    double const tolerance = maximumDistance > 0 ? maximumDistance : std::clamp(accuracy * 2.0, 10.0, 40.0);
+    if (cosine < 0.7 || distance > tolerance)
       continue;
     ranked.push_back({distance + 5.0 * (1.0 - cosine), &candidate});
   }
@@ -49,6 +80,24 @@ std::optional<IRoadGraph::EdgeProjectionT> MatchRoad(m2::PointD const & position
     if (edge.GetFeatureId() == best.first.GetFeatureId() && edge.IsForward() == best.first.IsForward() &&
         std::abs(static_cast<int64_t>(edge.GetSegId()) - best.first.GetSegId()) <= 1)
       continue;
+#ifdef OMIM_AUTO
+    if (AreConsecutiveRoadEdges(edge, best.first))
+      continue;
+    if (allowJunctionOverlap)
+    {
+      std::optional<m2::PointD> junction;
+      if (edge.GetStartPoint() == best.first.GetStartPoint())
+        junction = edge.GetStartPoint();
+      else if (edge.GetEndPoint() == best.first.GetEndPoint())
+        junction = edge.GetEndPoint();
+      // Near a fork/merge the camera may cover the common approach of both fragments.
+      // This exception applies to camera association, never to vehicle GPS matching.
+      if (junction && mercator::DistanceOnEarth(*junction, best.second.GetPoint()) <= kRoadEventRoadDistanceMeters &&
+          mercator::DistanceOnEarth(*junction, ranked[i].m_projection->second.GetPoint()) <=
+              kRoadEventRoadDistanceMeters)
+        continue;
+    }
+#endif
     if (ranked[i].m_score - ranked.front().m_score < std::max(3.0, accuracy * 0.5))
       return {};
   }
@@ -120,7 +169,13 @@ RoadInfoSnapshot RoadInfoReader::Read(location::GpsInfo const & location)
   double const time = location.m_timestamp;
   if (!std::isfinite(time) || !std::isfinite(location.m_latitude) || !std::isfinite(location.m_longitude) ||
       std::abs(location.m_latitude) > 85.0 || std::abs(location.m_longitude) > 180.0)
+  {
+#ifdef OMIM_AUTO
+    if (m_events)
+      result.m_coverageChanged = m_events->ClearCoverage();
+#endif
     return result;
+  }
   auto const position = mercator::FromLatLon(location.m_latitude, location.m_longitude);
   bool const continuous =
       m_previousLocation && time > m_previousLocation->m_timestamp && time - m_previousLocation->m_timestamp <= 5.0 &&
@@ -166,6 +221,10 @@ RoadInfoSnapshot RoadInfoReader::Read(location::GpsInfo const & location)
   std::vector<IRoadGraph::EdgeProjectionT> candidates;
   m_graph.FindClosestEdges(mercator::RectByCenterXYAndSizeInMeters(position, 40.0), 16, candidates);
   auto match = MatchRoad(position, m_direction, location.m_horizontalAccuracy, candidates);
+#ifdef OMIM_AUTO
+  if (m_events)
+    result.m_coverageChanged = UpdateCoverage({position, m_direction, time}, continuous, match, m_events->Get());
+#endif
   bool const stable = match && m_previousMatch &&
                       match->first.GetFeatureId() == m_previousMatch->first.GetFeatureId() &&
                       match->first.IsForward() == m_previousMatch->first.IsForward();
@@ -208,6 +267,86 @@ RoadInfoSnapshot RoadInfoReader::Read(location::GpsInfo const & location)
   return result;
 }
 
+#ifdef OMIM_AUTO
+bool RoadInfoReader::UpdateCoverage(CameraCoverageFix const & fix, bool continuous,
+                                    std::optional<IRoadGraph::EdgeProjectionT> const & match,
+                                    RoadEventSource::Snapshot const & events)
+{
+  if (!events.m_filterCoverage || !events.m_coverageVisible)
+    return false;
+  auto const & position = fix.m_position;
+  bool const sameInput = m_coverageInput.m_coverageGeneration == events.m_coverageGeneration &&
+                         m_coverageInput.m_store == events.m_store &&
+                         m_coverageInput.m_mapCameras == events.m_mapCameras;
+  if (!continuous || !sameInput)
+    m_coverageLastFix.reset();
+  if (!events.m_coverageRoute && !match)
+  {
+    if (m_coverageLastFix && CanRetainCameraCoverage(*m_coverageLastFix, fix))
+      return false;
+    m_coverageLastFix.reset();
+    m_coveragePosition.reset();
+    return m_events->ClearCoverage();
+  }
+  // Refresh on every good fix, independently of the 100 m selection cache.
+  m_coverageLastFix = match ? std::make_optional(fix) : std::nullopt;
+  bool const sameRoad =
+      (!match && !m_coverageMatch) ||
+      (match && m_coverageMatch && match->first.GetFeatureId() == m_coverageMatch->first.GetFeatureId() &&
+       match->first.IsForward() == m_coverageMatch->first.IsForward());
+  if (m_coveragePosition && sameRoad && sameInput && mercator::DistanceOnEarth(*m_coveragePosition, position) < 100)
+    return false;
+
+  auto path = events.m_coverageRoute;
+  if (!path)
+  {
+    auto const & edge = match->first;
+    auto feature = m_source.GetFeature(edge.GetFeatureId());
+    std::string const name(feature ? feature->GetReadableName() : "");
+    std::string const ref = feature ? feature->GetRef() : "";
+    path = std::make_shared<CameraCoveragePath>(MakeCurrentRoadCoveragePath(m_graph, edge, [&](Edge const & next)
+    {
+      if (next.GetFeatureId() == edge.GetFeatureId())
+        return true;
+      auto other = m_source.GetFeature(next.GetFeatureId());
+      return other && ((!ref.empty() && other->GetRef() == ref) || (!name.empty() && other->GetReadableName() == name));
+    }));
+  }
+  RoadEventSource::Coverage coverage;
+  // Local horizon bounds graph lookups even for a route spanning a whole country.
+  auto const rect = mercator::RectByCenterXYAndSizeInMeters(position, kCameraCoverageRadiusMeters);
+  auto collect = [&](std::shared_ptr<RoadEventStore const> const & store, std::vector<size_t> & indices)
+  {
+    if (!store)
+      return;
+    for (auto index : store->Query(rect, 1u << static_cast<unsigned>(RoadEventCategory::Cameras),
+                                   std::numeric_limits<size_t>::max()))
+    {
+      auto const & camera = store->Get(index);
+      if (!IsWithinCameraCoverageRange(position, camera.m_position))
+        continue;
+      if (!camera.m_directionType || !camera.m_distance ||
+          (camera.m_kind != RoadEventKind::Camera && camera.m_kind != RoadEventKind::Mobile &&
+           camera.m_kind != RoadEventKind::RedLight && camera.m_kind != RoadEventKind::LaneControl))
+        continue;
+      double const radius = RoadEventMatchRadius(camera);
+      if (!path->IsNear(camera.m_position, radius))
+        continue;
+      std::vector<IRoadGraph::EdgeProjectionT> candidates;
+      m_graph.FindClosestEdges(mercator::RectByCenterXYAndSizeInMeters(camera.m_position, radius), 16, candidates);
+      if (path->MatchesCamera(camera, candidates))
+        indices.push_back(index);
+    }
+  };
+  collect(events.m_store, coverage.m_imported);
+  collect(events.m_mapCameras, coverage.m_map);
+  m_coverageMatch = match;
+  m_coveragePosition = position;
+  m_coverageInput = events;
+  return m_events->SetCoverage(events, std::move(coverage));
+}
+#endif
+
 void RoadInfoReader::ReadEvents(IRoadGraph::EdgeProjectionT const & match, m2::PointD const & previous,
                                 RoadEventSource::Snapshot const & events, RoadInfoSnapshot & result)
 {
@@ -224,27 +363,56 @@ void RoadInfoReader::ReadEvents(IRoadGraph::EdgeProjectionT const & match, m2::P
     if (lengthSquared == 0)
       break;
     auto rect = m2::RectD(start, edge.GetEndPoint());
-    rect.Add(mercator::RectByCenterXYAndSizeInMeters(start, 15));
-    rect.Add(mercator::RectByCenterXYAndSizeInMeters(edge.GetEndPoint(), 15));
+#ifdef OMIM_AUTO
+    double constexpr queryRadius = kMaxCameraRoadDistanceMeters;
+#else
+    double constexpr queryRadius = 15;
+#endif
+    rect.Add(mercator::RectByCenterXYAndSizeInMeters(start, queryRadius));
+    rect.Add(mercator::RectByCenterXYAndSizeInMeters(edge.GetEndPoint(), queryRadius));
     double const length = mercator::DistanceOnEarth(start, edge.GetEndPoint());
     double const bearing = math::RadToDeg(std::atan2(direction.x, direction.y));
     for (auto index : events.m_store->Query(rect, kAllRoadEventCategories, 4096))
     {
       auto const & event = events.m_store->Get(index);
+#ifdef OMIM_AUTO
+      if (!event.MatchesRoadBearing(bearing))
+#else
       if (!event.MatchesBearing(bearing))
+#endif
         continue;
+#ifdef OMIM_AUTO
+      double const matchRadius = RoadEventMatchRadius(event);
+      auto const projection = ProjectRoadEvent(event.m_position, edge, matchRadius);
+      if (!projection)
+        continue;
+      double const coefficient = *projection;
+#else
+      double constexpr matchRadius = kRoadEventRoadDistanceMeters;
       double const coefficient = DotProduct(event.m_position - start, direction) / lengthSquared;
       if (coefficient < 0 || coefficient > 1)
         continue;
+#endif
       auto const projected = start + direction * coefficient;
-      if (mercator::DistanceOnEarth(projected, event.m_position) > 12)
+      if (mercator::DistanceOnEarth(projected, event.m_position) > matchRadius)
         continue;
       // A nearby parallel road must not donate its signs to the matched carriageway.
       std::vector<IRoadGraph::EdgeProjectionT> candidates;
-      m_graph.FindClosestEdges(mercator::RectByCenterXYAndSizeInMeters(event.m_position, 25), 16, candidates);
+      m_graph.FindClosestEdges(mercator::RectByCenterXYAndSizeInMeters(event.m_position, std::max(25.0, matchRadius)),
+                               16, candidates);
+#ifdef OMIM_AUTO
+      auto eventMatch = MatchRoad(event.m_position, direction, 5, candidates, matchRadius, true);
+#else
       auto eventMatch = MatchRoad(event.m_position, direction, 5, candidates);
-      if (!eventMatch || eventMatch->first.GetFeatureId() != edge.GetFeatureId() ||
-          eventMatch->first.IsForward() != edge.IsForward())
+#endif
+      if (!eventMatch)
+        continue;
+      bool sameRoad =
+          eventMatch->first.GetFeatureId() == edge.GetFeatureId() && eventMatch->first.IsForward() == edge.IsForward();
+#ifdef OMIM_AUTO
+      sameRoad |= AreConsecutiveRoadEdges(eventMatch->first, edge);
+#endif
+      if (!sameRoad)
         continue;
       double const distance = passed + length * coefficient;
       bool const crossed =
@@ -280,7 +448,12 @@ void RoadInfoReader::ReadEvents(IRoadGraph::EdgeProjectionT const & match, m2::P
         auto const insertion =
             std::lower_bound(warnings.begin(), warnings.end(), distance,
                              [](auto const & warning, double dist) { return warning.m_distance < dist; });
-        if (insertion != warnings.end() || warnings.size() < 16)
+        bool const duplicate = std::any_of(warnings.begin(), warnings.end(), [&](auto const & warning)
+        {
+          return warning.m_event.m_sourceId == event.m_sourceId && warning.m_event.m_kind == event.m_kind &&
+                 warning.m_event.m_position == event.m_position;
+        });
+        if (!duplicate && (insertion != warnings.end() || warnings.size() < 16))
         {
           warnings.insert(insertion, {event, distance});
           if (warnings.size() > 16)

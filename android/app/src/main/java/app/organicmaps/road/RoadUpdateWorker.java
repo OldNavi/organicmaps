@@ -6,7 +6,6 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -15,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class RoadUpdateWorker extends Worker
 {
   private final AtomicBoolean mCancelled = new AtomicBoolean();
-  private final CompletableFuture<RoadDataManager.UpdateResult> mCompletion = new CompletableFuture<>();
+  private final RoadUpdateCompletion mCompletion = new RoadUpdateCompletion();
   private final Handler mMain = new Handler(Looper.getMainLooper());
 
   public RoadUpdateWorker(@NonNull Context context, @NonNull WorkerParameters parameters)

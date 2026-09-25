@@ -47,6 +47,17 @@ public final class RoadDataSettingsFragment extends BaseXmlSettingsFragment
     getPreferenceScreen().addPreference(enabled);
     mMapVisibility = addVisibilityMenu(false, R.string.road_events_show_map);
     mRouteVisibility = addVisibilityMenu(true, R.string.road_events_show_route);
+    SwitchPreferenceCompat coverage = new SwitchPreferenceCompat(context);
+    coverage.setKey(RoadDataManager.COVERAGE);
+    coverage.setTitle(R.string.road_events_coverage);
+    coverage.setPersistent(false);
+    coverage.setChecked(mManager.coverageVisible());
+    coverage.setOnPreferenceChangeListener((pref, value) -> {
+      MwmApplication.prefs(context).edit().putBoolean(RoadDataManager.COVERAGE, (Boolean) value).apply();
+      mManager.configure();
+      return true;
+    });
+    getPreferenceScreen().addPreference(coverage);
     PreferenceCategory providers = new PreferenceCategory(context);
     providers.setTitle(R.string.road_events_providers);
     getPreferenceScreen().addPreference(providers);

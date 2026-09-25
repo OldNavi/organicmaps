@@ -1,6 +1,7 @@
 package app.organicmaps.road;
 
 import android.content.Context;
+import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.AtomicFile;
@@ -42,6 +43,8 @@ final class RoadDataCredentials
 
   private static synchronized SecretKey key() throws GeneralSecurityException, IOException
   {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+      throw new GeneralSecurityException("Encrypted source credentials require Android 6 or later");
     KeyStore store = KeyStore.getInstance("AndroidKeyStore");
     store.load(null);
     if (store.containsAlias(KEY_ALIAS))

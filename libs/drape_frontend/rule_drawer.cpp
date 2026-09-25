@@ -439,6 +439,7 @@ void RuleDrawer::operator()(FeatureType & f)
   bool hidePoi = !m_context->IsPoiVisible();
 #ifdef OMIM_AUTO
   hidePoi |= m_context->IsDrivingPoiFilterEnabled() && !IsDrivingPoi(types);
+  m_applyParams.m_poiDensity = m_context->GetPoiDensity();
 #endif
   if (hidePoi && ftypes::IsPoiChecker::Instance()(types) && !ftypes::IsLocalityChecker::Instance()(types))
   {

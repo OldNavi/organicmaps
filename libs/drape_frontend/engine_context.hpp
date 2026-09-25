@@ -1,6 +1,7 @@
 #pragma once
 
 #include "drape_frontend/custom_features_context.hpp"
+#include "drape_frontend/driving_poi_policy.hpp"
 #include "drape_frontend/map_shape.hpp"
 #include "drape_frontend/threads_commutator.hpp"
 #include "drape_frontend/traffic_generator.hpp"
@@ -33,6 +34,8 @@ public:
 #ifdef OMIM_AUTO
   bool IsDrivingPoiFilterEnabled() const { return m_drivingPoiFilter; }
   void SetDrivingPoiFilter(bool enabled) { m_drivingPoiFilter = enabled; }
+  PoiDensity GetPoiDensity() const { return m_poiDensity; }
+  void SetPoiDensity(PoiDensity density) { m_poiDensity = density; }
 #endif
   int8_t GetMapLangIndex() const { return m_mapLangIndex; }
   dp::BackgroundMode GetBackgroundMode() const { return m_backgroundMode; }
@@ -65,6 +68,7 @@ private:
   float m_areaOpacity;
 #ifdef OMIM_AUTO
   bool m_drivingPoiFilter = false;
+  PoiDensity m_poiDensity = PoiDensity::High;
   TMapShapes m_geometry;
   TMapShapes m_overlays;
 #endif

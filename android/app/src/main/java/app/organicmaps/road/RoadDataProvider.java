@@ -22,6 +22,10 @@ public interface RoadDataProvider
     }
   }
   String id();
+  default String eventUrl(String sourceId, double latitude, double longitude)
+  {
+    return null;
+  }
   RoadEventImporter newImporter();
   void login(String login, String password) throws IOException;
   void logout();

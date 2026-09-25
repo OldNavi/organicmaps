@@ -27,7 +27,15 @@ JNIEXPORT jobject Java_app_organicmaps_sdk_cluster_RoadInfo_nativeRead(JNIEnv * 
   catch (routing::RoutingException const &)
   {
     // A downloaded map may be replaced or removed between matching and reading its attributes.
+    info.m_coverageChanged = frm()->GetRoutingManager().GetRoadEvents()->ClearCoverage();
   }
+  if (info.m_coverageChanged)
+    GetPlatform().RunTask(Platform::Thread::Gui, []
+    {
+      if (auto engine = frm()->GetDrapeEngine())
+        engine->RefreshExternalMarks();
+      frm()->GetRoutingManager().GetNavigationScene().RefreshExternalMarks();
+    });
   auto camera = env->NewDoubleArray(info.m_cameraDistance >= 0.0 ? 5 : 0);
   if (info.m_cameraDistance >= 0.0)
   {

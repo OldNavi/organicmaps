@@ -242,6 +242,7 @@ void ReadManager::PushTaskBackForTileKey(TileKey const & tileKey, ref_ptr<dp::Te
       m_mapLangIndex, m_backgroundMode, m_areaOpacity, m_poiVisible);
 #ifdef OMIM_AUTO
   context->SetDrivingPoiFilter(m_drivingPoiFilter);
+  context->SetPoiDensity(m_poiDensity);
 #endif
   std::shared_ptr<TileInfo> tileInfo = std::make_shared<TileInfo>(std::move(context));
   m_tileInfos.insert(tileInfo);

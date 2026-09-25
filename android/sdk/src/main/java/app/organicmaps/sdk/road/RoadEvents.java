@@ -22,4 +22,12 @@ public final class RoadEvents
   public static native String[] nativeCountriesNear(double latitude, double longitude);
   @MainThread
   public static native void nativeConfigure(boolean enabled, boolean warnings, int visibleKinds, int[] minZooms);
+  @MainThread
+  public static native void nativeSetCoverageVisible(boolean visible);
+
+  @MainThread
+  public static native void nativeClearCoverage();
+
+  @MainThread
+  public static native void nativeFocusCoveragePreview();
 }

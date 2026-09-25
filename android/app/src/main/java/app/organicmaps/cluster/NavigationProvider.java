@@ -87,9 +87,16 @@ public final class NavigationProvider extends ContentProvider
     sRoadMonitor = new RoadInfoMonitor((info, fixNanos) -> {
       sRoadInfo = info;
       sRoadFixNanos = fixNanos;
+      if (info == RoadInfo.EMPTY && RoadDataManager.available())
+        RoadEvents.nativeClearCoverage();
       publish(app, true);
     });
-    sExpired = () -> publish(app, true);
+    sExpired = () ->
+    {
+      if (RoadDataManager.available())
+        RoadEvents.nativeClearCoverage();
+      publish(app, true);
+    };
     if (RoadDataManager.available())
     {
       sRoadWarnings = new RoadEventWarnings(app, audio);
@@ -183,6 +190,8 @@ public final class NavigationProvider extends ContentProvider
     if (sApplication == null || sRoadMonitor == null)
       return;
     sRoadMonitor.invalidate();
+    if (RoadDataManager.available())
+      RoadEvents.nativeClearCoverage();
     sRoadInfo = RoadInfo.EMPTY;
     sRoadFixNanos = 0;
     publish(sApplication, true);

@@ -485,6 +485,7 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
     bool changed = m_readManager->SetPoiVisible(msg->IsVisible());
 #ifdef OMIM_AUTO
     changed |= m_readManager->SetDrivingPoiFilter(msg->IsDriving());
+    changed |= m_readManager->SetPoiDensity(msg->GetDensity());
 #endif
     if (changed)
       m_commutator->PostMessage(ThreadsCommutator::RenderThread,

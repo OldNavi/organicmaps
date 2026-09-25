@@ -64,6 +64,14 @@ public:
   void SetMapLangIndex(int8_t mapLangIndex);
   bool SetPoiVisible(bool visible);
 #ifdef OMIM_AUTO
+  bool SetPoiDensity(PoiDensity density)
+  {
+    if (m_poiDensity == density)
+      return false;
+    m_poiDensity = density;
+    m_modeChanged = true;
+    return true;
+  }
   bool SetDrivingPoiFilter(bool enabled)
   {
     if (m_drivingPoiFilter == enabled)
@@ -110,6 +118,7 @@ private:
   bool m_poiVisible;
 #ifdef OMIM_AUTO
   bool m_drivingPoiFilter = false;
+  PoiDensity m_poiDensity = PoiDensity::High;
 #endif
   bool const m_trackTileHistory;
   TTilesCollection m_seenTiles;

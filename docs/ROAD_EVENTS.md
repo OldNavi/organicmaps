@@ -74,6 +74,22 @@ precision; map zoom changes only its transform. The snapshot is recached on data
 visibility, style or graphics-context changes. The gradient texture is generated
 in the automotive atlas, not rebuilt each frame.
 
+The **Camera warning areas** switch controls fills independently of icons and alerts.
+With fresh location data, guidance uses the selected route's directed segments;
+without guidance, matching follows the current street in both directions and stops
+at ambiguous forks. Same-name/ref continuations can cross feature boundaries.
+Cameras on an opposing or nearby parallel carriageway are excluded by road matching.
+Selection searches a circle of radius 2 km (diameter 4 km) and is reused until moving 100 m,
+changing road, route or data. A spatial prefilter limits expensive graph lookups.
+Both displays consume the same immutable selection, with no graph I/O in rendering.
+Without guidance, a brief ambiguous road match retains the last selection for up
+to 3 seconds and 100 m while heading stays within 30 degrees. This visual grace
+period is measured from the last successful match, not extended by missing matches.
+A confirmed road change, discontinuity or source replacement takes effect immediately;
+camera warnings still require a current match.
+GPS expiry clears it; results from before expiry, rerouting or replacement are rejected.
+Map browsing away from the vehicle retains camera icons without distant coverage fills.
+
 In the auto flavor, MWM speed-camera sections are read once per encountered map on
 the file thread and published as a shared immutable index. Road geometry supplies
 the bearing; a stored forward/backward hint selects the approach, while unknown
@@ -98,7 +114,14 @@ External mark IDs and the group are reserved separately from BookmarkManager-own
 ## Matching, limits, and warnings
 
 The road worker checks travel direction and the matched carriageway; ambiguous
-parallel roads are rejected. Without a known continuation it stops at a junction,
+parallel roads are rejected. Near-straight connected feature fragments represent
+one approach at a segment boundary. Camera coordinates may be on roadside objects:
+association tolerates the source sector's lateral extent, capped at 100 m, while
+warnings still require entering that sector. The camera can look obliquely across
+the road: its optical sector constrains vehicle positions, not the road tangent.
+Traffic travelling away from that sector is still rejected. The nearest compatible road must be
+the travelled road (or its directly connected continuation); proximity alone does
+not transfer a camera between parallel roads. Without a known continuation it stops at a junction,
 rather than guessing the driver's next road. A posted speed limit is applied only
 after passing the sign on the matched road. Camera enforcement speeds and hazard
 advisory speeds do not become road limits. Settlement baselines do not raise a
@@ -151,9 +174,21 @@ place page. Its localized title, coordinates and normal map actions are retained
 an additional section shows the source, import date and speed when provided.
 Hazard advisory speeds are labeled separately from speed limits. Selection does
 not read SQLite or use the network: its metadata comes from the rendered index.
+Selecting a camera temporarily shows its warning area on the main map, including
+when automatic fills are hidden or the camera is outside the current road/route.
+The preview also works below zoom 15 and disappears when the place page closes;
+it is not copied to the cluster. Selection does not pan or zoom the map.
+A selected automatic area is drawn only once.
+The source action opens the provider's record by its source ID; sources without
+a record link retain the coordinate-sharing action.
+
 Mark IDs include the index revision, so a delayed tap cannot select a different
 record after an import or a visibility change. The selected snapshot is carried
 through native place-page refreshes and Android parcel restoration.
+
+Camera speed badges avoid other event icons and other badges in screen space.
+If there is no room, the badge text and background are hidden together; camera
+symbols remain visible and the limit is still available in their place page.
 
 Icons remain above POIs and road labels without suppressing them. Their hit-test
 handles do not participate in displacement or mutate render indices each frame.

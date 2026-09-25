@@ -100,6 +100,7 @@ public:
   double GetNavigationViewTilt(int64_t id) const;
   std::array<uint32_t, 4> GetNavigationViewTileStats(int64_t id) const;
   void SetNavigationViewPoiVisible(int64_t id, bool visible);
+  void SetPoiDensity(bool cluster, int density);
   void SetNavigationView3dBuildings(int64_t id, bool enabled);
   double GetNavigationViewZoom(int64_t id) const;
   void UpdateDpi(int dpi);

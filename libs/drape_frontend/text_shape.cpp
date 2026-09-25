@@ -342,6 +342,7 @@ void TextShape::DrawSubStringPlain(ref_ptr<dp::GraphicsContext> context, Straigh
   handle->SetOverlayRank(isPrimary ? m_params.m_startOverlayRank : m_params.m_startOverlayRank + 1);
 
   handle->SetExtendingSize(m_params.m_extendingSize);
+  handle->SetIsBadge(m_params.m_isBadge);
   if (m_params.m_specialDisplacement == SpecialDisplacement::UserMark ||
       m_params.m_specialDisplacement == SpecialDisplacement::SpecialModeUserMark)
   {
@@ -394,6 +395,7 @@ void TextShape::DrawSubStringOutlined(ref_ptr<dp::GraphicsContext> context, Stra
   handle->SetOverlayRank(isPrimary ? m_params.m_startOverlayRank : m_params.m_startOverlayRank + 1);
 
   handle->SetExtendingSize(m_params.m_extendingSize);
+  handle->SetIsBadge(m_params.m_isBadge);
   if (m_params.m_specialDisplacement == SpecialDisplacement::UserMark ||
       m_params.m_specialDisplacement == SpecialDisplacement::SpecialModeUserMark)
   {

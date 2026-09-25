@@ -218,6 +218,9 @@ public:
 
   void SetMapLangIndex(int8_t mapLangIndex);
   void SetPoiVisible(bool visible);
+#ifdef OMIM_AUTO
+  void SetPoiDensity(PoiDensity density);
+#endif
   void SetCluster3dBuildings(bool enabled);
 
   void OnEnterForeground();
@@ -313,6 +316,7 @@ private:
 #ifdef OMIM_AUTO
   DrivingPoiPolicy m_drivingPoiPolicy;
   bool m_poiVisible = true;
+  PoiDensity m_poiDensity = PoiDensity::High;
 #endif
   uint64_t m_externalMarksRevision = 0;
   m2::RectD m_externalMarksRect;

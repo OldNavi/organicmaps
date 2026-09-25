@@ -1,4 +1,5 @@
 #include "geometry/mercator.hpp"
+#include "routing/camera_coverage.hpp"
 #include "routing/road_events.hpp"
 #include "testing/testing.hpp"
 
@@ -159,4 +160,45 @@ UNIT_TEST(RoadEvents_ApproachSectorUsesLocationDirectionAndDistance)
   TEST(event.IsInApproachSector(mercator::FromLatLon(55, 37.999)), ());
   event.m_distance = 0;
   TEST(!event.IsInApproachSector(mercator::FromLatLon(54.999, 38)), ());
+}
+
+UNIT_TEST(RoadEvents_CoverageRejectsStaleWorkerResults)
+{
+  routing::RoadEventSource source;
+  source.EnableCoverageFilter();
+  auto input = source.Get();
+  routing::RoadEventSource::Coverage selected{{1, 0}, {2}};
+  TEST(source.SetCoverage(input, selected), ());
+  auto visible = source.Get();
+  TEST_EQUAL(visible.m_coverage->m_imported, (std::vector<size_t>{0, 1}), ());
+  TEST(!source.SetCoverage(input, selected), ("Unchanged set must not rebuild overlays"));
+  TEST(source.ClearCoverage(), ());
+  TEST(!source.SetCoverage(input, selected), ("Expired GPS"));
+  input = source.Get();
+  source.Replace(std::make_shared<routing::RoadEventStore>());
+  TEST(!source.SetCoverage(input, selected), ("Country import completed during matching"));
+  input = source.Get();
+  source.SetCoverageRoute(std::make_shared<routing::CameraCoveragePath>(std::vector<routing::Edge>{}));
+  TEST(!source.SetCoverage(input, selected), ("Reroute completed during matching"));
+  input = source.Get();
+  source.ReplaceMapCameras(std::make_shared<routing::RoadEventStore>());
+  TEST(!source.SetCoverage(input, selected), ("Map cameras changed during matching"));
+}
+
+UNIT_TEST(RoadEvents_ObliqueCameraSectorDoesNotConstrainRoadTangent)
+{
+  routing::RoadEvent event;
+  event.m_position = mercator::FromLatLon(55, 38);
+  event.m_kind = routing::RoadEventKind::Camera;
+  event.m_directionType = 1;
+  event.m_direction = 150;
+  event.m_angle = 15;
+  event.m_distance = 400;
+  auto const car = mercator::GetSmPoint(event.m_position, -50, 86.6);
+  TEST(event.IsInApproachSector(car), ());
+  TEST(!event.MatchesBearing(180), ("Road heading is outside the optical sector axis"));
+  TEST(event.MatchesRoadBearing(180), ("Vehicle approaches on the road beside the camera"));
+  TEST(!event.MatchesRoadBearing(0), ("Opposing traffic moves away"));
+  event.m_kind = routing::RoadEventKind::Bump;
+  TEST(!event.MatchesRoadBearing(180), ("Directional road signs retain their existing rule"));
 }

@@ -26,6 +26,7 @@ import app.organicmaps.MwmApplication;
 import app.organicmaps.sdk.cluster.ClusterCamera;
 import app.organicmaps.sdk.cluster.ClusterMap;
 import app.organicmaps.sdk.location.ClusterTestLocation;
+import app.organicmaps.sdk.rendering.PoiDensity;
 import app.organicmaps.sdk.routing.RouteMarkType;
 import app.organicmaps.sdk.util.Config;
 import app.organicmaps.util.ThemeSwitcher;
@@ -941,6 +942,62 @@ public class ClusterRenderingTest
     {
       if (originalStyle[0] != null)
         main(() -> MapStyle.mark(originalStyle[0]));
+    }
+  }
+
+  @Test
+  @SdkSuppress(minSdkVersion = 29)
+  public void poiDensityChangesLiveAndSurvivesDisplayRecreation() throws Exception
+  {
+    MwmApplication app =
+        (MwmApplication) InstrumentationRegistry.getInstrumentation().getTargetContext().getApplicationContext();
+    int[] original = new int[2];
+    MapStyle[] originalStyle = new MapStyle[1];
+    try (Output output = new Output(app, 1280, 720, 160))
+    {
+      showUri(app, output, "17", "1");
+      awaitFrames(output, 3);
+      main(() -> {
+        original[0] = PoiDensity.nativeGet(false);
+        original[1] = PoiDensity.nativeGet(true);
+        originalStyle[0] = MapStyle.get();
+        MapStyle.set(MapStyle.Clear);
+        app.getLocationHelper().stop();
+        PoiDensity.nativeSet(true, PoiDensity.HIGH);
+        ClusterTestLocation.setCoreLocation(55.7552, 37.6196);
+      });
+      Thread.sleep(3000);
+      long many = awaitStableImage(output);
+      output.save(app, "cluster-poi-many.png");
+      main(() -> PoiDensity.nativeSet(true, PoiDensity.LOW));
+      awaitChanged(output, many);
+      long few = awaitStableImage(output);
+      output.save(app, "cluster-poi-few.png");
+      assertNotEquals("Density must affect rendered POI", many, few);
+      main(() -> PoiDensity.nativeSet(false, PoiDensity.NORMAL));
+      Thread.sleep(1000);
+      assertEquals("Main setting must not change the cluster", few, awaitStableImage(output));
+      command(app, "hide_cluster", output, 17);
+      showUri(app, output, "17", "1");
+      awaitZoom(output.id(), 17);
+      Thread.sleep(3000);
+      assertEquals("New renderer must restore cluster density", few, awaitStableImage(output));
+      main(() -> PoiDensity.nativeSet(true, PoiDensity.HIGH));
+      awaitChanged(output, few);
+      assertEquals("Many restores original spacing", many, awaitStableImage(output));
+      output.save(app, "cluster-poi-many.png");
+      command(app, "hide_cluster", output, 17);
+    }
+    finally
+    {
+      main(() -> {
+        if (originalStyle[0] != null)
+        {
+          MapStyle.mark(originalStyle[0]);
+          PoiDensity.nativeSet(false, original[0]);
+          PoiDensity.nativeSet(true, original[1]);
+        }
+      });
     }
   }
 

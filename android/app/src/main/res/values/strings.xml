@@ -1040,6 +1040,13 @@
     <string name="road_warning_speed_camera">Speed camera ahead</string>
     <!-- Spoken speed camera warning. The placeholder is the speed limit spelled out in the voice language, in the user's selected speed units. -->
     <string name="road_warning_speed_camera_limit">Speed camera ahead, limit %s</string>
+    <string name="road_events_coverage">Camera warning areas</string>
+    <string name="road_event_open_source">Open on the source website</string>
+    <string name="poi_density_main">Map objects: main screen</string>
+    <string name="poi_density_cluster">Map objects: instrument cluster</string>
+    <string name="poi_density_low">Few</string>
+    <string name="poi_density_normal">Normal</string>
+    <string name="poi_density_high">Many</string>
     <!-- Cardinal number spellout table for camera warnings. Keep exactly 20 pipe-separated entries for 0 through 19. -->
     <string name="road_warning_number_small">zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen</string>
     <!-- Cardinal number spellout table for camera warnings. Keep exactly 8 pipe-separated entries for 20, 30, 40, 50, 60, 70, 80, 90. -->

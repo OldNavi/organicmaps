@@ -1051,6 +1051,13 @@
     <string name="road_warning_speed_camera">Впереди камера контроля скорости</string>
     <!-- Spoken speed camera warning. The placeholder is the speed limit spelled out in the voice language, in the user's selected speed units. -->
     <string name="road_warning_speed_camera_limit">Впереди камера на %s</string>
+    <string name="road_events_coverage">Зоны предупреждения камер</string>
+    <string name="road_event_open_source">Открыть на сайте источника</string>
+    <string name="poi_density_main">Объекты на карте: основной экран</string>
+    <string name="poi_density_cluster">Объекты на карте: приборка</string>
+    <string name="poi_density_low">Мало</string>
+    <string name="poi_density_normal">Обычно</string>
+    <string name="poi_density_high">Много</string>
     <!-- Cardinal number spellout table for camera warnings. Keep exactly 20 pipe-separated entries for 0 through 19. -->
     <string name="road_warning_number_small">ноль|один|два|три|четыре|пять|шесть|семь|восемь|девять|десять|одиннадцать|двенадцать|тринадцать|четырнадцать|пятнадцать|шестнадцать|семнадцать|восемнадцать|девятнадцать</string>
     <!-- Cardinal number spellout table for camera warnings. Keep exactly 8 pipe-separated entries for 20, 30, 40, 50, 60, 70, 80, 90. -->

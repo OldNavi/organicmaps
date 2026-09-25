@@ -174,6 +174,7 @@ void GenerateColoredSymbolShapes(ref_ptr<dp::GraphicsContext> context, ref_ptr<d
   // Assign ids after fetching params from map above.
   params.m_featureId = renderInfo.m_featureId;
   params.m_markId = renderInfo.m_markId;
+  params.m_isBadge = isTextBg && (renderInfo.m_markId >> 60) == kml::kExternalMarkGroupId;
 
   m2::PointF coloredSize(0.0f, 0.0f);
   if (params.m_shape == ColoredSymbolViewParams::Shape::Circle)
@@ -256,6 +257,8 @@ void GenerateTextShapes(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::Textur
     params.m_markId = renderInfo.m_markId;
     params.m_tileCenter = tileCenter;
     params.m_titleDecl = titleDecl;
+    params.m_isBadge = (renderInfo.m_markId >> 60) == kml::kExternalMarkGroupId && renderInfo.m_coloredSymbols &&
+                       renderInfo.m_coloredSymbols->m_addTextSize;
 
     // Here we use visual scale to adapt texts sizes and offsets
     // to different screen resolutions and DPI.
@@ -345,7 +348,7 @@ drape_ptr<dp::OverlayHandle> CreateUserMarkOverlayHandle(UserMarkRenderParams co
   m2::PointD const pivot(renderInfo.m_pivot.x + tileKey.GetTileXOffset(), renderInfo.m_pivot.y);
   if ((renderInfo.m_markId >> 60) == kml::kExternalMarkGroupId)
     return make_unique_dp<dp::SelectionHandle>(overlayId, renderInfo.m_anchor, pivot,
-                                               pixelRect.RightTop() - pixelRect.LeftBottom(), m2::PointD(symbolOffset),
+                                               pixelRect.RightTop() - pixelRect.LeftBottom(), renderInfo.m_pixelOffset,
                                                renderInfo.m_minZoom);
   drape_ptr<dp::OverlayHandle> handle = make_unique_dp<dp::SquareHandle>(
       overlayId, renderInfo.m_anchor, pivot, pixelRect.RightTop() - pixelRect.LeftBottom(), renderInfo.m_pixelOffset,

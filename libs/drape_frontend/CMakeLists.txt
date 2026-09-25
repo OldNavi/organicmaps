@@ -1,6 +1,8 @@
 project(drape_frontend)
 
 set(SRC
+  user_mark_badge_layout.cpp
+  user_mark_badge_layout.hpp
   driving_poi_policy.cpp
   driving_poi_policy.hpp
   navigation_scene.hpp

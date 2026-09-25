@@ -13,6 +13,26 @@ constexpr size_t kRoadEventColumns = 9;
 
 extern "C"
 {
+JNIEXPORT void Java_app_organicmaps_sdk_road_RoadEvents_nativeSetCoverageVisible(JNIEnv *, jclass, jboolean visible)
+{
+#ifdef OMIM_AUTO
+  frm()->GetRoutingManager().GetRoadEvents()->EnableCoverageFilter();
+#endif
+  frm()->GetRoutingManager().GetRoadEvents()->SetCoverageVisible(visible);
+  if (auto engine = frm()->GetDrapeEngine())
+    engine->RefreshExternalMarks();
+  frm()->GetRoutingManager().GetNavigationScene().RefreshExternalMarks();
+}
+
+JNIEXPORT void Java_app_organicmaps_sdk_road_RoadEvents_nativeClearCoverage(JNIEnv *, jclass)
+{
+  if (!frm()->GetRoutingManager().GetRoadEvents()->ClearCoverage())
+    return;
+  if (auto engine = frm()->GetDrapeEngine())
+    engine->RefreshExternalMarks();
+  frm()->GetRoutingManager().GetNavigationScene().RefreshExternalMarks();
+}
+
 JNIEXPORT jlongArray Java_app_organicmaps_sdk_road_RoadEvents_nativeGetState(JNIEnv * env, jclass)
 {
   auto const state = frm()->GetRoutingManager().GetRoadEvents()->Get();

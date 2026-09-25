@@ -51,6 +51,18 @@ public final class OpenSpeedCamProvider implements RoadDataProvider
   {
     return "openspeedcam.net";
   }
+
+  @Override
+  public String eventUrl(String sourceId, double latitude, double longitude)
+  {
+    return HttpUrl.get(BASE_URL)
+        .newBuilder()
+        .addQueryParameter("point", sourceId)
+        .addQueryParameter("center", longitude + "," + latitude)
+        .addQueryParameter("zoom", "17")
+        .build()
+        .toString();
+  }
   @Override
   public RoadEventImporter newImporter()
   {

@@ -45763,6 +45763,41 @@ uk = Пошук уздовж маршруту не підтримується.
     en = Speed camera ahead, limit %s
     ru = Впереди камера на %s
 
+  [road_events_coverage]
+    tags = android-app
+    en = Camera warning areas
+    ru = Зоны предупреждения камер
+
+  [road_event_open_source]
+    tags = android-app
+    en = Open on the source website
+    ru = Открыть на сайте источника
+
+  [poi_density_main]
+    tags = android-app
+    en = Map objects: main screen
+    ru = Объекты на карте: основной экран
+
+  [poi_density_cluster]
+    tags = android-app
+    en = Map objects: instrument cluster
+    ru = Объекты на карте: приборка
+
+  [poi_density_low]
+    tags = android-app
+    en = Few
+    ru = Мало
+
+  [poi_density_normal]
+    tags = android-app
+    en = Normal
+    ru = Обычно
+
+  [poi_density_high]
+    tags = android-app
+    en = Many
+    ru = Много
+
   [road_warning_number_small]
     tags = android-app
     comment = Cardinal number spellout table for camera warnings. Keep exactly 20 pipe-separated entries for 0 through 19.

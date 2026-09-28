@@ -49,7 +49,7 @@ df::ColorConstant const kRoadShieldBlueBackgroundColor = "RoadShieldBlueBackgrou
 df::ColorConstant const kRoadShieldRedBackgroundColor = "RoadShieldRedBackground";
 df::ColorConstant const kRoadShieldOrangeBackgroundColor = "RoadShieldOrangeBackground";
 
-uint32_t constexpr kPathTextBaseTextIndex = 128;
+uint32_t constexpr kPathTextBaseTextIndex = 1u << 31;
 uint32_t constexpr kShieldBaseTextIndex = 0;
 
 #ifdef LINES_GENERATION_CALC_FILTERED_POINTS
@@ -949,6 +949,15 @@ void ApplyLineFeatureAdditional::ProcessAdditionalLineRules(drule::PathTextRule 
   ASSERT(pathtextRule || shieldRule, ());
   double const visScale = m_params.m_vparams.GetVisualScale();
 
+  struct ShieldParams
+  {
+    TextViewParams m_text;
+    ColoredSymbolViewParams m_symbol;
+    PoiSymbolViewParams m_poi;
+    m2::PointD m_size;
+  };
+  std::vector<ShieldParams> shieldParams;
+  double shieldPixelLength = 0.0;
   std::vector<m2::PointD> shieldPositions;
   ASSERT((shieldRule && !roadShields.empty()) || !(shieldRule && !roadShields.empty()),
          (roadShields.empty(), shieldRule == nullptr));
@@ -957,6 +966,19 @@ void ApplyLineFeatureAdditional::ProcessAdditionalLineRules(drule::PathTextRule 
     m_shieldRule = shieldRule;
     m_shieldDepth = PriorityToDepth(shieldRule->priority, drule::shield, 0);
     shieldPositions.reserve(m_clippedSplines.size() * 3);
+    shieldParams.reserve(roadShields.size());
+    for (auto const & shield : roadShields)
+    {
+      auto const shieldIndex = static_cast<uint8_t>(shieldParams.size());
+      auto & p = shieldParams.emplace_back();
+      GetRoadShieldsViewParams(texMng, shield, shieldIndex, static_cast<uint8_t>(roadShields.size()), p.m_text,
+                               p.m_symbol, p.m_poi, p.m_size);
+#ifdef OMIM_AUTO
+      // Shields stay upright as the road rotates. Reserve their full diagonal and all anchored rows/columns.
+      double const diameter = p.m_size.Length() + 4.0 * visScale;
+      shieldPixelLength = std::max(shieldPixelLength, diameter * (roadShields.size() > 1 ? 2.0 : 1.0));
+#endif
+    }
   }
 
   if (pathtextRule)
@@ -985,16 +1007,24 @@ void ApplyLineFeatureAdditional::ProcessAdditionalLineRules(drule::PathTextRule 
       PathTextViewParams p = params;
       auto shape = make_unique_dp<PathTextShape>(spline, p, m_params.m_tileKey, textIndex);
 
-      if (!shape->CalculateLayout(texMng))
+      bool const hasCaption = shape->CalculateLayout(texMng, shieldPixelLength);
+#ifdef OMIM_AUTO
+      if (m_shieldRule)
+        for (double const offset : shape->GetShieldOffsets())
+          shieldPositions.push_back(spline->GetPoint(offset).m_pos);
+#endif
+      if (!hasCaption)
         continue;
 
+#ifndef OMIM_AUTO
       // Position shields inbetween captions.
       // If there is only one center position then the shield and the caption will compete for it.
       if (m_shieldRule)
         CalculateRoadShieldPositions(shape->GetOffsets(), spline, shieldPositions);
+#endif
 
+      textIndex += static_cast<uint32_t>(shape->GetOffsets().size());
       m_params.m_insertShape(std::move(shape));
-      ++textIndex;
 
       /// @todo It is not correct to draw overlay text for GetMetaline(f),
       /// because metalines were merged by street names, which is not always equal to overlay text (PT).
@@ -1047,27 +1077,22 @@ void ApplyLineFeatureAdditional::ProcessAdditionalLineRules(drule::PathTextRule 
   uint32_t textIndex = kShieldBaseTextIndex;
   for (ftypes::RoadShield const & shield : roadShields)
   {
-    TextViewParams textParams;
-    ColoredSymbolViewParams symbolParams;
-    PoiSymbolViewParams poiParams;
-    m2::PointD shieldPixelSize;
-    GetRoadShieldsViewParams(texMng, shield, shieldIndex, static_cast<uint8_t>(roadShields.size()), textParams,
-                             symbolParams, poiParams, shieldPixelSize);
+    auto const & params = shieldParams[shieldIndex];
 
     auto & generatedShieldRects = generatedRoadShields[shield];
     generatedShieldRects.reserve(10);
     for (auto const & shieldPos : shieldPositions)
     {
-      if (!CheckShieldsNearby(shieldPos, shieldPixelSize, scaledMinDistance, generatedShieldRects))
+      if (!CheckShieldsNearby(shieldPos, params.m_size, scaledMinDistance, generatedShieldRects))
         continue;
 
-      m_params.m_insertShape(make_unique_dp<TextShape>(shieldPos, textParams, m_params.m_tileKey, m2::PointF(0, 0),
+      m_params.m_insertShape(make_unique_dp<TextShape>(shieldPos, params.m_text, m_params.m_tileKey, m2::PointF(0, 0),
                                                        m2::PointF(0, 0), dp::Center, textIndex));
       if (IsColoredRoadShield(shield))
         m_params.m_insertShape(
-            make_unique_dp<ColoredSymbolShape>(shieldPos, symbolParams, m_params.m_tileKey, textIndex));
+            make_unique_dp<ColoredSymbolShape>(shieldPos, params.m_symbol, m_params.m_tileKey, textIndex));
       else if (IsSymbolRoadShield(shield))
-        m_params.m_insertShape(make_unique_dp<PoiSymbolShape>(shieldPos, poiParams, m_params.m_tileKey, textIndex));
+        m_params.m_insertShape(make_unique_dp<PoiSymbolShape>(shieldPos, params.m_poi, m_params.m_tileKey, textIndex));
       ++textIndex;
     }
     ++shieldIndex;

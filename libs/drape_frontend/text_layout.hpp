@@ -109,6 +109,10 @@ public:
   static void CalculatePositions(double splineLength, double splineScaleToPixel, double textPixelLength,
                                  std::vector<double> & offsets);
 
+  static void CalculatePositionsWithShields(double splineLength, double splineScaleToPixel, double textPixelLength,
+                                            double shieldPixelLength, double gapInPixels,
+                                            std::vector<double> & textOffsets, std::vector<double> & shieldOffsets);
+
 private:
   static double CalculateTextLength(double textPixelLength);
 

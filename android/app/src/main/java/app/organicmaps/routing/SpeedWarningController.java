@@ -8,34 +8,32 @@ import android.os.SystemClock;
 import app.organicmaps.MwmApplication;
 import app.organicmaps.R;
 import app.organicmaps.cluster.NavigationProvider;
-import app.organicmaps.sdk.sound.NavigationWarningPlayer;
-import app.organicmaps.sdk.sound.TtsPlayer;
+import app.organicmaps.road.RoadWarningAudio;
 import app.organicmaps.settings.SpeedWarningSettings;
 
 /** A single application owner handles alerts even with several maps or only a cluster visible. */
 public final class SpeedWarningController
 {
-  private static final String SOUND_ASSET = "overspeed_warning.mp3";
   private final MwmApplication mApp;
   private final Handler mHandler = new Handler(Looper.getMainLooper());
   private final SpeedWarningState mState = new SpeedWarningState();
-  private final NavigationWarningPlayer mPlayer;
+  private final RoadWarningAudio mAudio;
   private final Runnable mCheck = this::update;
   // SharedPreferences holds weak references, so retain this application-lifetime listener.
   private final SharedPreferences.OnSharedPreferenceChangeListener mSettingsListener;
   private int mOffsetKmh;
-  private String mMode;
 
-  public SpeedWarningController(MwmApplication app)
+  public SpeedWarningController(MwmApplication app, RoadWarningAudio audio)
   {
     mApp = app;
-    mPlayer = new NavigationWarningPlayer(app);
+    mAudio = audio;
     mSettingsListener = (prefs, key) ->
     {
-      if (SpeedWarningSettings.OFFSET_KEY.equals(key) || SpeedWarningSettings.MODE_KEY.equals(key))
+      if (SpeedWarningSettings.OFFSET_KEY.equals(key) || SpeedWarningSettings.MODE_KEY.equals(key)
+          || SpeedWarningSettings.LEVEL_KEY.equals(key))
       {
         readSettings();
-        mPlayer.stop();
+        mAudio.stop();
         update();
       }
     };
@@ -46,7 +44,6 @@ public final class SpeedWarningController
   private void readSettings()
   {
     mOffsetKmh = SpeedWarningSettings.offsetKmh(mApp);
-    mMode = SpeedWarningSettings.mode(mApp);
   }
 
   public static boolean isExceeded(Context context, double speedMps, double limitMps)
@@ -57,6 +54,8 @@ public final class SpeedWarningController
   public void update()
   {
     mHandler.removeCallbacks(mCheck);
+    if (SpeedWarningSettings.level(mApp) == SpeedWarningSettings.OFF)
+      return;
     var reading = mApp.getLocationHelper().getDisplaySpeed();
     double speed = reading == null ? Double.NaN : reading.speedMps();
     double limit = NavigationProvider.getCurrentSpeedLimitMps();
@@ -64,13 +63,7 @@ public final class SpeedWarningController
     boolean due = mState.update(speed, limit, mOffsetKmh, now);
     if (due)
     {
-      boolean played = switch (mMode)
-      {
-        case SpeedWarningSettings.VOICE ->
-          TtsPlayer.INSTANCE.speakWarning(mApp.getString(R.string.auto_speed_warning_voice));
-        case SpeedWarningSettings.SOUND -> mPlayer.play(SOUND_ASSET);
-        default -> false;
-      };
+      boolean played = mAudio.play(R.string.auto_speed_warning_voice, now);
       if (played)
         mState.notified(now);
     }

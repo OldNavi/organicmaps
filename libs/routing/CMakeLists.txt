@@ -1,6 +1,8 @@
 project(routing)
 
 set(SRC
+  camera_coverage.cpp
+  camera_coverage.hpp
   absent_regions_finder.cpp
   absent_regions_finder.hpp
   async_router.cpp
@@ -125,6 +127,8 @@ set(SRC
   road_access_serialization.hpp
   road_graph.cpp
   road_graph.hpp
+  road_events.cpp
+  road_events.hpp
   road_info.cpp
   road_info.hpp
   road_index.cpp

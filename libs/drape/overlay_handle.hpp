@@ -137,6 +137,8 @@ public:
 
   void SetReady(bool isReady) { m_isReady = isReady; }
   bool IsReady() const { return m_isReady; }
+  bool IsBadge() const { return m_isBadge; }
+  void SetIsBadge(bool badge) { m_isBadge = badge; }
 
   void SetDisplayFlag(bool /* display */) { /* m_displayFlag = display; */ }
   /// @todo displayFlag logic is effectively turned off now,
@@ -163,6 +165,7 @@ protected:
   dp::Anchor const m_anchor;
   uint64_t const m_priority;
 
+  bool m_isBadge = false;
   double m_extendingSize;
   double m_pivotZ;
   RankT m_overlayRank;
@@ -229,6 +232,19 @@ private:
   m2::PointD m_gbPivot;
   m2::PointD m_pxOffset;
   bool m_isBound;
+};
+
+// Hit testing only: these symbols never take part in displacement or per-frame index mutation.
+class SelectionHandle final : public SquareHandle
+{
+public:
+  SelectionHandle(OverlayID const & id, Anchor anchor, m2::PointD const & pivot, m2::PointD const & size,
+                  m2::PointD const & offset, int minVisibleScale)
+    : SquareHandle(id, anchor, pivot, size, offset, 0, true, minVisibleScale, true)
+  {
+    SetIsVisible(true);
+  }
+  bool IndexesRequired() const override { return false; }
 };
 
 uint64_t CalculateOverlayPriority(uint8_t rank, float depth);

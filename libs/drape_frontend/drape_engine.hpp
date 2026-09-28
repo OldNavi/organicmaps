@@ -6,6 +6,7 @@
 #include "drape_frontend/custom_features_context.hpp"
 #include "drape_frontend/drape_engine_params.hpp"
 #include "drape_frontend/drape_hints.hpp"
+#include "drape_frontend/driving_poi_policy.hpp"
 #include "drape_frontend/frontend_renderer.hpp"
 #include "drape_frontend/overlays_tracker.hpp"
 #include "drape_frontend/postprocess_renderer.hpp"
@@ -45,6 +46,7 @@ class GraphicsContextFactory;
 namespace df
 {
 class UserMarksProvider;
+class ExternalMarks;
 class MapDataProvider;
 
 class DrapeEngine
@@ -90,6 +92,7 @@ public:
       , m_renderInjectionHandler(std::move(renderInjectionHandler))
     {}
 
+    std::shared_ptr<ExternalMarks> m_externalMarks;
     dp::ApiVersion m_apiVersion;
     ref_ptr<dp::GraphicsContextFactory> m_factory;
     dp::Viewport m_viewport;
@@ -157,6 +160,7 @@ public:
   void ClearUserMarksGroup(kml::MarkGroupId groupId);
   void ChangeVisibilityUserMarksGroup(kml::MarkGroupId groupId, bool isVisible);
   void InvalidateUserMarks();
+  void RefreshExternalMarks();
   void UpdateBookmarksTextPlacement(UserMarksProvider * provider);
   void UpdateUserMarks(UserMarksProvider * provider, bool firstTime);
 
@@ -214,6 +218,9 @@ public:
 
   void SetMapLangIndex(int8_t mapLangIndex);
   void SetPoiVisible(bool visible);
+#ifdef OMIM_AUTO
+  void SetPoiDensity(PoiDensity density);
+#endif
   void SetCluster3dBuildings(bool enabled);
 
   void OnEnterForeground();
@@ -305,6 +312,17 @@ private:
   std::atomic<double> m_currentZoomLevel{0.0};
   std::atomic<double> m_currentTilt{0.0};
   ModelViewChangedHandler m_modelViewChangedHandler;
+  std::shared_ptr<ExternalMarks> m_externalMarks;
+#ifdef OMIM_AUTO
+  DrivingPoiPolicy m_drivingPoiPolicy;
+  bool m_poiVisible = true;
+  PoiDensity m_poiDensity = PoiDensity::High;
+#endif
+  uint64_t m_externalMarksRevision = 0;
+  m2::RectD m_externalMarksRect;
+  int m_externalMarksZoom = -1;
+  kml::MarkIdCollection m_externalMarkIds;
+  kml::TrackIdCollection m_externalLineIds;
   TapEventInfoHandler m_tapEventInfoHandler;
   UserPositionChangedHandler m_userPositionChangedHandler;
 

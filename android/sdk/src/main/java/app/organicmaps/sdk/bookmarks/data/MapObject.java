@@ -8,6 +8,7 @@ import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.os.ParcelCompat;
+import app.organicmaps.sdk.road.RoadEventInfo;
 import app.organicmaps.sdk.routing.RoutePointInfo;
 import app.organicmaps.sdk.widget.placepage.PlacePageData;
 import java.lang.annotation.Retention;
@@ -72,6 +73,20 @@ public class MapObject implements PlacePageData
   private final RoadWarningMarkType mRoadWarningMarkType;
   @Nullable
   private List<String> mRawTypes;
+  @Nullable
+  private RoadEventInfo mRoadEvent;
+
+  // Called from JNI for external road-event selections only.
+  public void setRoadEvent(String identity, int kind, int speedKmh, long importedAt)
+  {
+    mRoadEvent = new RoadEventInfo(identity, kind, speedKmh, importedAt);
+  }
+
+  @Nullable
+  public RoadEventInfo getRoadEvent()
+  {
+    return mRoadEvent;
+  }
 
   public MapObject(@MapObjectType int mapObjectType, String title, @Nullable String secondaryTitle, String subtitle,
                    String address, double lat, double lon, String apiId, @Nullable RoutePointInfo routePointInfo,
@@ -125,6 +140,7 @@ public class MapObject implements PlacePageData
     mOsmDescription = source.readString();
     mRoadWarningMarkType = RoadWarningMarkType.values()[source.readInt()];
     mRawTypes = source.createStringArrayList();
+    mRoadEvent = ParcelCompat.readParcelable(source, RoadEventInfo.class.getClassLoader(), RoadEventInfo.class);
   }
 
   @NonNull
@@ -153,7 +169,8 @@ public class MapObject implements PlacePageData
 
     return mMapObjectType == other.mMapObjectType && mTitle.equals(other.mTitle) && mSubtitle.equals(other.mSubtitle)
  && Double.doubleToLongBits(mLon) == Double.doubleToLongBits(other.mLon)
- && Double.doubleToLongBits(mLat) == Double.doubleToLongBits(other.mLat);
+ && Double.doubleToLongBits(mLat) == Double.doubleToLongBits(other.mLat)
+ && Objects.equals(mRoadEvent, other.mRoadEvent);
   }
 
   public static boolean same(@Nullable MapObject one, @Nullable MapObject another)
@@ -377,6 +394,7 @@ public class MapObject implements PlacePageData
     // All collections are deserialized AFTER non-collection and primitive type objects,
     // so collections must be always serialized at the end.
     dest.writeStringList(mRawTypes);
+    dest.writeParcelable(mRoadEvent, flags);
   }
 
   @Override
@@ -393,7 +411,7 @@ public class MapObject implements PlacePageData
   @Override
   public int hashCode()
   {
-    return Objects.hash(mMapObjectType, mTitle, mSubtitle, mLat, mLon);
+    return Objects.hash(mMapObjectType, mTitle, mSubtitle, mLat, mLon, mRoadEvent);
   }
 
   public static final Creator<MapObject> CREATOR = new Creator<>() {

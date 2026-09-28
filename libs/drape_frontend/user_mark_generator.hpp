@@ -31,11 +31,19 @@ public:
   void GenerateUserMarksGeometry(ref_ptr<dp::GraphicsContext> context, TileKey const & tileKey,
                                  ref_ptr<dp::TextureManager> textures);
 
+  // Untiled fills form one complete snapshot, so old/new map LODs never blend them twice.
+  void GenerateUserAreasGeometry(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::TextureManager> textures,
+                                 TFlushFn const & flush);
+  void InvalidateUserAreas() { m_areasDirty = true; }
+  bool AreUserAreasDirty() const { return m_areasDirty; }
+
 private:
   void UpdateIndex(kml::MarkGroupId groupId);
 
   ref_ptr<IDCollections> GetIdCollection(TileKey const & tileKey, kml::MarkGroupId groupId);
   void CleanIndex();
+  bool IsArea(kml::MarkId id) const;
+  bool HasAreas(kml::MarkGroupId groupId) const;
 
   template <class SourceT, class LevelsT>
   SourceT GetIndexSource(TileKey const & tileKey, LevelsT const & levels) const;
@@ -49,5 +57,6 @@ private:
   MarksIndex m_index;
 
   TFlushFn m_flushFn;
+  bool m_areasDirty = false;
 };
 }  // namespace df

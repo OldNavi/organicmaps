@@ -1,5 +1,7 @@
 #include "drape_frontend/frontend_renderer.hpp"
 
+#include "drape/gl_buffer_pool.hpp"
+
 #include "drape_frontend/animation/interpolation_holder.hpp"
 #include "drape_frontend/animation_system.hpp"
 #include "drape_frontend/debug_rect_renderer.hpp"
@@ -187,6 +189,11 @@ FrontendRenderer::FrontendRenderer(Params && params)
   , m_minFrameTime(params.m_myPositionParams.m_hints.m_maxFps > 0 ? 1.0 / params.m_myPositionParams.m_hints.m_maxFps
                                                                   : 0.0)
 {
+#ifdef OMIM_AUTO
+  m_renderScale = params.m_myPositionParams.m_hints.m_renderScale;
+  m_msaaSamples = params.m_myPositionParams.m_hints.m_msaaSamples;
+  CHECK(m_renderScale >= 0.5 && m_renderScale <= 1.0, (m_renderScale));
+#endif
 #ifdef DEBUG
   m_isTeardowned = false;
 #endif
@@ -345,6 +352,23 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
     break;
   }
 
+  case Message::Type::FlushUserAreas:
+  {
+    ref_ptr<FlushUserAreasMessage> msg = message;
+    std::vector<UserAreaGroup> areas;
+    for (auto & data : msg->AcceptRenderData())
+    {
+      PrepareBucket(data.m_state, data.m_bucket);
+      auto group = make_unique_dp<UserMarkRenderGroup>(data.m_state, data.m_tileKey);
+      group->AddBucket(std::move(data.m_bucket));
+      areas.push_back({std::move(group), data.m_minZoom});
+    }
+    // Replace one complete snapshot. Retaining parent/child tiles would blend the gradient twice.
+    m_userAreas.swap(areas);
+    m_frameData.m_forceFullRedrawNextFrame = true;
+    break;
+  }
+
   case Message::Type::FlushUserMarks:
   {
     ref_ptr<FlushUserMarksMessage> msg = message;
@@ -356,6 +380,9 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
       {
         PrepareBucket(renderData.m_state, renderData.m_bucket);
         AddToRenderGroup<UserMarkRenderGroup>(renderData.m_state, std::move(renderData.m_bucket), renderData.m_tileKey);
+        // Static external marks can arrive after the scene entered its cached-frame path.
+        // Redraw now instead of waiting for another gesture or reopening the layers sheet.
+        m_frameData.m_forceFullRedrawNextFrame = true;
       }
     }
     break;
@@ -930,6 +957,8 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
   }
   break;
 
+  case Message::Type::RefreshExternalMarks: EmitModelViewChanged(m_userEventStream.GetCurrentScreen()); break;
+
   case Message::Type::InvalidateUserMarks:
   {
     m_forceUpdateUserMarks = true;
@@ -1103,6 +1132,7 @@ void FrontendRenderer::UpdateAll()
 #endif  // BUILD_DESIGNER
 
   // Clear all graphics.
+  m_userAreas.clear();
   for (RenderLayer & layer : m_layers)
   {
     layer.m_renderGroups.clear();
@@ -1153,6 +1183,9 @@ void FrontendRenderer::UpdateContextDependentResources()
   m_forceUpdateScene = true;
   m_forceUpdateUserMarks = true;
   m_frameData.m_forceFullRedrawNextFrame = true;
+  m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                            make_unique_dp<InvalidateUserMarksMessage>(true /* recacheAreas */),
+                            MessagePriority::Normal);
   ++m_lastRecacheRouteId;
 
   // Immediate guidance switches style before the initial FlushSubroute may reach this renderer.
@@ -1277,7 +1310,19 @@ void FrontendRenderer::OnResize(ScreenBase const & screen)
   CHECK(m_context != nullptr, ());
   // All resize methods must be protected from setting up the same size.
   m_context->Resize(sx, sy);
+#ifdef OMIM_AUTO
+  auto const buildingsSize = m_scaledBackground ? GetScaledRenderSize() : m2::PointU(sx, sy);
+  m_buildingsFramebuffer->SetSize(m_context, buildingsSize.x, buildingsSize.y);
+#else
   m_buildingsFramebuffer->SetSize(m_context, sx, sy);
+#endif
+#ifdef OMIM_AUTO
+  if (m_scaledBackground)
+  {
+    auto const size = GetScaledRenderSize();
+    m_scaledBackground->SetSize(m_context, size.x, size.y);
+  }
+#endif
   m_postprocessRenderer->Resize(m_context, sx, sy);
   m_needRestoreSize = false;
 
@@ -1375,7 +1420,10 @@ std::pair<FeatureID, kml::MarkId> FrontendRenderer::GetVisiblePOI(m2::RectD cons
   auto selectionRect = pixelRect;
   constexpr double kTapRectFactor = 0.25;  // make tap rect size smaller for extended objects
   selectionRect.Scale(kTapRectFactor);
-  SearchInNonDisplaceableUserMarksLayer(screen, DepthLayer::SearchMarkLayer, selectionRect, selectResult);
+  // External marks are painted above labels; give their visible symbols the same tap priority.
+  SearchInNonDisplaceableUserMarksLayer(screen, DepthLayer::UserMarkLayer, selectionRect, selectResult);
+  if (selectResult.empty())
+    SearchInNonDisplaceableUserMarksLayer(screen, DepthLayer::SearchMarkLayer, selectionRect, selectResult);
 
   if (selectResult.empty())
     m_overlayTree->Select(pixelRect, selectResult);
@@ -1502,6 +1550,19 @@ void FrontendRenderer::EndUpdateOverlayTree()
   }
 }
 
+#ifdef OMIM_AUTO
+m2::PointU FrontendRenderer::GetScaledRenderSize() const
+{
+  return {std::max(1u, static_cast<uint32_t>(m_viewport.GetWidth() * m_renderScale)),
+          std::max(1u, static_cast<uint32_t>(m_viewport.GetHeight() * m_renderScale))};
+}
+
+bool FrontendRenderer::UseScaledBackground() const
+{
+  return m_scaledBackground && m_scaledBackground->IsSupported();
+}
+#endif
+
 void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFrame)
 {
   TRACE_SECTION("[drape] RenderScene");
@@ -1526,15 +1587,52 @@ void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFram
       m_context->SetStencilReferenceValue(2 /* write this value to the stencil buffer */);
     }
 
+#ifdef OMIM_AUTO
+    bool const scaledBackground = UseScaledBackground();
+    if (scaledBackground)
+    {
+      m_context->SetFramebuffer(make_ref(m_scaledBackground));
+      auto const size = GetScaledRenderSize();
+      m_context->SetViewport(0, 0, size.x, size.y);
+    }
+    else if (m_scaledBackground)
+      m_viewport.Apply(m_context);
+#endif
     m_context->Clear(clearBits, storeBits);
     m_context->ApplyFramebuffer("Static frame");
-    m_viewport.Apply(m_context);
+#ifdef OMIM_AUTO
+    if (!m_scaledBackground)
+#endif
+      m_viewport.Apply(m_context);
 
     RenderTileBackgroundLayer(modelView);
 
     Render2dLayer(modelView);
     RenderUserMarksLayer(modelView, DepthLayer::UserLineLayer);
+    for (auto const & area : m_userAreas)
+      if (GetCurrentZoom() >= area.m_minZoom)
+      {
+        // Area origins are canonical and independent of the currently requested world-copy tiles.
+        auto areaView = modelView;
+        auto origin = modelView.GetOrg();
+        origin.x = mercator::NearestWrapX(origin.x, area.m_group->GetTileKey().GetGlobalRect().Center().x);
+        areaView.SetOrg(origin);
+        RenderSingleGroup(m_context, areaView, make_ref(area.m_group));
+      }
 
+#ifdef OMIM_AUTO
+    if (scaledBackground)
+    {
+      m_scaledBackground->Resolve();
+      // Only raster resolution changes: camera, tile coverage, text and input coordinates stay native.
+      if (!m_postprocessRenderer->RestoreFrameTarget(m_context))
+        return;
+      m_context->Clear(clearBits, storeBits);
+      m_context->ApplyFramebuffer("Upscaled ground");
+      m_screenQuadRenderer->RenderTexture(m_context, make_ref(m_gpuProgramManager), m_scaledBackground->GetTexture(),
+                                          1.0f);
+    }
+#endif
     bool const hasTransitRouteData = HasTransitRouteData();
     if (m_buildingsFramebuffer->IsSupported() && !m_routeRenderer->IsRulerRoute())
     {
@@ -1656,15 +1754,32 @@ void FrontendRenderer::PreRender3dLayer(ScreenBase const & modelView)
   if (layer.m_renderGroups.empty())
     return;
 
+#ifdef OMIM_AUTO
+  auto const renderSize =
+      UseScaledBackground() ? GetScaledRenderSize() : m2::PointU(m_viewport.GetWidth(), m_viewport.GetHeight());
+  m_buildingsFramebuffer->SetSize(m_context, renderSize.x, renderSize.y);
+#endif
   m_context->SetFramebuffer(make_ref(m_buildingsFramebuffer));
   m_context->SetClearColor(dp::Color::Transparent());
+#ifdef OMIM_AUTO
+  if (m_scaledBackground)
+    m_context->SetViewport(0, 0, renderSize.x, renderSize.y);
+#endif
   m_context->Clear(dp::ClearBits::ColorBit | dp::ClearBits::DepthBit, dp::ClearBits::ColorBit /* storeBits */);
   m_context->ApplyFramebuffer("Buildings");
+#ifdef OMIM_AUTO
+  if (!m_scaledBackground)
+    m_context->SetViewport(0, 0, renderSize.x, renderSize.y);
+#else
   m_viewport.Apply(m_context);
+#endif
 
   layer.Sort(make_ref(m_overlayTree));
   for (drape_ptr<RenderGroup> const & group : layer.m_renderGroups)
     RenderSingleGroup(m_context, modelView, make_ref(group));
+#ifdef OMIM_AUTO
+  m_buildingsFramebuffer->Resolve();
+#endif
 }
 
 void FrontendRenderer::Render3dLayer(ScreenBase const & modelView)
@@ -1800,6 +1915,55 @@ void FrontendRenderer::RenderMwmBorderLayer(ScreenBase const & modelView)
     RenderSingleGroup(m_context, modelView, make_ref(group));
 }
 
+#ifdef OMIM_AUTO
+void FrontendRenderer::UpdateRoadEventBadges(ScreenBase const & modelView)
+{
+  m_externalSymbols.clear();
+  m_externalBadges.clear();
+  m_externalBadgeHandles.clear();
+  m_unreadyExternalBadges.clear();
+  auto const & groups = m_layers[static_cast<size_t>(DepthLayer::UserMarkLayer)].m_renderGroups;
+  for (auto const & group : groups)
+    group->ForEachOverlay([&](ref_ptr<dp::OverlayHandle> const & handle)
+    {
+      auto const id = handle->GetOverlayID().m_markId;
+      if ((id >> 60) != kml::kExternalMarkGroupId)
+        return;
+      handle->BeforeUpdate();
+      bool const ready = handle->Update(modelView);
+      if (handle->IsBadge())
+      {
+        m_externalBadgeHandles.push_back(handle);
+        if (!ready)
+        {
+          m_unreadyExternalBadges.push_back(id);
+          return;
+        }
+        if (handle->IndexesRequired())
+        {
+          auto const rect = handle->GetPixelRect(modelView, modelView.isPerspective());
+          if (!modelView.IsReverseProjection3d(rect.Center()))
+            m_externalBadges.push_back({id, rect});
+        }
+      }
+      else if (!handle->HasDynamicAttributes())
+      {
+        auto const rect = handle->GetPixelRect(modelView, modelView.isPerspective());
+        if (!modelView.IsReverseProjection3d(rect.Center()))
+          m_externalSymbols.push_back({id, rect});
+      }
+    });
+  PlaceUserMarkBadges(m_externalSymbols, m_externalBadges, m_visibleExternalBadges);
+  std::sort(m_unreadyExternalBadges.begin(), m_unreadyExternalBadges.end());
+  for (auto const & handle : m_externalBadgeHandles)
+  {
+    auto const id = handle->GetOverlayID().m_markId;
+    handle->SetIsVisible(std::binary_search(m_visibleExternalBadges.begin(), m_visibleExternalBadges.end(), id) &&
+                         !std::binary_search(m_unreadyExternalBadges.begin(), m_unreadyExternalBadges.end(), id));
+  }
+}
+#endif
+
 void FrontendRenderer::RenderUserMarksLayer(ScreenBase const & modelView, DepthLayer layerId)
 {
   TRACE_SECTION("[drape] RenderUserMarksLayer");
@@ -1810,9 +1974,30 @@ void FrontendRenderer::RenderUserMarksLayer(ScreenBase const & modelView, DepthL
   CHECK(m_context != nullptr, ());
   DEBUG_LABEL(m_context, "User Marks: " + DebugPrint(layerId));
   m_context->Clear(dp::ClearBits::DepthBit, dp::kClearBitsStoreAll);
+#ifdef OMIM_AUTO
+  if (layerId == DepthLayer::UserMarkLayer)
+    UpdateRoadEventBadges(modelView);
+#endif
 
   for (drape_ptr<RenderGroup> const & group : renderGroups)
+  {
+    if (layerId == DepthLayer::UserMarkLayer)
+      group->ForEachOverlay([&modelView](ref_ptr<dp::OverlayHandle> const & handle)
+      {
+        // External numeric sign labels are not managed by the POI displacement tree.
+        if ((handle->GetOverlayID().m_markId >> 60) == kml::kExternalMarkGroupId && handle->HasDynamicAttributes()
+#ifdef OMIM_AUTO
+            && !handle->IsBadge()
+#endif
+        )
+        {
+          handle->SetIsVisible(true);
+          handle->BeforeUpdate();
+          handle->Update(modelView);
+        }
+      });
     RenderSingleGroup(m_context, modelView, make_ref(group));
+  }
 }
 
 void FrontendRenderer::RenderEmptyFrame()
@@ -1861,6 +2046,13 @@ void FrontendRenderer::RenderFrame()
   auto & scaleFpsHelper = gui::DrapeGui::Instance().GetScaleFpsHelper();
   auto const frameStart = std::chrono::steady_clock::now();
   m_frameData.m_timer.Reset();
+
+#ifdef OMIM_AUTO
+  bool const displayPaced = m_minFrameTime > 0.0 && m_context->WaitForFrame(m_minFrameTime, [this]()
+  { return !IsRenderingEnabled() || !CanReceiveMessages(); });
+  if (!IsRenderingEnabled() || !CanReceiveMessages() || !m_context->Validate())
+    return;
+#endif
 
   bool modelViewChanged, viewportChanged, needActiveFrame;
   ScreenBase const & modelView = ProcessEvents(modelViewChanged, viewportChanged, needActiveFrame);
@@ -1982,13 +2174,21 @@ void FrontendRenderer::RenderFrame()
     while (std::chrono::steady_clock::now() < messageDeadline);
   }
 
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().EndFrame();
+#endif
 #ifndef DISABLE_SCREEN_PRESENTATION
   m_context->Present();
 #endif
 
   // Each renderer has its own budget; rendering and presentation already count towards it.
+#ifdef OMIM_AUTO
+  double const frameTime = displayPaced ? 0.0 : m_minFrameTime;
+#else
   double const frameTime =
       std::max(m_minFrameTime, m_myPositionController->IsRouteFollowingActive() ? 1.0 / 30.0 : 0.0);
+#endif
   // The animation timer is reset after an idle wait, so use the original frame start for pacing.
   if (IsRenderingEnabled() && frameTime > 0.0 && (!canSuspend || m_minFrameTime > 0.0))
     std::this_thread::sleep_until(frameStart + std::chrono::duration<double>(frameTime));
@@ -2483,6 +2683,7 @@ void FrontendRenderer::OnContextDestroy()
     m_renderInjectionHandler(m_context, m_texMng, make_ref(m_gpuProgramManager), true);
 
   // Clear all graphics.
+  m_userAreas.clear();
   for (RenderLayer & layer : m_layers)
   {
     layer.m_renderGroups.clear();
@@ -2499,6 +2700,9 @@ void FrontendRenderer::OnContextDestroy()
   m_guiRenderer.reset();
   m_selectionShape.reset();
   m_buildingsFramebuffer.reset();
+#ifdef OMIM_AUTO
+  m_scaledBackground.reset();
+#endif
   m_screenQuadRenderer.reset();
 
   m_myPositionController->ResetRenderShape();
@@ -2519,6 +2723,10 @@ void FrontendRenderer::OnContextDestroy()
 
   // Here we have to erase weak pointer to the context, since it
   // can be destroyed after this method.
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Clear();
+#endif
   m_context->DoneCurrent();
   m_context = nullptr;
 
@@ -2540,6 +2748,10 @@ void FrontendRenderer::OnContextCreate()
   m_context->MakeCurrent();
 
   m_context->Init(m_apiVersion);
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Enable();
+#endif
 
   // Render empty frame here to avoid black initialization screen.
   RenderEmptyFrame();
@@ -2583,8 +2795,22 @@ void FrontendRenderer::OnContextCreate()
       make_unique_dp<dp::Framebuffer>(dp::TextureFormat::RGBA8, true /* depthEnabled */, false /* stencilEnabled */);
   m_buildingsFramebuffer->SetFramebufferFallback([this]()
   { return m_postprocessRenderer->OnFramebufferFallback(m_context); });
+#ifdef OMIM_AUTO
+  m_buildingsFramebuffer->SetSamples(m_msaaSamples);
+  if ((m_renderScale < 1.0 || m_msaaSamples > 0) && m_apiVersion == dp::ApiVersion::OpenGLES3)
+  {
+    m_scaledBackground = make_unique_dp<dp::Framebuffer>(dp::TextureFormat::RGBA8, true, true);
+    m_scaledBackground->SetSamples(m_msaaSamples);
+    m_scaledBackground->SetFramebufferFallback([this]()
+    { return m_postprocessRenderer->RestoreFrameTarget(m_context); });
+  }
+#endif
 
   m_transitBackground = make_unique_dp<ScreenQuadRenderer>(m_context);
+  // The draw context can be recreated while the upload context and logical areas survive.
+  m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                            make_unique_dp<InvalidateUserMarksMessage>(true /* recacheAreas */),
+                            MessagePriority::Normal);
 }
 
 void FrontendRenderer::OnRenderingEnabled()
@@ -2654,6 +2880,7 @@ void FrontendRenderer::Routine::Do()
 
 void FrontendRenderer::ReleaseResources()
 {
+  m_userAreas.clear();
   for (RenderLayer & layer : m_layers)
     layer.m_renderGroups.clear();
 
@@ -2662,6 +2889,9 @@ void FrontendRenderer::ReleaseResources()
   m_selectionShape.reset();
   m_routeRenderer.reset();
   m_buildingsFramebuffer.reset();
+#ifdef OMIM_AUTO
+  m_scaledBackground.reset();
+#endif
   m_screenQuadRenderer.reset();
   m_tileBackgroundRenderer.reset();
   m_trafficRenderer.reset();
@@ -2672,6 +2902,10 @@ void FrontendRenderer::ReleaseResources()
 
   // Here m_context can be nullptr, so call the method
   // for the context from the factory.
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Clear();
+#endif
   m_contextFactory->GetDrawContext()->DoneCurrent();
   m_context = nullptr;
 }
@@ -2866,18 +3100,33 @@ void FrontendRenderer::SearchInNonDisplaceableUserMarksLayer(ScreenBase const & 
     UpdateSearchMarkTextOverlay(modelView);
   else
     layer.Sort(nullptr);
+#ifdef OMIM_AUTO
+  if (layerId == DepthLayer::UserMarkLayer)
+    UpdateRoadEventBadges(modelView);
+#endif
 
   for (drape_ptr<RenderGroup> & group : layer.m_renderGroups)
   {
     if (layerId != DepthLayer::SearchMarkLayer)
     {
+#ifdef OMIM_AUTO
+      group->ForEachOverlay([](ref_ptr<dp::OverlayHandle> const & handle)
+      {
+        if (!handle->IsBadge())
+          handle->SetIsVisible(true);
+      });
+#else
       group->SetOverlayVisibility(true);
+#endif
       group->Update(modelView);
     }
     group->ForEachOverlay(
-        [&modelView, &result, selectionRect = m2::RectF(selectionRect)](ref_ptr<dp::OverlayHandle> const & h)
+        [&modelView, &result, layerId, selectionRect = m2::RectF(selectionRect)](ref_ptr<dp::OverlayHandle> const & h)
     {
       if (!h->IsVisible())
+        return;
+      // Keep the existing selection path for ordinary bookmarks and other user marks.
+      if (layerId == DepthLayer::UserMarkLayer && (h->GetOverlayID().m_markId >> 60) != kml::kExternalMarkGroupId)
         return;
 
       dp::OverlayHandle::Rects shapes;

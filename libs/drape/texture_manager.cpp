@@ -495,6 +495,20 @@ void TextureManager::Init(ref_ptr<dp::GraphicsContext> context, Params const & p
         make_unique_dp<SymbolsTexture>(context, m_resPostfix, texName, make_ref(m_textureAllocator)));
   }
 
+  // Flavor-specific assets may supply extra atlases without changing the shared map symbols.
+  std::string additionalTextures;
+  try
+  {
+    ReaderPtr<Reader>(GetPlatform().GetReader("additional-symbols.txt", "r")).ReadAsString(additionalTextures);
+  }
+  catch (FileAbsentException const &)
+  {}
+  strings::Tokenize(additionalTextures, "\r\n", [&](std::string_view name)
+  {
+    m_symbolTextures.push_back(
+        make_unique_dp<SymbolsTexture>(context, m_resPostfix, std::string(name), make_ref(m_textureAllocator)));
+  });
+
   // Initialize static textures.
   m_trafficArrowTexture = make_unique_dp<StaticTexture>(context, "traffic-arrow.png", m_resPostfix,
                                                         dp::TextureFormat::RGBA8, make_ref(m_textureAllocator));
@@ -638,8 +652,10 @@ std::vector<drape_ptr<HWTexture>> TextureManager::GetTexturesToCleanup()
 bool TextureManager::GetSymbolRegionSafe(std::string const & symbolName, SymbolRegion & region)
 {
   CHECK(m_isInitialized, ());
-  for (size_t i = 0; i < m_symbolTextures.size(); ++i)
+  // Flavor atlases may override a stock name while reusing the same packed camera pixels.
+  for (size_t remaining = m_symbolTextures.size(); remaining > 0;)
   {
+    size_t const i = --remaining;
     ref_ptr<SymbolsTexture> symbolsTexture = make_ref(m_symbolTextures[i]);
     ASSERT(symbolsTexture != nullptr, ());
     if (symbolsTexture->IsSymbolContained(symbolName))

@@ -5,6 +5,7 @@
 #include "drape_frontend/drape_api.hpp"
 #include "drape_frontend/drape_api_builder.hpp"
 #include "drape_frontend/drape_engine_params.hpp"
+#include "drape_frontend/driving_poi_policy.hpp"
 #include "drape_frontend/gps_track_point.hpp"
 #include "drape_frontend/gui/layer_render.hpp"
 #include "drape_frontend/gui/skin.hpp"
@@ -272,14 +273,20 @@ private:
   drape_ptr<IDCollections> m_ids;
 };
 
+using FlushUserAreasMessage = FlushRenderDataMessage<TUserMarksRenderData, Message::Type::FlushUserAreas>;
+
 using FlushUserMarksMessage = FlushRenderDataMessage<TUserMarksRenderData, Message::Type::FlushUserMarks>;
 
 class InvalidateUserMarksMessage : public Message
 {
 public:
-  InvalidateUserMarksMessage() = default;
+  explicit InvalidateUserMarksMessage(bool recacheAreas = false) : m_recacheAreas(recacheAreas) {}
 
   Type GetType() const override { return Type::InvalidateUserMarks; }
+  bool NeedRecacheAreas() const { return m_recacheAreas; }
+
+private:
+  bool m_recacheAreas;
 };
 
 class GuiLayerRecachedMessage : public Message
@@ -942,12 +949,26 @@ private:
 class SetPoiVisibilityMessage : public Message
 {
 public:
+#ifdef OMIM_AUTO
+  explicit SetPoiVisibilityMessage(bool visible, bool driving = false, PoiDensity density = PoiDensity::High)
+    : m_visible(visible)
+    , m_driving(driving)
+    , m_density(density)
+  {}
+  bool IsDriving() const { return m_driving; }
+  PoiDensity GetDensity() const { return m_density; }
+#else
   explicit SetPoiVisibilityMessage(bool visible) : m_visible(visible) {}
+#endif
   Type GetType() const override { return Type::SetPoiVisibility; }
   bool IsVisible() const { return m_visible; }
 
 private:
   bool const m_visible;
+#ifdef OMIM_AUTO
+  bool const m_driving;
+  PoiDensity const m_density;
+#endif
 };
 
 class SetMapLangIndexMessage : public Message

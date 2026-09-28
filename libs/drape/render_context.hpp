@@ -72,8 +72,8 @@ private:
     static auto primary = std::make_shared<RenderContext>();
     return primary;
   }
-  inline static thread_local std::shared_ptr<RenderContext> s_current;
-  inline static std::atomic<size_t> s_generation{0};
+  static thread_local std::shared_ptr<RenderContext> s_current;
+  static std::atomic<size_t> s_generation;
   size_t m_generation = ++s_generation;
   std::recursive_mutex m_mutex;
   std::map<std::type_index, std::shared_ptr<void>> m_values;

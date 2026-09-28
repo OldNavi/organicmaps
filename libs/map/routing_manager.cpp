@@ -3,6 +3,7 @@
 #include "map/routing_mark.hpp"
 
 #include "routing/absent_regions_finder.hpp"
+#include "routing/camera_coverage.hpp"
 #include "routing/checkpoint_predictor.hpp"
 #include "routing/index_router.hpp"
 #include "routing/road_info.hpp"
@@ -378,6 +379,9 @@ RoutingManager::RoutingManager(Callbacks && callbacks, Delegate & delegate)
       if (m_routeSpeedCamShowCallback)
         m_routeSpeedCamShowCallback(point, cameraSpeedKmPH);
 
+      // Automotive cameras (including MWM) share the external layer's symbols, sectors and deduplication.
+      if (m_roadEvents->Get().m_useMapCameras)
+        return;
       auto editSession = m_bmManager->GetEditSession();
       auto mark = editSession.CreateUserMark<SpeedCameraMark>(point);
 
@@ -493,7 +497,7 @@ void RoutingManager::OnVehicleSpeed(double speedMps, double ageSeconds, bool val
 std::unique_ptr<routing::RoadInfoReader> RoutingManager::CreateRoadInfoReader()
 {
   return std::make_unique<routing::RoadInfoReader>(m_callbacks.m_dataSourceGetter(),
-                                                   m_callbacks.m_countryParentNameGetterFn);
+                                                   m_callbacks.m_countryParentNameGetterFn, m_roadEvents);
 }
 
 RouterType RoutingManager::GetBestRouter(m2::PointD const & startPoint, m2::PointD const & finalPoint) const
@@ -577,6 +581,9 @@ void RoutingManager::SetRouterImpl(RouterType type)
 
 void RoutingManager::RemoveRoute(bool deactivateFollowing)
 {
+#ifdef OMIM_AUTO
+  m_roadEvents->SetCoverageRoute({});
+#endif
   ++m_routeAltMarksGeneration;
   GetPlatform().RunTask(Platform::Thread::Gui, [this, deactivateFollowing]()
   {
@@ -854,8 +861,43 @@ bool RoutingManager::InsertRoute(RoutesResult const & result)
   if (!roadWarnings.empty())
     CreateRoadWarningMarks(std::move(roadWarnings));
 
+#ifdef OMIM_AUTO
+  UpdateCameraCoverageRoute();
+#endif
   return hasDrivingOptionsWarning;
 }
+
+#ifdef OMIM_AUTO
+void RoutingManager::UpdateCameraCoverageRoute()
+{
+  if (!m_routingSession.IsFollowing())
+  {
+    m_roadEvents->SetCoverageRoute({});
+    return;
+  }
+  m_routingSession.RouteCall([this](RoutesResult const & result)
+  {
+    auto const & route = result.GetActive();
+    std::vector<routing::Edge> edges;
+    auto const & segments = route.GetRouteSegments();
+    edges.reserve(segments.size());
+    std::optional<geometry::PointWithAltitude> start;
+    size_t i = 0;
+    route.ForEachPoint([&](geometry::PointWithAltitude const & end)
+    {
+      if (start)
+      {
+        auto const & segment = segments[i++].GetSegment();
+        if (segment.IsRealSegment())
+          edges.push_back(routing::Edge::MakeReal(FeatureID(GetMwmId(segment.GetMwmId()), segment.GetFeatureId()),
+                                                  segment.IsForward(), segment.GetSegmentIdx(), *start, end));
+      }
+      start = end;
+    });
+    m_roadEvents->SetCoverageRoute(std::make_shared<routing::CameraCoveragePath>(std::move(edges)));
+  });
+}
+#endif
 
 void RoutingManager::InsertSingleRoute(RouteBase const & route, bool isActive, double depthOffset,
                                        std::shared_ptr<TransitRouteDisplay> const & transitRouteDisplay,
@@ -946,6 +988,9 @@ void RoutingManager::FollowRoute()
   if (!m_routingSession.EnableFollowMode())
     return;
 
+#ifdef OMIM_AUTO
+  UpdateCameraCoverageRoute();
+#endif
   m_transitReadManager->BlockTransitSchemeMode(true /* isBlocked */);
 
   // Switching on the extrapolator only for following mode in car and bicycle navigation.
@@ -1481,6 +1526,9 @@ bool RoutingManager::DisableFollowMode()
   bool const disabled = m_routingSession.DisableFollowMode();
   if (disabled)
   {
+#ifdef OMIM_AUTO
+    m_roadEvents->SetCoverageRoute({});
+#endif
     m_transitReadManager->BlockTransitSchemeMode(false /* isBlocked */);
     m_drapeEngine.SafeCall(&df::DrapeEngine::DeactivateRouteFollowing);
   }

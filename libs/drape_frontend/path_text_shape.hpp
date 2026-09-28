@@ -22,9 +22,10 @@ class PathTextShape : public MapShape
 public:
   PathTextShape(m2::SharedSpline const & spline, PathTextViewParams const & params, TileKey const & tileKey,
                 uint32_t baseTextIndex);
-  bool CalculateLayout(ref_ptr<dp::TextureManager> textures);
+  bool CalculateLayout(ref_ptr<dp::TextureManager> textures, double shieldPixelLength = 0.0);
 
   std::vector<double> const & GetOffsets() const { return m_context->GetOffsets(); }
+  std::vector<double> const & GetShieldOffsets() const { return m_context->GetShieldOffsets(); }
 
   void Draw(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::Batcher> batcher,
             ref_ptr<dp::TextureManager> textures) const override;

@@ -8,6 +8,7 @@
 #include <QtGui/QPainter>
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -33,6 +34,72 @@ m2::SplineEx BuildRounded(std::vector<m2::PointD> const & pts)
 }  // namespace
 
 using df::test_support::VisualParamsFixture;
+
+UNIT_CLASS_TEST(VisualParamsFixture, RoadLabels_SeparateSingleCaptionAndShield)
+{
+  std::vector<double> captions, shields;
+  df::PathTextLayout::CalculatePositionsWithShields(400.0, 1.0, 160.0, 64.0, 20.0, captions, shields);
+  TEST_EQUAL(captions.size(), 1, ());
+  TEST_EQUAL(shields.size(), 1, ());
+  TEST_LESS(captions.front() + 80.0 + 20.0, shields.front() - 32.0, ());
+  TEST_GREATER(captions.front() - 80.0, 0.0, ());
+  TEST_LESS(shields.front() + 32.0, 400.0, ());
+}
+
+UNIT_CLASS_TEST(VisualParamsFixture, RoadLabels_AlternateNamesAndShields)
+{
+  std::vector<double> captions, shields;
+  df::PathTextLayout::CalculatePositionsWithShields(3000.0, 1.0, 160.0, 100.0, 24.0, captions, shields);
+  TEST_GREATER(captions.size(), 2, ());
+  TEST_EQUAL(shields.size() + 1, captions.size(), ());
+  for (size_t i = 0; i < shields.size(); ++i)
+  {
+    TEST_GREATER(shields[i] - 50.0 - captions[i] - 80.0, 24.0, ());
+    TEST_GREATER(captions[i + 1] - 80.0 - shields[i] - 50.0, 24.0, ());
+  }
+}
+
+UNIT_CLASS_TEST(VisualParamsFixture, RoadLabels_ShortRoadDoesNotStackLabels)
+{
+  std::vector<double> captions, shields;
+  df::PathTextLayout::CalculatePositionsWithShields(200.0, 1.0, 160.0, 64.0, 20.0, captions, shields);
+  TEST_EQUAL(captions, std::vector<double>({100.0}), ());
+  TEST(shields.empty(), ());
+  df::PathTextLayout::CalculatePositionsWithShields(100.0, 1.0, 160.0, 64.0, 20.0, captions, shields);
+  TEST(captions.empty(), ());
+  TEST_EQUAL(shields, std::vector<double>({50.0}), ("Keep the road reference when the full name does not fit"));
+  df::PathTextLayout::CalculatePositionsWithShields(30.0, 1.0, 160.0, 64.0, 20.0, captions, shields);
+  TEST(captions.empty(), ());
+  TEST(shields.empty(), ());
+}
+
+UNIT_CLASS_TEST(VisualParamsFixture, RoadLabels_ClearanceAcrossZoomAndShieldSizes)
+{
+  for (double scale : {0.5, 1.0, 2.0, 4.0})
+    for (double length : {80.0, 160.0, 400.0, 900.0, 3000.0})
+      for (double textSize : {60.0, 160.0, 400.0})
+        for (double shieldSize : {32.0, 80.0, 200.0})
+        {
+          std::vector<double> captions, shields;
+          df::PathTextLayout::CalculatePositionsWithShields(length, scale, textSize, shieldSize, 20.0, captions,
+                                                            shields);
+          TEST(std::is_sorted(captions.begin(), captions.end()), ());
+          TEST(std::is_sorted(shields.begin(), shields.end()), ());
+          for (double caption : captions)
+          {
+            TEST_GREATER_OR_EQUAL(caption * scale - textSize * 0.5, 0.0, ());
+            TEST_LESS_OR_EQUAL(caption * scale + textSize * 0.5, length * scale, ());
+            for (double shield : shields)
+              TEST_GREATER_OR_EQUAL(std::abs(caption - shield) * scale - 0.5 * (textSize + shieldSize), 20.0,
+                                    (length, scale, textSize, shieldSize));
+          }
+          for (double shield : shields)
+          {
+            TEST_GREATER_OR_EQUAL(shield * scale - shieldSize * 0.5, 0.0, ());
+            TEST_LESS_OR_EQUAL(shield * scale + shieldSize * 0.5, length * scale, ());
+          }
+        }
+}
 
 UNIT_CLASS_TEST(VisualParamsFixture, Rounding_Spline)
 {

@@ -6,6 +6,7 @@
 #include "drape/font_constants.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <iterator>  // std::reverse_iterator
 #include <numeric>
 
@@ -527,6 +528,51 @@ void PathTextLayout::CalculatePositions(double splineLength, double splineScaleT
     double const glbTextLen = splineLength / textCount;
     for (double offset = 0.5 * glbTextLen; offset < splineLength; offset += glbTextLen)
       offsets.push_back(offset);
+  }
+}
+
+void PathTextLayout::CalculatePositionsWithShields(double splineLength, double splineScaleToPixel,
+                                                   double textPixelLength, double shieldPixelLength, double gapInPixels,
+                                                   std::vector<double> & textOffsets,
+                                                   std::vector<double> & shieldOffsets)
+{
+  ASSERT_GREATER(splineScaleToPixel, 0.0, ());
+  ASSERT_GREATER(shieldPixelLength, 0.0, ());
+  ASSERT_GREATER_OR_EQUAL(gapInPixels, 0.0, ());
+  textOffsets.clear();
+  shieldOffsets.clear();
+
+  double const pathLength = splineLength * splineScaleToPixel;
+  double const textLength = CalculateTextLength(textPixelLength);
+  double const period = std::max(GetTextMinPeriod(textLength), textLength + shieldPixelLength + 2.0 * gapInPixels);
+  auto const textCount = static_cast<size_t>(std::floor(0.75 * pathLength / period));
+  if (textCount >= 2)
+  {
+    double const step = splineLength / textCount;
+    for (size_t i = 0; i < textCount; ++i)
+    {
+      textOffsets.push_back((i + 0.5) * step);
+      if (i + 1 < textCount)
+        shieldOffsets.push_back((i + 1.0) * step);
+    }
+    return;
+  }
+
+  // A short road still gets distinct anchors instead of placing a shield on its only caption.
+  double const pairLength = textLength + gapInPixels + shieldPixelLength;
+  if (pairLength + 2.0 * gapInPixels <= pathLength)
+  {
+    double const start = 0.5 * (pathLength - pairLength);
+    textOffsets.push_back((start + 0.5 * textLength) / splineScaleToPixel);
+    shieldOffsets.push_back((start + textLength + gapInPixels + 0.5 * shieldPixelLength) / splineScaleToPixel);
+  }
+  else if (textLength <= pathLength)
+  {
+    textOffsets.push_back(0.5 * splineLength);
+  }
+  else if (shieldPixelLength <= pathLength)
+  {
+    shieldOffsets.push_back(0.5 * splineLength);
   }
 }
 

@@ -78,6 +78,72 @@ bool IsSpacelessLanguage(std::string const & locale)
 {
   return locale == "ja" || locale.starts_with("zh") || locale.starts_with("yue");
 }
+
+#if defined(OMIM_AUTO)
+bool IsRoadReference(std::string const & value, bool bareReference)
+{
+  bool hasDigit = false;
+  bool hasLetter = false;
+  size_t letters = 0;
+  for (auto const c : strings::MakeUniString(value))
+  {
+    bool const upper = (c >= 'A' && c <= 'Z') || (c >= U'А' && c <= U'Я') || c == U'Ё';
+    bool const lower = (c >= 'a' && c <= 'z') || (c >= U'а' && c <= U'я') || c == U'ё';
+    if (upper || lower)
+    {
+      // Bare references use uppercase codes; preserve names such as "Rue 8".
+      if (bareReference && lower)
+        return false;
+      hasLetter = true;
+      if (++letters > 3)
+        return false;
+    }
+    else
+    {
+      if (c >= '0' && c <= '9')
+        hasDigit = true;
+      else if (c != ' ' && c != '-' && c != U'–' && c != U'—' && c != U'‑')
+        return false;
+    }
+  }
+  return hasDigit && (!bareReference || hasLetter);
+}
+
+bool IsAdministrativeRoadName(std::string const & name)
+{
+  // Map names sometimes repeat the road class and inventory number instead of a proper name.
+  static std::regex const roadClass(
+      "^(?:(?:(?:региональная|федеральная|местная|муниципальная|межмуниципальная) )?"
+      "(?:автомобильная )?(?:дорога|автодорога)|трасса)(?: (?:регионального|федерального|местного|муниципального|"
+      "межмуниципального) значения)?(?: (?:номер|№))? *(.*)$");
+  std::smatch match;
+  return std::regex_match(name, match, roadClass) && IsRoadReference(match[1].str(), false);
+}
+
+void RemoveRoadReferences(std::string & name)
+{
+  std::vector<std::string> parts;
+  bool removed = false;
+  strings::TokenizeAndTrim(name, ";", [&](std::string_view part)
+  {
+    auto const lower = strings::MakeLowerCase(std::string(part));
+    if (!IsRoadReference(std::string(part), true) && !IsAdministrativeRoadName(lower))
+      parts.emplace_back(part);
+    else
+      removed = true;
+  });
+  if (removed)
+    name = strings::JoinStrings(parts, "; ");
+}
+
+void PrepareRoadNameForSpeech(RouteSegment::RoadNameInfo & road)
+{
+  road.m_ref.clear();
+  road.m_destination_ref.clear();
+  RemoveRoadReferences(road.m_name);
+  RemoveRoadReferences(road.m_destination);
+}
+#endif
 }  //  namespace
 
 void GetTtsText::SetLocale(std::string const & locale)
@@ -177,6 +243,10 @@ std::string GetTtsText::GetTurnNotification(Notification const & notification) c
   // In the future we could use the full RoadNameInfo struct to do some nice formatting.
   std::string streetOut;
   RouteSegment::RoadNameInfo nsi = notification.m_nextStreetInfo;  // extract non-const
+#if defined(OMIM_AUTO)
+  if (!notification.IsPedestrianNotification())
+    PrepareRoadNameForSpeech(nsi);
+#endif
   FormatFullRoadName(nsi, streetOut);
 
   if (!streetOut.empty())

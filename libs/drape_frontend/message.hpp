@@ -26,7 +26,9 @@ public:
     ChangeUserMarkGroupVisibility,
     UpdateUserMarks,
     InvalidateUserMarks,
+    RefreshExternalMarks,
     FlushUserMarks,
+    FlushUserAreas,
     GuiLayerRecached,
     GuiRecache,
     GuiLayerLayout,
@@ -117,7 +119,10 @@ public:
     AddTileBackgroundImage,
     SetTileBackgroundData,
     SetTileBackgroundMode,
-    AssignTileBackgroundImage
+    AssignTileBackgroundImage,
+#ifdef OMIM_AUTO
+    ReadTileBatch,
+#endif
   };
 
   virtual ~Message() = default;

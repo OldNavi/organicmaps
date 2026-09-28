@@ -2,6 +2,7 @@ package app.organicmaps.sdk.cluster;
 
 import androidx.annotation.Keep;
 import androidx.annotation.WorkerThread;
+import app.organicmaps.sdk.road.RoadEventAhead;
 
 @Keep
 public final class RoadInfo
@@ -11,9 +12,29 @@ public final class RoadInfo
   public final double speedLimitMps;
   public final String road;
   public final double[] camera;
+  public final double externalSpeedLimitMps;
+  public final String eventId;
+  public final double[] event;
+  public final RoadEventAhead[] warnings;
 
   public RoadInfo(boolean matched, double speedLimitMps, String road, double[] camera)
   {
+    this(matched, speedLimitMps, road, camera, 0, "", new double[0]);
+  }
+
+  public RoadInfo(boolean matched, double speedLimitMps, String road, double[] camera, double externalSpeedLimitMps,
+                  String eventId, double[] event)
+  {
+    this(matched, speedLimitMps, road, camera, externalSpeedLimitMps, eventId, event, new RoadEventAhead[0]);
+  }
+
+  public RoadInfo(boolean matched, double speedLimitMps, String road, double[] camera, double externalSpeedLimitMps,
+                  String eventId, double[] event, RoadEventAhead[] warnings)
+  {
+    this.warnings = warnings.clone();
+    this.externalSpeedLimitMps = externalSpeedLimitMps;
+    this.eventId = eventId;
+    this.event = event.clone();
     this.matched = matched;
     this.speedLimitMps = speedLimitMps;
     this.road = road;

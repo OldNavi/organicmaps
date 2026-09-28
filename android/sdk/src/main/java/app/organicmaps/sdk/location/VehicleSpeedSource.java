@@ -194,8 +194,7 @@ public final class VehicleSpeedSource
       return location;
     Location result = new Location(location);
     result.setSpeed((float) Math.abs(speed)); // Location speed is a magnitude; VHAL speed may be signed.
-    if (Build.VERSION.SDK_INT >= 26)
-      result.removeSpeedAccuracy(); // GNSS speed accuracy does not describe the VHAL value.
+    LocationCompat.removeSpeedAccuracy(result); // GNSS speed accuracy does not describe the VHAL value.
     return result;
   }
 }

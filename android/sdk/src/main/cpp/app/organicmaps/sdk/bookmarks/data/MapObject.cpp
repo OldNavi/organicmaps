@@ -69,6 +69,13 @@ jobject CreateMapObject(JNIEnv * env, place_page::Info const & info, int mapObje
 
   if (parseMeta)
     InjectMetadata(env, g_mapObjectClazz, mapObject, info);
+  if (auto const & event = info.GetBuildInfo().m_roadEvent)
+  {
+    jni::TScopedLocalRef identity(env, jni::ToJavaString(env, event->m_sourceId));
+    env->CallVoidMethod(mapObject, jni::GetMethodID(env, mapObject, "setRoadEvent", "(Ljava/lang/String;IIJ)V"),
+                        identity.get(), static_cast<jint>(event->m_kind), static_cast<jint>(event->m_speedKmh),
+                        static_cast<jlong>(event->m_importedAt));
+  }
   return mapObject;
 }
 

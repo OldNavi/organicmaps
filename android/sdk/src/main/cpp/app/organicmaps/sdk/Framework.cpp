@@ -187,7 +187,8 @@ bool Framework::DestroySurfaceOnDetach()
 }
 
 bool Framework::CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi, bool firstLaunch,
-                                  bool launchByDeepLink, uint32_t appVersionCode, bool isCustomROM, bool isAuto)
+                                  bool launchByDeepLink, uint32_t appVersionCode, bool isCustomROM, bool isAuto,
+                                  double renderScale, int maxFps, int msaaSamples)
 {
   // Vulkan is supported only since Android 8.0, because some Android devices with Android 7.x
   // have fatal driver issue, which can lead to process termination and whole OS destabilization.
@@ -249,7 +250,9 @@ bool Framework::CreateDrapeEngine(JNIEnv * env, jobject jSurface, int densityDpi
   p.m_isChoosePositionMode = m_isChoosePositionMode != ChoosePositionMode::None;
   p.m_hints.m_isFirstLaunch = firstLaunch;
   p.m_hints.m_isLaunchByDeepLink = launchByDeepLink;
-  p.m_hints.m_maxFps = isAuto ? 30 : 0;
+  p.m_hints.m_maxFps = isAuto ? maxFps : 0;
+  p.m_hints.m_renderScale = isAuto ? renderScale : 1.0;
+  p.m_hints.m_msaaSamples = isAuto ? msaaSamples : 0;
   ASSERT(!m_guiPositions.empty(), ("GUI elements must be set-up before engine is created"));
   p.m_widgetsInitInfo = m_guiPositions;
 
@@ -272,7 +275,8 @@ Framework::~Framework()
 }
 
 int64_t Framework::CreateNavigationView(JNIEnv * env, jobject surface, int dpi, double scale, int zoom, bool showPoi,
-                                        bool buildings3d, double tilt, double anchorX, double anchorY)
+                                        bool buildings3d, double tilt, double anchorX, double anchorY,
+                                        double renderScale, int maxFps, int msaaSamples)
 {
   auto factory = make_unique_dp<AndroidOGLContextFactory>(env, surface);
   if (!factory->IsValid())
@@ -283,7 +287,7 @@ int64_t Framework::CreateNavigationView(JNIEnv * env, jobject surface, int dpi, 
   view.m_factory = make_unique_dp<dp::ThreadSafeFactory>(factory.release());
   view.m_engine = m_work.CreateNavigationRenderer(make_ref(view.m_factory), width, height,
                                                   std::clamp(df::DPI2VS(dpi) * scale, 1.0, df::kMaxVisualScale),
-                                                  showPoi, buildings3d);
+                                                  showPoi, buildings3d, renderScale, maxFps, msaaSamples);
   int const initialZoom = zoom == 0 ? 16 : zoom;
   view.m_engine->SetModelViewCenter(mercator::FromLatLon(0.0, 0.0), initialZoom, false, false);
   view.m_engine->SetClusterCamera(zoom, tilt, {anchorX, anchorY});
@@ -339,6 +343,20 @@ void Framework::SetNavigationViewPoiVisible(int64_t id, bool visible)
   auto const it = m_navigationViews.find(id);
   if (it != m_navigationViews.end())
     it->second.m_engine->SetPoiVisible(visible);
+}
+
+void Framework::SetPoiDensity(bool cluster, int density)
+{
+#ifdef OMIM_AUTO
+  CHECK(density >= 0 && density <= static_cast<int>(df::PoiDensity::High), (density));
+  settings::Set(df::PoiDensitySetting(cluster), density);
+  auto const value = static_cast<df::PoiDensity>(density);
+  if (cluster)
+    for (auto const & [id, view] : m_navigationViews)
+      view.m_engine->SetPoiDensity(value);
+  else if (auto engine = m_work.GetDrapeEngine())
+    engine->SetPoiDensity(value);
+#endif
 }
 
 std::array<uint32_t, 4> Framework::GetNavigationViewTileStats(int64_t id) const
@@ -2083,3 +2101,18 @@ jint RegisterNativeMethods(JNIEnv * env)
   return env->RegisterNatives(clazz, frameworkMethods, std::size(frameworkMethods));
 }
 }  // namespace android::framework
+
+extern "C" JNIEXPORT jint Java_app_organicmaps_sdk_rendering_PoiDensity_nativeGet(JNIEnv *, jclass, jboolean cluster)
+{
+#ifdef OMIM_AUTO
+  return static_cast<jint>(df::LoadPoiDensity(cluster));
+#else
+  return 2;
+#endif
+}
+
+extern "C" JNIEXPORT void Java_app_organicmaps_sdk_rendering_PoiDensity_nativeSet(JNIEnv *, jclass, jboolean cluster,
+                                                                                  jint density)
+{
+  g_framework->SetPoiDensity(cluster, density);
+}

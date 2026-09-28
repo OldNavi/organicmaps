@@ -29,6 +29,7 @@ set(SRC
   position_accumulator_tests.cpp
   restriction_test.cpp
   road_access_test.cpp
+  road_events_tests.cpp
   road_info_tests.cpp
   road_graph_builder.cpp
   road_graph_builder.hpp

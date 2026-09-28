@@ -5,6 +5,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import androidx.annotation.NonNull;
+import app.organicmaps.sdk.rendering.RenderConfig;
 
 /** A passive map with its own native renderer, camera and graphics surface. */
 public final class ClusterMap extends SurfaceView implements SurfaceHolder.Callback
@@ -106,8 +107,10 @@ public final class ClusterMap extends SurfaceView implements SurfaceHolder.Callb
   @Override
   public void surfaceCreated(@NonNull SurfaceHolder holder)
   {
+    var rendering = RenderConfig.get(getContext()).cluster();
     mHandle = nativeCreate(holder.getSurface(), getResources().getDisplayMetrics().densityDpi, mScale, mZoom,
-                           mPoiVisible, mBuildings3d, mCamera.tilt, mCamera.anchorX, mCamera.anchorY);
+                           mPoiVisible, mBuildings3d, mCamera.tilt, mCamera.anchorX, mCamera.anchorY,
+                           rendering.renderScale(), rendering.maxFps(), rendering.msaaSamples());
     if (mHandle == 0)
       post(mOnUnsupported);
   }
@@ -134,7 +137,8 @@ public final class ClusterMap extends SurfaceView implements SurfaceHolder.Callb
   }
 
   private static native long nativeCreate(Surface surface, int dpi, double scale, int zoom, boolean showPoi,
-                                          boolean buildings3d, double tilt, double anchorX, double anchorY);
+                                          boolean buildings3d, double tilt, double anchorX, double anchorY,
+                                          double renderScale, int maxFps, int msaaSamples);
   private static native void nativeDestroy(long handle);
   private static native void nativeResize(long handle, int width, int height);
   private static native void nativeSetCamera(long handle, int zoom, double tilt, double anchorX, double anchorY);

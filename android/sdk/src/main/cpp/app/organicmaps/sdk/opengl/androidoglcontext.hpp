@@ -3,6 +3,10 @@
 #include "drape/gl_includes.hpp"
 #include "drape/oglcontext.hpp"
 
+#ifdef OMIM_AUTO
+#include "drape/frame_cadence.hpp"
+#endif
+
 #include <atomic>
 
 namespace android
@@ -20,6 +24,9 @@ public:
   void SetRenderingEnabled(bool enabled) override;
   void SetPresentAvailable(bool available) override;
   bool Validate() override;
+#ifdef OMIM_AUTO
+  bool WaitForFrame(double minFrameTime, std::function<bool()> const & cancelled) override;
+#endif
 
   void SetSurface(EGLSurface surface);
   void ResetSurface();
@@ -37,5 +44,8 @@ private:
   // @}
 
   std::atomic<bool> m_presentAvailable;
+#ifdef OMIM_AUTO
+  dp::FrameCadence m_frameCadence;
+#endif
 };
 }  // namespace android

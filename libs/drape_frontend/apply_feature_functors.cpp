@@ -403,6 +403,10 @@ void ApplyPointFeature::ProcessPointRules(drule::SymbolRule const * symbolRule, 
 {
   auto const [createdByEditor, obsoleteInEditor] = m_params.GetEditStatus(m_f.GetID());
   m2::PointF symbolSize(0, 0);
+#ifdef OMIM_AUTO
+  auto const padding = static_cast<uint32_t>(m_params.m_vparams.GetVisualScale() *
+                                             PoiDensityPadding(m_params.m_poiDensity, feature::TypesHolder(m_f)));
+#endif
 
   if (symbolRule)
   {
@@ -417,6 +421,9 @@ void ApplyPointFeature::ProcessPointRules(drule::SymbolRule const * symbolRule, 
     // Where 0.1 comes from: https://github.com/organicmaps/organicmaps/pull/649
     params.m_extendingSize =
         static_cast<uint32_t>(m_params.m_vparams.GetVisualScale() * symbolRule->min_distance * 0.1);
+#ifdef OMIM_AUTO
+    params.m_extendingSize += padding;
+#endif
 
     params.m_posZ = m_posZ;
     params.m_hasArea = HasArea();
@@ -451,6 +458,9 @@ void ApplyPointFeature::ProcessPointRules(drule::SymbolRule const * symbolRule, 
 
     ExtractCaptionParams(capRule, auxRule, params);
     params.m_depth = PriorityToDepth(captionRule->priority, drule::caption, 0);
+#ifdef OMIM_AUTO
+    params.m_extendingSize += padding;
+#endif
     params.m_hasArea = HasArea();
     params.m_createdByEditor = createdByEditor;
 

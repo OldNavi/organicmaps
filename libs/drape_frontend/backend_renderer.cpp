@@ -1,6 +1,8 @@
 #include "drape_frontend/gui/drape_gui.hpp"
 
 #include "drape_frontend/backend_renderer.hpp"
+
+#include "drape/gl_buffer_pool.hpp"
 #include "drape_frontend/batchers_pool.hpp"
 #include "drape_frontend/circles_pack_shape.hpp"
 #include "drape_frontend/color_constants.hpp"
@@ -135,6 +137,26 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
 {
   switch (message->GetType())
   {
+#ifdef OMIM_AUTO
+  case Message::Type::ReadTileBatch:
+  {
+    ref_ptr<TileReadBatchMessage> msg = message;
+    auto const & key = msg->GetKey();
+    if (!m_requestedTiles->CheckTileKey(key) || !m_readManager->CheckTileGeneration(key))
+      break;
+
+    // Start/end stay balanced even when a whole queued tile is skipped after a zoom change.
+    TileReadStartMessage start(key);
+    AcceptMessage(make_ref(&start));
+    MapShapeReadedMessage geometry(key, std::move(msg->m_geometry));
+    AcceptMessage(make_ref(&geometry));
+    OverlayMapShapeReadedMessage overlays(key, std::move(msg->m_overlays));
+    AcceptMessage(make_ref(&overlays));
+    TileReadEndMessage end(key);
+    AcceptMessage(make_ref(&end));
+    break;
+  }
+#endif
   case Message::Type::UpdateReadManager:
   {
     ScreenBase screen;
@@ -202,12 +224,20 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   case Message::Type::FinishTileRead:
   {
     ref_ptr<FinishTileReadMessage> msg = message;
+    auto tiles = msg->MoveTiles();
+#ifdef OMIM_AUTO
+    // Old completion messages must not recreate marks for a discarded zoom/generation.
+    std::erase_if(tiles, [this](auto const & key)
+    { return !m_requestedTiles->CheckTileKey(key) || !m_readManager->CheckTileGeneration(key); });
+    if (tiles.empty())
+      break;
+#endif
     CHECK(m_context != nullptr, ());
     if (msg->NeedForceUpdateUserMarks())
-      for (auto const & tileKey : msg->GetTiles())
+      for (auto const & tileKey : tiles)
         m_userMarkGenerator->GenerateUserMarksGeometry(m_context, tileKey, m_texMng);
     m_commutator->PostMessage(ThreadsCommutator::RenderThread,
-                              make_unique_dp<FinishTileReadMessage>(msg->MoveTiles(), msg->NeedForceUpdateUserMarks()),
+                              make_unique_dp<FinishTileReadMessage>(std::move(tiles), msg->NeedForceUpdateUserMarks()),
                               MessagePriority::Normal);
     break;
   }
@@ -286,6 +316,7 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   {
     ref_ptr<ChangeUserMarkGroupVisibilityMessage> msg = message;
     m_userMarkGenerator->SetGroupVisibility(msg->GetGroupId(), msg->IsVisible());
+    RecacheUserAreas();
     break;
   }
 
@@ -311,11 +342,14 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   {
     ref_ptr<ClearUserMarkGroupMessage> msg = message;
     m_userMarkGenerator->RemoveGroup(msg->GetGroupId());
+    RecacheUserAreas();
     break;
   }
 
   case Message::Type::InvalidateUserMarks:
   {
+    ref_ptr<InvalidateUserMarksMessage> msg = message;
+    RecacheUserAreas(msg->NeedRecacheAreas());
     m_commutator->PostMessage(ThreadsCommutator::RenderThread, make_unique_dp<InvalidateUserMarksMessage>(),
                               MessagePriority::Normal);
     break;
@@ -373,6 +407,7 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
 
     CHECK(m_context != nullptr, ());
     m_texMng->OnSwitchMapStyle(m_context);
+    RecacheUserAreas(true);
     RecacheMapShapes();
     RecacheGui(m_lastWidgetsInfo, false /* needResetOldGui */);
 #ifdef RENDER_DEBUG_INFO_LABELS
@@ -402,6 +437,7 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
 #endif  // BUILD_DESIGNER
 
     m_texMng->OnVisualScaleChanged(m_context, params);
+    RecacheUserAreas(true);
 
     RecacheMapShapes();
     RecacheGui(m_lastWidgetsInfo, false /* needResetOldGui */);
@@ -446,7 +482,12 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   case Message::Type::SetPoiVisibility:
   {
     ref_ptr<SetPoiVisibilityMessage> const msg = message;
-    if (m_readManager->SetPoiVisible(msg->IsVisible()))
+    bool changed = m_readManager->SetPoiVisible(msg->IsVisible());
+#ifdef OMIM_AUTO
+    changed |= m_readManager->SetDrivingPoiFilter(msg->IsDriving());
+    changed |= m_readManager->SetPoiDensity(msg->GetDensity());
+#endif
+    if (changed)
       m_commutator->PostMessage(ThreadsCommutator::RenderThread,
                                 make_unique_dp<SetPoiVisibilityMessage>(msg->IsVisible()), MessagePriority::Normal);
     break;
@@ -826,6 +867,10 @@ void BackendRenderer::ReleaseResources()
 
   // Here m_context can be nullptr, so call the method
   // for the context from the factory.
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Clear();
+#endif
   m_contextFactory->GetResourcesUploadContext()->DoneCurrent();
   m_context = nullptr;
 }
@@ -837,10 +882,15 @@ void BackendRenderer::OnContextCreate()
   m_contextFactory->WaitForInitialization(m_context.get());
   m_context->MakeCurrent();
   m_context->Init(m_apiVersion);
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Enable();
+#endif
   dp::SupportManager::Instance().Init(m_context);
 
   m_readManager->Start();
   InitContextDependentResources();
+  RecacheUserAreas(true);
 }
 
 void BackendRenderer::OnContextDestroy()
@@ -856,6 +906,10 @@ void BackendRenderer::OnContextDestroy()
   // Here we have to erase weak pointer to the context, since it
   // can be destroyed after this method.
   CHECK(m_context != nullptr, ());
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().Clear();
+#endif
   m_context->DoneCurrent();
   m_context = nullptr;
 }
@@ -880,6 +934,10 @@ void BackendRenderer::RenderFrame()
 
   ProcessSingleMessage();
   m_context->CollectMemory();
+#ifdef OMIM_AUTO
+  if (m_apiVersion == dp::ApiVersion::OpenGLES3)
+    dp::GLBufferPool::Instance().EndFrame();
+#endif
 }
 
 void BackendRenderer::InitContextDependentResources()
@@ -972,6 +1030,17 @@ void BackendRenderer::FlushTrafficRenderData(TrafficRenderData && renderData)
 {
   m_commutator->PostMessage(ThreadsCommutator::RenderThread,
                             make_unique_dp<FlushTrafficDataMessage>(std::move(renderData)), MessagePriority::Normal);
+}
+
+void BackendRenderer::RecacheUserAreas(bool force)
+{
+  if (force)
+    m_userMarkGenerator->InvalidateUserAreas();
+  m_userMarkGenerator->GenerateUserAreasGeometry(m_context, m_texMng, [this](TUserMarksRenderData && data)
+  {
+    m_commutator->PostMessage(ThreadsCommutator::RenderThread, make_unique_dp<FlushUserAreasMessage>(std::move(data)),
+                              MessagePriority::Normal);
+  });
 }
 
 void BackendRenderer::FlushUserMarksRenderData(TUserMarksRenderData && renderData)

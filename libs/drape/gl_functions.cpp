@@ -170,6 +170,29 @@ TglMapBufferFn glMapBufferFn = nullptr;
 TglUnmapBufferFn glUnmapBufferFn = nullptr;
 TglMapBufferRangeFn glMapBufferRangeFn = nullptr;
 TglFlushMappedBufferRangeFn glFlushMappedBufferRangeFn = nullptr;
+#ifdef OMIM_AUTO
+using FenceSyncFn = GLsync(DP_APIENTRY *)(GLenum, GLbitfield);
+using ClientWaitSyncFn = GLenum(DP_APIENTRY *)(GLsync, GLbitfield, GLuint64);
+using DeleteSyncFn = void(DP_APIENTRY *)(GLsync);
+FenceSyncFn fenceSyncFn = nullptr;
+ClientWaitSyncFn clientWaitSyncFn = nullptr;
+DeleteSyncFn deleteSyncFn = nullptr;
+using GenRenderbuffersFn = void(DP_APIENTRY *)(GLsizei, GLuint *);
+using BindRenderbufferFn = void(DP_APIENTRY *)(GLenum, GLuint);
+using GetRenderbufferParameterFn = void(DP_APIENTRY *)(GLenum, GLenum, GLint *);
+using DeleteRenderbuffersFn = void(DP_APIENTRY *)(GLsizei, GLuint const *);
+using RenderbufferStorageMultisampleFn = void(DP_APIENTRY *)(GLenum, GLsizei, GLenum, GLsizei, GLsizei);
+using FramebufferRenderbufferFn = void(DP_APIENTRY *)(GLenum, GLenum, GLenum, GLuint);
+using BlitFramebufferFn = void(DP_APIENTRY *)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield,
+                                              GLenum);
+GenRenderbuffersFn genRenderbuffersFn = nullptr;
+BindRenderbufferFn bindRenderbufferFn = nullptr;
+GetRenderbufferParameterFn getRenderbufferParameterFn = nullptr;
+DeleteRenderbuffersFn deleteRenderbuffersFn = nullptr;
+RenderbufferStorageMultisampleFn renderbufferStorageMultisampleFn = nullptr;
+FramebufferRenderbufferFn framebufferRenderbufferFn = nullptr;
+BlitFramebufferFn blitFramebufferFn = nullptr;
+#endif
 
 /// Shaders
 TglCreateShaderFn glCreateShaderFn = nullptr;
@@ -297,6 +320,18 @@ void GLFunctions::Init(dp::ApiVersion apiVersion)
   glUnmapBufferFn = ::glUnmapBuffer;
   glMapBufferRangeFn = ::glMapBufferRange;
   glFlushMappedBufferRangeFn = ::glFlushMappedBufferRange;
+#ifdef OMIM_AUTO
+  fenceSyncFn = ::glFenceSync;
+  clientWaitSyncFn = ::glClientWaitSync;
+  deleteSyncFn = ::glDeleteSync;
+  genRenderbuffersFn = ::glGenRenderbuffers;
+  bindRenderbufferFn = ::glBindRenderbuffer;
+  getRenderbufferParameterFn = ::glGetRenderbufferParameteriv;
+  deleteRenderbuffersFn = ::glDeleteRenderbuffers;
+  renderbufferStorageMultisampleFn = ::glRenderbufferStorageMultisample;
+  framebufferRenderbufferFn = ::glFramebufferRenderbuffer;
+  blitFramebufferFn = ::glBlitFramebuffer;
+#endif
   glGetStringiFn = ::glGetStringi;
   glTexImage3DFn = ::glTexImage3D;
   glTexSubImage3DFn = ::glTexSubImage3D;
@@ -314,6 +349,18 @@ void GLFunctions::Init(dp::ApiVersion apiVersion)
   glUnmapBufferFn = LOAD_GL_FUNC(TglUnmapBufferFn, glUnmapBuffer);
   glMapBufferRangeFn = LOAD_GL_FUNC(TglMapBufferRangeFn, glMapBufferRange);
   glFlushMappedBufferRangeFn = LOAD_GL_FUNC(TglFlushMappedBufferRangeFn, glFlushMappedBufferRange);
+#ifdef OMIM_AUTO
+  fenceSyncFn = LOAD_GL_FUNC(FenceSyncFn, glFenceSync);
+  clientWaitSyncFn = LOAD_GL_FUNC(ClientWaitSyncFn, glClientWaitSync);
+  deleteSyncFn = LOAD_GL_FUNC(DeleteSyncFn, glDeleteSync);
+  genRenderbuffersFn = LOAD_GL_FUNC(GenRenderbuffersFn, glGenRenderbuffers);
+  bindRenderbufferFn = LOAD_GL_FUNC(BindRenderbufferFn, glBindRenderbuffer);
+  getRenderbufferParameterFn = LOAD_GL_FUNC(GetRenderbufferParameterFn, glGetRenderbufferParameteriv);
+  deleteRenderbuffersFn = LOAD_GL_FUNC(DeleteRenderbuffersFn, glDeleteRenderbuffers);
+  renderbufferStorageMultisampleFn = LOAD_GL_FUNC(RenderbufferStorageMultisampleFn, glRenderbufferStorageMultisample);
+  framebufferRenderbufferFn = LOAD_GL_FUNC(FramebufferRenderbufferFn, glFramebufferRenderbuffer);
+  blitFramebufferFn = LOAD_GL_FUNC(BlitFramebufferFn, glBlitFramebuffer);
+#endif
   glGetStringiFn = LOAD_GL_FUNC(TglGetStringiFn, glGetStringi);
   glTexImage3DFn = LOAD_GL_FUNC(TglTexImage3DFn, glTexImage3D);
   glTexSubImage3DFn = LOAD_GL_FUNC(TglTexSubImage3DFn, glTexSubImage3D);
@@ -448,6 +495,93 @@ void GLFunctions::glFinish()
   ASSERT_EQUAL(CurrentApiVersion, dp::ApiVersion::OpenGLES3, ());
   GLCHECK(::glFinish());
 }
+
+#ifdef OMIM_AUTO
+void * GLFunctions::CreateFence()
+{
+  auto const fence = fenceSyncFn(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+  CHECK(fence != nullptr, ());
+  return fence;
+}
+
+bool GLFunctions::IsFenceSignaled(void * fence)
+{
+  auto const result = clientWaitSyncFn(static_cast<GLsync>(fence), 0, 0);
+  CHECK_NOT_EQUAL(result, GL_WAIT_FAILED, ());
+  return result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED;
+}
+
+void GLFunctions::DeleteFence(void * fence)
+{
+  deleteSyncFn(static_cast<GLsync>(fence));
+}
+
+GLFunctions::MultisampleFramebuffer GLFunctions::CreateMultisampleFramebuffer(uint32_t width, uint32_t height,
+                                                                              uint32_t samples, bool depth,
+                                                                              bool stencil)
+{
+  auto const maximum = static_cast<uint32_t>(glGetInteger(GL_MAX_SAMPLES));
+  while (samples > maximum)
+    samples /= 2;
+  for (; samples >= 2; samples /= 2)
+  {
+    MultisampleFramebuffer result;
+    result.m_samples = samples;
+    glGenFramebuffer(&result.m_framebuffer);
+    glBindFramebuffer(result.m_framebuffer);
+    genRenderbuffersFn(1, &result.m_color);
+    bindRenderbufferFn(GL_RENDERBUFFER, result.m_color);
+    renderbufferStorageMultisampleFn(GL_RENDERBUFFER, samples, GL_RGBA8, width, height);
+    GLint allocatedSamples = 0;
+    getRenderbufferParameterFn(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &allocatedSamples);
+    // Drivers may round sample counts up; do not silently exceed the configured memory/rendering budget.
+    if (allocatedSamples < 2 || allocatedSamples > static_cast<GLint>(samples))
+    {
+      bindRenderbufferFn(GL_RENDERBUFFER, 0);
+      DeleteMultisampleFramebuffer(result);
+      continue;
+    }
+    result.m_samples = static_cast<uint32_t>(allocatedSamples);
+    framebufferRenderbufferFn(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, result.m_color);
+    if (depth || stencil)
+    {
+      genRenderbuffersFn(1, &result.m_depthStencil);
+      bindRenderbufferFn(GL_RENDERBUFFER, result.m_depthStencil);
+      renderbufferStorageMultisampleFn(GL_RENDERBUFFER, result.m_samples,
+                                       stencil ? GL_DEPTH24_STENCIL8 : GL_DEPTH_COMPONENT24, width, height);
+      framebufferRenderbufferFn(GL_FRAMEBUFFER, stencil ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT,
+                                GL_RENDERBUFFER, result.m_depthStencil);
+    }
+    bindRenderbufferFn(GL_RENDERBUFFER, 0);
+    if (glCheckFramebufferStatus() == GL_FRAMEBUFFER_COMPLETE)
+      return result;
+    DeleteMultisampleFramebuffer(result);
+  }
+  return {};
+}
+
+void GLFunctions::DeleteMultisampleFramebuffer(MultisampleFramebuffer const & framebuffer)
+{
+  if (framebuffer.m_color != 0)
+    deleteRenderbuffersFn(1, &framebuffer.m_color);
+  if (framebuffer.m_depthStencil != 0)
+    deleteRenderbuffersFn(1, &framebuffer.m_depthStencil);
+  if (framebuffer.m_framebuffer != 0)
+  {
+    auto id = framebuffer.m_framebuffer;
+    glDeleteFramebuffer(&id);
+  }
+}
+
+void GLFunctions::ResolveMultisampleFramebuffer(uint32_t source, uint32_t destination, uint32_t width, uint32_t height)
+{
+  glBindFramebufferFn(GL_READ_FRAMEBUFFER, source);
+  glBindFramebufferFn(GL_DRAW_FRAMEBUFFER, destination);
+  glScissor(0, 0, width, height);
+  GLCHECK(blitFramebufferFn(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+  glBindFramebuffer(destination);
+}
+#endif
 
 void GLFunctions::glFrontFace(glConst mode)
 {

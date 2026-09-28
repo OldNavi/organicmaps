@@ -12,11 +12,26 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceScreen;
 import app.organicmaps.R;
 import app.organicmaps.base.BaseToolbarActivity;
+import app.organicmaps.road.RoadDataManager;
 
 public class SettingsActivity
     extends BaseToolbarActivity implements PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
                                            PreferenceFragmentCompat.OnPreferenceStartScreenCallback
 {
+  private static final String EXTRA_OPEN_ROAD_PROVIDER = "open_road_data_provider";
+
+  public static void startForRoadDataProvider(Context context)
+  {
+    context.startActivity(new Intent(context, SettingsActivity.class).putExtra(EXTRA_OPEN_ROAD_PROVIDER, true));
+  }
+
+  private static final String EXTRA_OPEN_ROAD_EVENTS = "open_road_events";
+
+  public static void startForRoadEvents(Context context)
+  {
+    context.startActivity(new Intent(context, SettingsActivity.class).putExtra(EXTRA_OPEN_ROAD_EVENTS, true));
+  }
+
   private static final String EXTRA_OPEN_VOICE_INSTRUCTIONS = "open_voice_instructions";
 
   public static void startForVoiceInstructions(@NonNull Context context)
@@ -42,6 +57,12 @@ public class SettingsActivity
   {
     super.onSafeCreate(savedInstanceState);
 
+    if (savedInstanceState == null && getIntent().getBooleanExtra(EXTRA_OPEN_ROAD_PROVIDER, false)
+        && RoadDataManager.available())
+      stackFragment(RoadDataProviderFragment.class, RoadDataManager.get(this).providerId(), null);
+    if (savedInstanceState == null && getIntent().getBooleanExtra(EXTRA_OPEN_ROAD_EVENTS, false)
+        && RoadDataManager.available())
+      stackFragment(RoadDataSettingsFragment.class, getString(R.string.road_events_title), null);
     if (savedInstanceState == null && getIntent().getBooleanExtra(EXTRA_OPEN_VOICE_INSTRUCTIONS, false))
       stackFragment(VoiceInstructionsSettingsFragment.class, getString(R.string.pref_tts_enable_title), null);
   }

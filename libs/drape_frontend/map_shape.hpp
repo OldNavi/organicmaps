@@ -60,6 +60,23 @@ private:
   TileKey m_tileKey;
 };
 
+#ifdef OMIM_AUTO
+// Keep a tile's CPU geometry together so an obsolete generation can be discarded before GPU upload.
+class TileReadBatchMessage : public MapShapeMessage
+{
+public:
+  TileReadBatchMessage(TileKey const & key, TMapShapes && geometry, TMapShapes && overlays)
+    : MapShapeMessage(key)
+    , m_geometry(std::move(geometry))
+    , m_overlays(std::move(overlays))
+  {}
+  Type GetType() const override { return Type::ReadTileBatch; }
+  bool IsGraphicsContextDependent() const override { return true; }
+  TMapShapes m_geometry;
+  TMapShapes m_overlays;
+};
+#endif
+
 class TileReadStartMessage : public MapShapeMessage
 {
 public:

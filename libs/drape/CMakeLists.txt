@@ -1,6 +1,7 @@
 project(drape)
 
 set(DRAPE_TESTABLE_SRC
+  render_context.cpp
   attribute_buffer_mutator.cpp
   attribute_buffer_mutator.hpp
   attribute_provider.cpp
@@ -33,6 +34,8 @@ set(DRAPE_TESTABLE_SRC
   framebuffer.hpp
   gl_constants.cpp
   gl_constants.hpp
+  gl_buffer_pool.cpp
+  gl_buffer_pool.hpp
   gl_gpu_program.cpp
   gl_gpu_program.hpp
   gl_extensions_list.cpp

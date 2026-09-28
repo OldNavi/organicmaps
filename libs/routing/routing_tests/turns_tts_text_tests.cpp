@@ -135,6 +135,68 @@ UNIT_TEST(GetTtsTextTest)
   TEST_EQUAL(getTtsText.GetTurnNotification(notification4), "Затем. Поворот налево.", ());
 }
 
+#if defined(OMIM_AUTO)
+UNIT_TEST(GetTtsRoadReferencesAuto)
+{
+  GetTtsText tts;
+  tts.ForTestingSetLocaleWithJson(R"({
+      "in_300_meters":"Через 300 метров.",
+      "then":"Затем",
+      "onto":"на",
+      "make_a_right_turn":"Поверните направо.",
+      "make_a_right_turn_street":"NULL",
+      "take_exit_number":"Съезд",
+      "dist_direction_onto_street":"%1$s %2$s %3$s %4$s"
+      })",
+                                  "ru");
+
+  routing::RouteSegment::RoadNameInfo road;
+  road.m_ref = "ru:regional/46К-1234;e-road/E 30";
+  auto say = [&](routing::RouteSegment::RoadNameInfo const & info)
+  { return tts.GetTurnNotification(Notification(300, 0, false, CarDirection::TurnRight, Units::Metric, info)); };
+  TEST_EQUAL(say(road), "Через 300 метров. Поверните направо.", ());
+  for (auto const * name :
+       {"46К-1234", "М-5", "E 30", "Региональная дорога номер 46К-1234",
+        "Автомобильная дорога регионального значения 46К-1234", "Региональная автомобильная дорога № 46К-1234",
+        "ФЕДЕРАЛЬНАЯ АВТОДОРОГА М-5", "Трасса № 60"})
+  {
+    road.m_name = name;
+    TEST_EQUAL(say(road), "Через 300 метров. Поверните направо.", (name));
+  }
+
+  for (auto const * name : {"Новорязанское шоссе", "улица 1905 года", "Федеральная улица",
+                            "Региональная дорога Озёрная", "Rue du 8 Mai", "Rue 8"})
+  {
+    road.m_name = name;
+    TEST_EQUAL(say(road), "Через 300 метров Поверните направо на " + string(name), (name));
+  }
+  road.m_name = "М-5; Новорязанское шоссе";
+  TEST_EQUAL(say(road), "Через 300 метров Поверните направо на Новорязанское шоссе", ());
+
+  road.m_junction_ref = "12";
+  road.m_destination_ref = "М-5";
+  road.m_destination = "E 30; Самара";
+  TEST_EQUAL(say(road), "Через 300 метров Съезд 12; Самара", ());
+  TEST_EQUAL(road.m_destination_ref, "М-5", ());
+  TEST_EQUAL(road.m_ref, "ru:regional/46К-1234;e-road/E 30", ());
+
+  road.m_destination.clear();
+  road.m_junction_ref.clear();
+  road.m_name.clear();
+  Notification immediate(0, 0, false, CarDirection::TurnRight, Units::Metric, road);
+  TEST_EQUAL(tts.GetTurnNotification(immediate), "Поверните направо.", ());
+  immediate.m_useThenInsteadOfDistance = true;
+  TEST_EQUAL(tts.GetTurnNotification(immediate), "Затем Поверните направо.", ());
+
+  road.m_name = "М-5";
+  road.m_ref.clear();
+  road.m_destination_ref.clear();
+  Notification pedestrian(300, 0, false, CarDirection::None, Units::Metric, road);
+  pedestrian.m_turnDirPedestrian = PedestrianDirection::TurnRight;
+  TEST_EQUAL(tts.GetTurnNotification(pedestrian), "Через 300 метров Поверните направо на М-5", ());
+}
+#endif
+
 UNIT_TEST(EndsInAcronymOrNumTest)
 {
   TEST_EQUAL(EndsInAcronymOrNum(strings::MakeUniString("")), false, ());
@@ -303,13 +365,19 @@ UNIT_TEST(GetTtsStreetTextTest)
                                    routing::RouteSegment::RoadNameInfo("Woodhaven Boulevard", "NY 25", "195"));
   Notification const notification7(1000, 0, false, CarDirection::TurnRight, measurement_utils::Units::Metric,
                                    routing::RouteSegment::RoadNameInfo("Woodhaven Boulevard", "NY 25", "1950"));
+#if defined(OMIM_AUTO)
+  string const roadReference;
+#else
+  string const roadReference = "NY 25; ";
+#endif
 
   getTtsText.ForTestingSetLocaleWithJson(engShortJson, "en");
   TEST_EQUAL(getTtsText.GetTurnNotification(notification1), "In 500 meters Make a right turn onto Main Street", ());
   TEST_EQUAL(getTtsText.GetTurnNotification(notification2), "In 300 meters Make a left turn onto Main Street", ());
   TEST_EQUAL(getTtsText.GetTurnNotification(notification3), "In 300 meters. Make a left turn.", ());
   TEST_EQUAL(getTtsText.GetTurnNotification(notification4), "Then. Make a left turn.", ());
-  TEST_EQUAL(getTtsText.GetTurnNotification(notification6), "Take exit 195; NY 25; Woodhaven Boulevard", ());
+  TEST_EQUAL(getTtsText.GetTurnNotification(notification6), "Take exit 195; " + roadReference + "Woodhaven Boulevard",
+             ());
 
   getTtsText.ForTestingSetLocaleWithJson(jaShortJson, "ja");
   TEST_EQUAL(getTtsText.GetTurnNotification(notification1), "五百メートル先右折し Main Street に入ります", ());
@@ -360,19 +428,22 @@ UNIT_TEST(GetTtsStreetTextTest)
   TEST_EQUAL(getTtsText.GetTurnNotification(notification4), "Majd Forduljon balra.", ());
   TEST_EQUAL(getTtsText.GetTurnNotification(notification5), "Háromszáz méter után Forduljon balra a Capital Parkwayra",
              ());  // -ra suffix for "back" vowel endings
-  TEST_EQUAL(getTtsText.GetTurnNotification(notification6), "Forduljon jobbra a 195; NY 25; Woodhaven Boulevardra",
+  TEST_EQUAL(getTtsText.GetTurnNotification(notification6),
+             "Forduljon jobbra a 195; " + roadReference + "Woodhaven Boulevardra",
              ());  // a for prefixing "hundred ninety five"
-  TEST_EQUAL(getTtsText.GetTurnNotification(notification7), "Forduljon jobbra az 1950; NY 25; Woodhaven Boulevardra",
+  TEST_EQUAL(getTtsText.GetTurnNotification(notification7),
+             "Forduljon jobbra az 1950; " + roadReference + "Woodhaven Boulevardra",
              ());  // az for prefixing "thousand nine hundred fifty"
   Notification const notificationHuA(300, 0, false, CarDirection::TurnRight, measurement_utils::Units::Metric,
                                      routing::RouteSegment::RoadNameInfo("Woodhaven Boulevard", "NY 25", "19"));
   TEST_EQUAL(getTtsText.GetTurnNotification(notificationHuA),
-             "Háromszáz méter után Forduljon jobbra a 19; NY 25; Woodhaven Boulevardra",
+             "Háromszáz méter után Forduljon jobbra a 19; " + roadReference + "Woodhaven Boulevardra",
              ());  // a for prefixing "ten nine"
   Notification const notificationHuB(300, 0, false, CarDirection::TurnRight, measurement_utils::Units::Metric,
                                      routing::RouteSegment::RoadNameInfo("Woodhaven Boulevard", "NY 25", "1"));
   TEST_EQUAL(getTtsText.GetTurnNotification(notificationHuB),
-             "Háromszáz méter után Forduljon jobbra az 1; NY 25; Woodhaven Boulevardra", ());  // az for prefixing "one"
+             "Háromszáz méter után Forduljon jobbra az 1; " + roadReference + "Woodhaven Boulevardra",
+             ());  // az for prefixing "one"
 
   Notification const notificationHu1(300, 0, false, CarDirection::TurnRight, measurement_utils::Units::Metric,
                                      routing::RouteSegment::RoadNameInfo("puszta"));
@@ -459,7 +530,8 @@ UNIT_TEST(GetTtsStreetTextTest)
              "Over driehonderd meter naar links afslaan naar Main Street", ());
   TEST_EQUAL(getTtsText.GetTurnNotification(notification3), "Over driehonderd meter Sla linksaf.", ());
   TEST_EQUAL(getTtsText.GetTurnNotification(notification4), "Daarna Sla linksaf.", ());
-  TEST_EQUAL(getTtsText.GetTurnNotification(notification6), "Verlaat naar 195; NY 25; Woodhaven Boulevard", ());
+  TEST_EQUAL(getTtsText.GetTurnNotification(notification6),
+             "Verlaat naar 195; " + roadReference + "Woodhaven Boulevard", ());
 }
 
 UNIT_TEST(GetAllSoundedDistMetersTest)

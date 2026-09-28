@@ -116,13 +116,19 @@ PathTextContext::PathTextContext(m2::SharedSpline const & spline, double xOffset
   , m_xOffset(xOffset)
 {}
 
-void PathTextContext::SetLayout(drape_ptr<PathTextLayout> && layout, double baseGtoPScale)
+void PathTextContext::SetLayout(drape_ptr<PathTextLayout> && layout, double baseGtoPScale, double shieldPixelLength)
 {
   m_layout = std::move(layout);
   m_globalOffsets.clear();
   m_globalPivots.clear();
-  PathTextLayout::CalculatePositions(m_globalSpline->GetLength(), baseGtoPScale, m_layout->GetPixelLength(),
-                                     m_globalOffsets);
+  m_shieldOffsets.clear();
+  if (shieldPixelLength > 0.0)
+    PathTextLayout::CalculatePositionsWithShields(m_globalSpline->GetLength(), baseGtoPScale,
+                                                  m_layout->GetPixelLength(), shieldPixelLength, 20.0 * m_visualScale,
+                                                  m_globalOffsets, m_shieldOffsets);
+  else
+    PathTextLayout::CalculatePositions(m_globalSpline->GetLength(), baseGtoPScale, m_layout->GetPixelLength(),
+                                       m_globalOffsets);
   m_globalPivots.reserve(m_globalOffsets.size());
   for (auto const offset : m_globalOffsets)
     m_globalPivots.push_back(m_globalSpline->GetPoint(offset).m_pos);

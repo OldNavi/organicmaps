@@ -15,7 +15,7 @@ class PathTextContext
 public:
   PathTextContext(m2::SharedSpline const & spline, double xOffset = 0.0);
 
-  void SetLayout(drape_ptr<PathTextLayout> && layout, double baseGtoPScale);
+  void SetLayout(drape_ptr<PathTextLayout> && layout, double baseGtoPScale, double shieldPixelLength = 0.0);
   ref_ptr<PathTextLayout> const GetLayout() const;
   double GetVisualScale() const { return m_visualScale; }
 
@@ -27,6 +27,7 @@ public:
   void Update(ScreenBase const & screen);
 
   std::vector<double> const & GetOffsets() const;
+  std::vector<double> const & GetShieldOffsets() const { return m_shieldOffsets; }
 
 private:
   struct ProjectionCursor
@@ -48,6 +49,7 @@ private:
 private:
   std::vector<m2::PointD> m_globalPivots;
   std::vector<double> m_globalOffsets;
+  std::vector<double> m_shieldOffsets;
   m2::SharedSpline m_globalSpline;
 
   std::vector<m2::SplineEx> m_pixel3dSplines;

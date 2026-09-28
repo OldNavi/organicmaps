@@ -22,7 +22,7 @@ PathTextShape::PathTextShape(m2::SharedSpline const & spline, PathTextViewParams
   m_context = std::make_shared<PathTextContext>(m_spline, m_tile.xOffset);
 }
 
-bool PathTextShape::CalculateLayout(ref_ptr<dp::TextureManager> textures)
+bool PathTextShape::CalculateLayout(ref_ptr<dp::TextureManager> textures, double shieldPixelLength)
 {
   auto tileCenter = m_params.m_tileCenter;
   // PathTextContext shifts spline points and pivots into the extended world copy
@@ -38,7 +38,7 @@ bool PathTextShape::CalculateLayout(ref_ptr<dp::TextureManager> textures)
     return false;
   }
 
-  m_context->SetLayout(std::move(layout), m_params.m_baseGtoPScale);
+  m_context->SetLayout(std::move(layout), m_params.m_baseGtoPScale, shieldPixelLength);
 
   return !m_context->GetOffsets().empty();
 }

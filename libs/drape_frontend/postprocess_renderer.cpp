@@ -251,6 +251,22 @@ bool PostprocessRenderer::BeginFrame(ref_ptr<dp::GraphicsContext> context, Scree
   return m_frameStarted;
 }
 
+#ifdef OMIM_AUTO
+bool PostprocessRenderer::RestoreFrameTarget(ref_ptr<dp::GraphicsContext> context)
+{
+  if (!IsEnabled())
+  {
+    if (!m_framebufferFallback())
+      return false;
+  }
+  else
+    context->SetFramebuffer(make_ref(m_mainFramebuffer));
+  // GL clear obeys scissor: restore the full target before clearing after a smaller render pass.
+  context->SetViewport(0, 0, m_width, m_height);
+  return true;
+}
+#endif
+
 bool PostprocessRenderer::EndFrame(ref_ptr<dp::GraphicsContext> context, ref_ptr<gpu::ProgramManager> gpuProgramManager,
                                    dp::Viewport const & viewport)
 {

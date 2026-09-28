@@ -10,6 +10,9 @@ android {
   defaultConfig {
     minSdk = propMinSdkVersion.toInteger()
     targetSdk = propTargetSdkVersion.toInteger()
+    // Unflavored libraries compile against the ordinary SDK; the app selects its native variant.
+    if (!project.plugins.hasPlugin('com.android.application'))
+      missingDimensionStrategy 'default', 'standard'
 
     buildTypes {
       debug {}

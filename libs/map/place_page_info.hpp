@@ -3,6 +3,8 @@
 #include "map/routing_mark.hpp"
 #include "map/track.hpp"
 
+#include "routing/road_events.hpp"
+
 #include "storage/storage_defines.hpp"
 
 #include "drape_frontend/frontend_renderer.hpp"
@@ -17,6 +19,7 @@
 #include "geometry/latlon.hpp"
 #include "geometry/point2d.hpp"
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -127,6 +130,7 @@ struct BuildInfo
   kml::TrackId m_trackId = kml::kInvalidTrackId;
   bool m_isGeometrySelectionAllowed = false;
   bool m_needAnimationOnSelection = true;
+  std::optional<routing::RoadEvent> m_roadEvent;
 };
 
 class Info : public osm::MapObject
@@ -134,6 +138,7 @@ class Info : public osm::MapObject
 public:
   void SetBuildInfo(place_page::BuildInfo const & info) { m_buildInfo = info; }
   place_page::BuildInfo const & GetBuildInfo() const { return m_buildInfo; }
+  void FillRoadEventInfo();
 
   /// Place traits
   bool IsFeature() const { return m_featureID.IsValid(); }

@@ -20,6 +20,12 @@
 #include <string>
 #include <vector>
 
+namespace routing
+{
+void GetFullRoadName(RouteSegment::RoadNameInfo const & road, FollowingInfo::RoadShieldInfo & roadShields,
+                     std::string & name);
+}
+
 namespace routing_session_test
 {
 using namespace routing;
@@ -39,6 +45,35 @@ vector<turns::TurnItem> const kTestTurns = {turns::TurnItem(1, turns::CarDirecti
                                             turns::TurnItem(3, turns::CarDirection::ReachedYourDestination)};
 vector<double> const kTestTimes = {5.0, 10.0, 15.0};
 auto const kRouteBuildingMaxDuration = seconds(30);
+
+UNIT_TEST(RoutingDestinationPresentation)
+{
+  RouteSegment::RoadNameInfo road;
+  road.m_destination = "Одинцово";
+  FollowingInfo::RoadShieldInfo shields;
+  std::string name;
+  GetFullRoadName(road, shields, name);
+#ifdef OMIM_AUTO
+  TEST_EQUAL(name, "Одинцово", ());
+#else
+  TEST_EQUAL(name, "> Одинцово", ());
+#endif
+
+  road.m_destination_ref = "M1";
+  road.m_junction_ref = "12";
+  GetFullRoadName(road, shields, name);
+#ifdef OMIM_AUTO
+  TEST_EQUAL(name, "12 : [M1] Одинцово", ());
+#else
+  TEST_EQUAL(name, "12 : [M1] > Одинцово", ());
+#endif
+  auto const [first, last] = shields.m_targetRoadShieldsPosition;
+  TEST_EQUAL(name.substr(first, last - first), "[M1]", ());
+
+  road = RouteSegment::RoadNameInfo("Road > Gate");
+  GetFullRoadName(road, shields, name);
+  TEST_EQUAL(name, "Road > Gate", ("A character in the actual name is not presentation markup"));
+}
 
 void FillSubroutesInfo(Route & route, vector<turns::TurnItem> const & turns = kTestTurnsReachOnly);
 

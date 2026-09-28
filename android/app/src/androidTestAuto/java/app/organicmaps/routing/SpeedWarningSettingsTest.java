@@ -60,6 +60,8 @@ public class SpeedWarningSettingsTest
     SharedPreferences prefs = MwmApplication.prefs(context);
     boolean hadOffset = prefs.contains(SpeedWarningSettings.OFFSET_KEY);
     boolean hadMode = prefs.contains(SpeedWarningSettings.MODE_KEY);
+    boolean hadLevel = prefs.contains(SpeedWarningSettings.LEVEL_KEY);
+    int oldLevel = SpeedWarningSettings.level(context);
     int oldOffset = prefs.getInt(SpeedWarningSettings.OFFSET_KEY, 0);
     String oldMode = prefs.getString(SpeedWarningSettings.MODE_KEY, SpeedWarningSettings.VOICE);
     AtomicReference<SettingsActivity> activity = new AtomicReference<>();
@@ -92,14 +94,22 @@ public class SpeedWarningSettingsTest
         assertTrue(offset.getSummary().toString().contains("+16"));
         ListPreference mode = fragment.findPreference(SpeedWarningSettings.MODE_KEY);
         assertNotNull(mode);
-        for (String value :
-             new String[] {SpeedWarningSettings.VOICE, SpeedWarningSettings.SILENT, SpeedWarningSettings.SOUND})
+        for (String value : new String[] {SpeedWarningSettings.VOICE, SpeedWarningSettings.SOUND})
         {
           assertTrue(mode.callChangeListener(value));
           mode.setValue(value);
           assertEquals(value, SpeedWarningSettings.mode(context));
           assertTrue("Muting audio must not disable visual warnings",
                      SpeedWarningController.isExceeded(context, 77 / 3.6, 60 / 3.6));
+        }
+        ListPreference level = fragment.findPreference(SpeedWarningSettings.LEVEL_KEY);
+        assertNotNull(level);
+        for (int value : new int[] {SpeedWarningSettings.OFF, SpeedWarningSettings.IMPORTANT, SpeedWarningSettings.ALL})
+        {
+          assertTrue(level.callChangeListener(Integer.toString(value)));
+          level.setValue(Integer.toString(value));
+          assertEquals(value, SpeedWarningSettings.level(context));
+          assertTrue(SpeedWarningController.isExceeded(context, 77 / 3.6, 60 / 3.6));
         }
         fragment.scrollToPreference(SpeedWarningSettings.OFFSET_KEY);
       });
@@ -136,6 +146,10 @@ public class SpeedWarningSettingsTest
           editor.putString(SpeedWarningSettings.MODE_KEY, oldMode);
         else
           editor.remove(SpeedWarningSettings.MODE_KEY);
+        if (hadLevel)
+          editor.putInt(SpeedWarningSettings.LEVEL_KEY, oldLevel);
+        else
+          editor.remove(SpeedWarningSettings.LEVEL_KEY);
         editor.apply();
         if (activity.get() != null)
           activity.get().finish();
@@ -191,7 +205,7 @@ public class SpeedWarningSettingsTest
   }
 
   @Test
-  public void yandexSignalPlaysOnNavigationUsage() throws Exception
+  public void shortSignalPlaysOnNavigationUsage() throws Exception
   {
     Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
     try (var asset = context.getAssets().openFd("overspeed_warning.mp3");
@@ -199,7 +213,7 @@ public class SpeedWarningSettingsTest
     {
       metadata.setDataSource(asset.getFileDescriptor(), asset.getStartOffset(), asset.getLength());
       long duration = Long.parseLong(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-      assertTrue("Expected the short Yandex Danger signal", duration >= 500 && duration <= 600);
+      assertTrue("Expected the short navigation warning signal", duration >= 500 && duration <= 600);
     }
     AtomicReference<NavigationWarningPlayer> player = new AtomicReference<>();
     try

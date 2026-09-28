@@ -37,12 +37,13 @@ public class LayersAdapter extends RecyclerView.Adapter<LayerHolder>
     LayerBottomSheetItem item = mItems.get(position);
     holder.mItem = item;
 
-    boolean isEnabled = item.getMode().isEnabled(context);
+    boolean isEnabled = item.isEnabled(context);
 
     holder.mButton.setSelected(isEnabled);
     holder.mTitle.setSelected(isEnabled);
     holder.mTitle.setText(item.getTitle());
-    boolean isNewLayer = SharedPropertiesUtils.shouldShowNewMarkerForLayerMode(item.getMode());
+    boolean isNewLayer =
+        item.getMode() != null && SharedPropertiesUtils.shouldShowNewMarkerForLayerMode(item.getMode());
     UiUtils.showIf(isNewLayer, holder.mNewMarker);
     holder.mButton.setBackgroundResource(item.getDrawable());
     holder.mButton.setActivated(isEnabled);

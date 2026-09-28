@@ -63,7 +63,10 @@ public:
 
   void SetSpeedCamClearCallback(SpeedCameraClearCallback && callback) { m_speedCamClearCallback = std::move(callback); }
 
-  bool Enable() const { return m_mode != SpeedCameraManagerMode::Never; }
+  bool Enable() const { return m_externalNotifications || m_mode != SpeedCameraManagerMode::Never; }
+  // An automotive host may own warning delivery while retaining native camera tracking for its UI/provider.
+  void SetExternalNotifications(bool external) { m_externalNotifications = external; }
+  void SetCameraVisible(bool visible);
   void OnLocationPositionChanged(location::GpsInfo const & info);
 
   // See comments in |enum class Interval|
@@ -167,6 +170,8 @@ private:
   SpeedCameraClearCallback m_speedCamClearCallback = []() {};
 
   SpeedCameraManagerMode m_mode = SpeedCameraManagerMode::Auto;
+  bool m_externalNotifications = false;
+  bool m_cameraVisible = true;
 
   DECLARE_THREAD_CHECKER(m_threadChecker);
 };

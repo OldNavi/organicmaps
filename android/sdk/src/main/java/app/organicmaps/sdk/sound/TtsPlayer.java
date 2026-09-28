@@ -56,6 +56,7 @@ public enum TtsPlayer
   private ContentObserver mTtsEngineObserver;
   private TextToSpeech mTts;
   private RoxVoice mRoxVoice;
+  private Locale mSelectedLocale = Locale.US;
   private final AtomicInteger mTtsQueueSize = new AtomicInteger(0);
   private final UtteranceProgressListener mUtteranceProgressListener = new UtteranceProgressListener() {
     @Override
@@ -166,6 +167,7 @@ public enum TtsPlayer
     if (mTts != null)
       mTts.setLanguage(lang.locale);
     nativeSetTurnNotificationsLocale(lang.internalCode);
+    mSelectedLocale = lang.locale;
     if (!Config.TTS.useRoxVoice())
       Config.TTS.setLanguage(lang.internalCode);
 
@@ -175,6 +177,12 @@ public enum TtsPlayer
   public boolean setLanguage(LanguageData lang)
   {
     return (lang != null && setLanguageInternal(lang));
+  }
+
+  @NonNull
+  public Locale getSelectedLocale()
+  {
+    return mSelectedLocale;
   }
 
   private static @Nullable LanguageData getDefaultLanguage(List<LanguageData> langs)

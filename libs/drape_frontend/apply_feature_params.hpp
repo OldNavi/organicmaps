@@ -1,4 +1,5 @@
 #pragma once
+#include "drape_frontend/driving_poi_policy.hpp"
 #include "drape_frontend/tile_key.hpp"
 #include "drape_frontend/visual_params.hpp"
 
@@ -28,6 +29,9 @@ struct ApplyFeatureParams
 
   double m_currentScaleGtoP, m_trafficScalePtoG;
   double m_minSegmentSqrLength;
+#ifdef OMIM_AUTO
+  PoiDensity m_poiDensity = PoiDensity::High;
+#endif
 
   ApplyFeatureParams();
   void Init(TileKey const & tileKey);

@@ -5,6 +5,7 @@
 #include "map/place_page_info.hpp"
 #include "map/raster_tile_provider.hpp"
 #include "map/relation_track.hpp"
+#include "map/road_event_layer.hpp"
 #include "map/track_mark.hpp"
 #include "map/user_mark.hpp"
 
@@ -421,6 +422,23 @@ Framework::Framework(FrameworkParams const & params, bool loadMaps)
 
   m_isolinesManager.SetEnabled(LoadIsolinesEnabled());
 
+  m_mwmRoadEvents = std::make_shared<MwmRoadEvents>(GetDataSource(), m_routingManager.GetRoadEvents(),
+                                                    [this, lifetime = std::weak_ptr<int>(m_roadEventsLifetime)]
+  {
+    GetPlatform().RunTask(Platform::Thread::Gui, [this, lifetime]
+    {
+      if (lifetime.expired())
+        return;
+      if (m_drapeEngine)
+      {
+        m_drapeEngine->RefreshExternalMarks();
+        m_drapeEngine->InvalidateRect(mercator::Bounds::FullRect());
+      }
+      m_routingManager.GetNavigationScene().RefreshExternalMarks();
+      m_routingManager.GetNavigationScene().InvalidateRect(mercator::Bounds::FullRect());
+    });
+  });
+
   InitTransliteration();
   LOG(LDEBUG, ("Transliterators initialized"));
 
@@ -442,6 +460,7 @@ Framework::~Framework()
 {
   GetPowerManager().UnsubscribeAll();
 
+  m_roadEventsLifetime.reset();
   m_threadRunner.reset();
 
   osm::Editor & editor = osm::Editor::Instance();
@@ -481,6 +500,8 @@ void Framework::OnCountryFileDownloaded(storage::CountryId const &, storage::Loc
   m_transitManager.Invalidate();
   m_isolinesManager.Invalidate();
 
+  if (m_mwmRoadEvents)
+    m_mwmRoadEvents->Invalidate();
   InvalidateRect(rect);
 
   /// @todo A bit controversial, why clear when adding a new map :)
@@ -521,6 +542,8 @@ void Framework::OnMapDeregistered(platform::LocalCountryFile const & localFile)
     m_isolinesManager.OnMwmDeregistered(localFile);
     m_trafficManager.OnMwmDeregistered(localFile);
     m_descriptionsLoader->OnMwmDeregistered(localFile);
+    if (m_mwmRoadEvents)
+      m_mwmRoadEvents->Invalidate();
 
     m_storage.DeleteCustomCountryVersion(localFile);
   };
@@ -1747,7 +1770,14 @@ void Framework::CreateDrapeEngine(ref_ptr<dp::GraphicsContextFactory> contextFac
   uint32_t const borderType = classif().GetTypeByPath({"organicapp", "mwm_border"});
   auto featureReadFn = [this, borderType](auto const & fn, std::vector<FeatureID> const & ids)
   {
-    m_featuresFetcher.ReadFeatures(fn, ids);
+    auto const cameras = m_routingManager.GetRoadEvents()->Get();
+    auto filterCamera = [&](FeatureType & feature)
+    {
+      if (MwmRoadEvents::Replaces(feature, cameras))
+        return;
+      fn(feature);
+    };
+    m_featuresFetcher.ReadFeatures(filterCamera, ids);
 
     for (auto const & id : ids)
       if (id.m_mwmId.IsNull())
@@ -1841,6 +1871,7 @@ void Framework::CreateDrapeEngine(ref_ptr<dp::GraphicsContextFactory> contextFac
       std::move(overlaysShowStatsFn), std::move(onGraphicsContextInitialized),
       std::move(params.m_renderInjectionHandler));
 
+  p.m_externalMarks = std::make_shared<RoadEventLayer>(m_routingManager.GetRoadEvents(), m_mwmRoadEvents);
   m_drapeEngine = make_unique_dp<df::DrapeEngine>(std::move(p));
   m_drapeEngine->SetModelViewListener([this](ScreenBase const & screen)
   { GetPlatform().RunTask(Platform::Thread::Gui, [this, screen]() { OnViewportChanged(screen); }); });
@@ -1890,23 +1921,36 @@ void Framework::CreateDrapeEngine(ref_ptr<dp::GraphicsContextFactory> contextFac
 
 drape_ptr<df::DrapeEngine> Framework::CreateNavigationRenderer(ref_ptr<dp::GraphicsContextFactory> factory, int width,
                                                                int height, double visualScale, bool showPoi,
-                                                               bool allow3dBuildings)
+                                                               bool allow3dBuildings, double renderScale, int maxFps,
+                                                               int msaaSamples)
 {
   dp::RenderContext::Scope scope(std::make_shared<dp::RenderContext>());
   df::Hints hints;
   hints.m_isPassiveNavigation = true;
-  hints.m_maxFps = 20;
+  hints.m_maxFps = maxFps;
+  hints.m_renderScale = renderScale;
+  hints.m_msaaSamples = msaaSamples;
   hints.m_showPoi = showPoi;
   df::MapDataProvider provider([this](auto const & fn, m2::RectD const & rect, int scale)
   { m_featuresFetcher.ForEachFeatureID(rect, fn, scale); }, [this](auto const & fn, std::vector<FeatureID> const & ids)
-  { m_featuresFetcher.ReadFeatures(fn, ids); }, [this](std::string_view name) { return IsCountryLoadedByName(name); },
-                               [](m2::PointD const &, int) {}, [](df::TileKey const &, dp::BackgroundMode)
-  { return false; }, [](df::TileKey const &, dp::BackgroundMode) {});
+  {
+    auto const cameras = m_routingManager.GetRoadEvents()->Get();
+    auto filterCamera = [&](FeatureType & feature)
+    {
+      if (!MwmRoadEvents::Replaces(feature, cameras))
+        fn(feature);
+    };
+    m_featuresFetcher.ReadFeatures(filterCamera, ids);
+  }, [this](std::string_view name) { return IsCountryLoadedByName(name); }, [](m2::PointD const &, int) {
+  }, [](df::TileKey const &, dp::BackgroundMode) { return false; }, [](df::TileKey const &, dp::BackgroundMode) {});
   df::DrapeEngine::Params params(dp::ApiVersion::OpenGLES3, factory, dp::Viewport(0, 0, width, height), provider, hints,
                                  visualScale, m_fontScaleFactor, {}, [](location::EMyPositionMode, bool) {},
                                  allow3dBuildings, false, false, true, false, {}, false, false, false,
                                  dp::BackgroundMode::Default, 1.0f, std::nullopt,
                                  [](std::list<df::OverlayShowEvent> &&) {}, [] {}, {});
+  params.m_externalMarks =
+      std::make_shared<RoadEventLayer>(m_routingManager.GetRoadEvents(), m_mwmRoadEvents,
+                                       RoadEventLayer::kClusterExcludedKinds, false /* allowSelectionPreview */);
   auto engine = make_unique_dp<df::DrapeEngine>(std::move(params));
   engine->SetVisibleViewport(m2::RectD(0, 0, width, height));
   engine->Allow3dMode(true, allow3dBuildings);
@@ -2241,6 +2285,12 @@ void Framework::ActivateMapSelection()
   if (!m_currentPlacePageInfo)
     return;
 
+#ifdef OMIM_AUTO
+  if (m_routingManager.GetRoadEvents()->SetCoveragePreview(m_currentPlacePageInfo->GetBuildInfo().m_roadEvent) &&
+      m_drapeEngine)
+    m_drapeEngine->RefreshExternalMarks();
+#endif
+
   auto & bm = GetBookmarkManager();
 
   bm.ResetRecentlyDeletedBookmark();
@@ -2269,6 +2319,11 @@ void Framework::ActivateMapSelection()
 
 bool Framework::DeactivateMapSelection()
 {
+#ifdef OMIM_AUTO
+  if (m_routingManager.GetRoadEvents()->SetCoveragePreview({}) && m_drapeEngine)
+    m_drapeEngine->RefreshExternalMarks();
+#endif
+
   if (m_routingManager.IsRoutingActive() || m_routingManager.GetRoutePointsCount() > 0)
     HideRouteTransitIfNeeded();
 
@@ -2338,8 +2393,9 @@ void Framework::DeactivateHotelSearchMark()
     m_searchMarks.OnDeactivate(m_currentPlacePageInfo->GetID());
 }
 
-void Framework::OnTapEvent(place_page::BuildInfo const & buildInfo)
+void Framework::OnTapEvent(place_page::BuildInfo const & tapInfo)
 {
+  auto buildInfo = tapInfo;
   if (buildInfo.m_isLongTap)
   {
     SwitchFullScreen();
@@ -2351,6 +2407,17 @@ void Framework::OnTapEvent(place_page::BuildInfo const & buildInfo)
   auto const umID = buildInfo.m_userMarkId;
   if (umID != kml::kInvalidMarkId)
   {
+    if (UserMark::GetMarkType(umID) == UserMark::EXTERNAL)
+    {
+      buildInfo.m_roadEvent = RoadEventLayer::Resolve(*m_routingManager.GetRoadEvents(), umID);
+      if (!buildInfo.m_roadEvent)
+        return;
+      // Keep the selected snapshot for subsequent place-page refreshes, independent of later imports.
+      buildInfo.m_mercator = buildInfo.m_roadEvent->m_position;
+      buildInfo.m_userMarkId = kml::kInvalidMarkId;
+      buildInfo.m_featureId = {};
+      buildInfo.m_match = place_page::BuildInfo::Match::Nothing;
+    }
     if (UserMark::GetMarkType(umID) == UserMark::Type::ROUTE_ALT)
     {
       if (auto const * mark = static_cast<RouteAltMark const *>(GetBookmarkManager().GetUserMark(umID)))
@@ -2520,6 +2587,13 @@ place_page::Info Framework::BuildPlacePageInfo(place_page::BuildInfo const & bui
       outInfo = {};
       outInfo.SetBuildInfo(buildInfo);
     }
+  }
+
+  if (buildInfo.m_roadEvent)
+  {
+    outInfo.FillRoadEventInfo();
+    GetSelectionProcessor().SetPlacePageLocation(outInfo);
+    return outInfo;
   }
 
   auto const & sp = GetSelectionProcessor();

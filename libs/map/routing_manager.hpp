@@ -9,6 +9,7 @@
 #include "map/transit/transit_reader.hpp"
 
 #include "routing/following_info.hpp"
+#include "routing/road_events.hpp"
 #include "routing/route.hpp"
 #include "routing/router.hpp"
 #include "routing/routing_callbacks.hpp"
@@ -41,7 +42,7 @@ namespace routing
 {
 class NumMwmIds;
 class RoadInfoReader;
-}
+}  // namespace routing
 
 class DataSource;
 
@@ -64,6 +65,7 @@ class RoutingManager final
 {
 public:
   std::unique_ptr<routing::RoadInfoReader> CreateRoadInfoReader();
+  std::shared_ptr<routing::RoadEventSource> GetRoadEvents() const { return m_roadEvents; }
   class Delegate
   {
   public:
@@ -322,6 +324,9 @@ private:
   /// \returns true if the active route has an avoidable warning (toll/ferry/dirty) on a car route,
   /// i.e. one that should surface the "driving options" affordance (RouterResultCode::HasWarnings).
   bool InsertRoute(routing::RoutesResult const & result);
+#ifdef OMIM_AUTO
+  void UpdateCameraCoverageRoute();
+#endif
 
   // Helper: build drape subroutes for a single route. |isActive| controls styling
   // (alternatives are dimmed). |roadWarnings| is appended for every route (active and alternatives)
@@ -376,6 +381,7 @@ private:
   RouteRecommendCallback m_routeRecommendCallback;
   Callbacks m_callbacks;
   df::DrapeEngineSafePtr m_drapeEngine;
+  std::shared_ptr<routing::RoadEventSource> m_roadEvents = std::make_shared<routing::RoadEventSource>();
   df::NavigationScene m_navigationScene;
   routing::RouterType m_currentRouterType = routing::RouterType::Count;
   bool m_loadAltitudes = false;

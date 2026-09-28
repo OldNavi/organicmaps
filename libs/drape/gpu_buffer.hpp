@@ -35,6 +35,9 @@ private:
   Target m_t;
   uint32_t m_bufferID;
   uint32_t m_mappingOffset;
+#ifdef OMIM_AUTO
+  uint32_t m_storageBytes = 0;
+#endif
 #ifdef TRACK_GPU_MEM
   uint64_t m_batcherHash;
 #endif

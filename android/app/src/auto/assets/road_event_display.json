@@ -1,0 +1,23 @@
+  {
+  "camera": 13,
+  "dummy": 16,
+  "video": 16,
+  "red_light": 13,
+  "lane_control": 13,
+  "mobile": 13,
+  "police": 14,
+  "average_start": 13,
+  "average_end": 13,
+  "speed_limit": 15,
+  "settlement_start": 13,
+  "settlement_end": 13,
+  "bump": 16,
+  "crossing": 16,
+  "children": 15,
+  "railway": 14,
+  "bad_road": 15,
+  "bend": 15,
+  "intersection": 15,
+  "danger": 15,
+  "no_overtaking": 15
+}

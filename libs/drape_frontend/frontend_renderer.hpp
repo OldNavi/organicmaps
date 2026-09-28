@@ -1,5 +1,7 @@
 #pragma once
 
+#include "drape_frontend/user_mark_badge_layout.hpp"
+
 #include "drape_frontend/base_renderer.hpp"
 #include "drape_frontend/drape_api_renderer.hpp"
 #include "drape_frontend/frame_values.hpp"
@@ -204,6 +206,14 @@ private:
   void RenderMwmBorderLayer(ScreenBase const & modelView);
   void RenderOverlayLayer(ScreenBase const & modelView);
   void RenderUserMarksLayer(ScreenBase const & modelView, DepthLayer layerId);
+#ifdef OMIM_AUTO
+  void UpdateRoadEventBadges(ScreenBase const & modelView);
+  std::vector<UserMarkFootprint> m_externalSymbols;
+  std::vector<UserMarkFootprint> m_externalBadges;
+  std::vector<ref_ptr<dp::OverlayHandle>> m_externalBadgeHandles;
+  std::vector<kml::MarkId> m_visibleExternalBadges;
+  std::vector<kml::MarkId> m_unreadyExternalBadges;
+#endif
   void RenderTransitSchemeLayer(ScreenBase const & modelView);
   void RenderTrafficLayer(ScreenBase const & modelView);
   void RenderRouteLayer(ScreenBase const & modelView);
@@ -317,6 +327,12 @@ private:
   drape_ptr<gpu::ProgramManager> m_gpuProgramManager;
 
   std::array<RenderLayer, static_cast<size_t>(DepthLayer::LayersCount)> m_layers;
+  struct UserAreaGroup
+  {
+    drape_ptr<UserMarkRenderGroup> m_group;
+    int m_minZoom = 1;
+  };
+  std::vector<UserAreaGroup> m_userAreas;
 
   drape_ptr<gui::LayerRenderer> m_guiRenderer;
   gui::TWidgetsLayoutInfo m_lastWidgetsLayout;
@@ -343,6 +359,13 @@ private:
   drape_ptr<TrafficRenderer> m_trafficRenderer;
   drape_ptr<TransitSchemeRenderer> m_transitSchemeRenderer;
   drape_ptr<dp::Framebuffer> m_buildingsFramebuffer;
+#ifdef OMIM_AUTO
+  drape_ptr<dp::Framebuffer> m_scaledBackground;
+  double m_renderScale = 1.0;
+  uint32_t m_msaaSamples = 0;
+  bool UseScaledBackground() const;
+  m2::PointU GetScaledRenderSize() const;
+#endif
   drape_ptr<ScreenQuadRenderer> m_screenQuadRenderer;
   drape_ptr<GpsTrackRenderer> m_gpsTrackRenderer;
   drape_ptr<DrapeApiRenderer> m_drapeApiRenderer;

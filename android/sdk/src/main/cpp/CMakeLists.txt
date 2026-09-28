@@ -23,6 +23,8 @@ set(SRC
 
   # JNI sources
   app/organicmaps/sdk/ClusterMap.cpp
+  app/organicmaps/sdk/RoadEvents.cpp
+  app/organicmaps/sdk/RoadInfo.cpp
   app/organicmaps/sdk/search/DisplayedCategories.cpp
   app/organicmaps/sdk/search/SearchEngine.cpp
   app/organicmaps/sdk/search/SearchRecents.cpp

@@ -1,8 +1,10 @@
 #pragma once
 
+#include "routing/camera_coverage.hpp"
 #include "routing/data_source.hpp"
 #include "routing/features_road_graph.hpp"
 #include "routing/maxspeeds.hpp"
+#include "routing/road_events.hpp"
 #include "routing/speed_camera_ser_des.hpp"
 
 #include "platform/location.hpp"
@@ -11,22 +13,39 @@
 
 namespace routing
 {
+struct ApproachingRoadEvent
+{
+  RoadEvent m_event;
+  double m_distance = 0;
+};
+
 struct RoadInfoSnapshot
 {
+  bool m_coverageChanged = false;
   bool m_matched = false;
   double m_speedLimitMps = 0.0;
   std::string m_road;
   double m_cameraDistance = -1.0;
   double m_cameraLimitMps = 0.0;
   m2::PointD m_cameraPosition;
+  double m_externalSpeedLimitMps = 0;
+  double m_eventDistance = -1;
+  RoadEvent m_event;
+  std::vector<ApproachingRoadEvent> m_warnings;
 };
 
 // Pure selection policy, shared with tests. Ambiguous parallel roads are not a match.
 std::optional<IRoadGraph::EdgeProjectionT> MatchRoad(m2::PointD const & position, m2::PointD const & direction,
                                                      double accuracy,
-                                                     std::vector<IRoadGraph::EdgeProjectionT> const & candidates);
+                                                     std::vector<IRoadGraph::EdgeProjectionT> const & candidates,
+                                                     double maximumDistance = 0, bool allowJunctionOverlap = false);
 
 using RoadCameraGetter = std::function<std::vector<RouteSegment::SpeedCamera>(Edge const &)>;
+#ifdef OMIM_AUTO
+bool AreConsecutiveRoadEdges(Edge const & a, Edge const & b);
+std::optional<double> ProjectRoadEvent(m2::PointD const & position, Edge const & edge,
+                                       double maximumDistance = kRoadEventRoadDistanceMeters);
+#endif
 void FindRoadCamera(IRoadGraph const & graph, Edge edge, m2::PointD const & position, RoadCameraGetter const & cameras,
                     RoadInfoSnapshot & result);
 
@@ -34,10 +53,25 @@ void FindRoadCamera(IRoadGraph const & graph, Edge edge, m2::PointD const & posi
 class RoadInfoReader
 {
 public:
-  RoadInfoReader(DataSource & source, VehicleModelFactory::CountryParentNameGetterFn const & parents);
+  RoadInfoReader(DataSource & source, VehicleModelFactory::CountryParentNameGetterFn const & parents,
+                 std::shared_ptr<RoadEventSource> events = {});
   RoadInfoSnapshot Read(location::GpsInfo const & location);
 
 private:
+#ifdef OMIM_AUTO
+  bool UpdateCoverage(CameraCoverageFix const & fix, bool continuous,
+                      std::optional<IRoadGraph::EdgeProjectionT> const & match,
+                      RoadEventSource::Snapshot const & events);
+  RoadEventSource::Snapshot m_coverageInput;
+  std::optional<IRoadGraph::EdgeProjectionT> m_coverageMatch;
+  std::optional<m2::PointD> m_coveragePosition;
+  std::optional<CameraCoverageFix> m_coverageLastFix;
+#endif
+  void ReadEvents(IRoadGraph::EdgeProjectionT const & match, m2::PointD const & previous,
+                  RoadEventSource::Snapshot const & events, RoadInfoSnapshot & result);
+  std::shared_ptr<RoadEventSource> m_events;
+  std::shared_ptr<RoadEventStore const> m_eventStore;
+  double m_externalLimit = 0;
   struct Attributes
   {
     std::unique_ptr<Maxspeeds> m_speeds;

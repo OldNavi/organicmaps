@@ -27,6 +27,12 @@ public:
     std::lock_guard lock(m_mutex);
     m_engines.erase(engine);
   }
+  void RefreshExternalMarks()
+  {
+    std::lock_guard lock(m_mutex);
+    for (auto * engine : m_engines)
+      engine->RefreshExternalMarks();
+  }
   void UpdateMapStyle()
   {
     std::lock_guard lock(m_mutex);

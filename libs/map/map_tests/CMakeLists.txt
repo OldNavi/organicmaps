@@ -21,6 +21,7 @@ set(SRC
   power_manager_tests.cpp
   raster_tile_provider_tests.cpp
   road_warning_tests.cpp
+  road_event_layer_tests.cpp
   share_tests.cpp
   search_api_tests.cpp
   search_mark_lifecycle_tests.cpp

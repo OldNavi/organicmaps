@@ -100,7 +100,7 @@ std::string GetSymbolNameForZoomLevel(ref_ptr<UserPointMark::SymbolNameZoomInfo>
     return {};
 
   for (auto itName = symbolNames->crbegin(); itName != symbolNames->crend(); ++itName)
-    if (itName->first <= tileKey.m_zoomLevel)
+    if (itName->first <= tileKey.GetRenderZoom())
       return itName->second;
   return {};
 }
@@ -113,7 +113,7 @@ m2::PointF GetSymbolOffsetForZoomLevel(ref_ptr<UserPointMark::SymbolOffsets> sym
   CHECK_GREATER(tileKey.m_zoomLevel, 0, ());
   CHECK_LESS_OR_EQUAL(tileKey.m_zoomLevel, scales::UPPER_STYLE_SCALE, ());
 
-  auto const offsetIndex = static_cast<size_t>(tileKey.m_zoomLevel - 1);
+  auto const offsetIndex = static_cast<size_t>(tileKey.GetRenderZoom() - 1);
   return symbolOffsets->operator[](offsetIndex);
 }
 
@@ -163,7 +163,7 @@ void GenerateColoredSymbolShapes(ref_ptr<dp::GraphicsContext> context, ref_ptr<d
   {
     for (auto const & e : renderInfo.m_coloredSymbols->m_zoomInfo)
     {
-      if (e.first <= tileKey.m_zoomLevel)
+      if (e.first <= tileKey.GetRenderZoom())
       {
         params = e.second;
         break;
@@ -174,6 +174,7 @@ void GenerateColoredSymbolShapes(ref_ptr<dp::GraphicsContext> context, ref_ptr<d
   // Assign ids after fetching params from map above.
   params.m_featureId = renderInfo.m_featureId;
   params.m_markId = renderInfo.m_markId;
+  params.m_isBadge = isTextBg && (renderInfo.m_markId >> 60) == kml::kExternalMarkGroupId;
 
   m2::PointF coloredSize(0.0f, 0.0f);
   if (params.m_shape == ColoredSymbolViewParams::Shape::Circle)
@@ -241,7 +242,7 @@ void GenerateTextShapes(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::Textur
                         UserMarkRenderParams const & renderInfo, TileKey const & tileKey, m2::PointD const & tileCenter,
                         m2::PointF const & symbolOffset, m2::PointF const & symbolSize, dp::Batcher & batcher)
 {
-  if (renderInfo.m_minTitleZoom > tileKey.m_zoomLevel)
+  if (renderInfo.m_minTitleZoom > tileKey.GetRenderZoom())
     return;
 
   auto const vs = static_cast<float>(df::VisualParams::Instance().GetVisualScale());
@@ -256,6 +257,8 @@ void GenerateTextShapes(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::Textur
     params.m_markId = renderInfo.m_markId;
     params.m_tileCenter = tileCenter;
     params.m_titleDecl = titleDecl;
+    params.m_isBadge = (renderInfo.m_markId >> 60) == kml::kExternalMarkGroupId && renderInfo.m_coloredSymbols &&
+                       renderInfo.m_coloredSymbols->m_addTextSize;
 
     // Here we use visual scale to adapt texts sizes and offsets
     // to different screen resolutions and DPI.
@@ -343,10 +346,49 @@ drape_ptr<dp::OverlayHandle> CreateUserMarkOverlayHandle(UserMarkRenderParams co
   dp::OverlayID overlayId(renderInfo.m_featureId, renderInfo.m_markId, tileKey.GetTileCoords(),
                           kStartUserMarkOverlayIndex + renderInfo.m_index);
   m2::PointD const pivot(renderInfo.m_pivot.x + tileKey.GetTileXOffset(), renderInfo.m_pivot.y);
+  if ((renderInfo.m_markId >> 60) == kml::kExternalMarkGroupId)
+    return make_unique_dp<dp::SelectionHandle>(overlayId, renderInfo.m_anchor, pivot,
+                                               pixelRect.RightTop() - pixelRect.LeftBottom(), m2::PointD(symbolOffset),
+                                               renderInfo.m_minZoom);
   drape_ptr<dp::OverlayHandle> handle = make_unique_dp<dp::SquareHandle>(
       overlayId, renderInfo.m_anchor, pivot, pixelRect.RightTop() - pixelRect.LeftBottom(), renderInfo.m_pixelOffset,
       0 /*priority*/, true /* isBound */, renderInfo.m_minZoom, true /* isBillboard */);
   return handle;
+}
+
+void CacheUserArea(ref_ptr<dp::GraphicsContext> context, TileKey const & tileKey, ref_ptr<dp::TextureManager> textures,
+                   UserLineRenderParams const & params, dp::Batcher & batcher)
+{
+  auto const & fill = *params.m_fill;
+  auto const tileRect = tileKey.GetWrappedDataRect();
+  dp::TextureManager::SymbolRegion region;
+  textures->GetSymbolRegion(fill.m_symbolName, region);
+  auto const & uv = region.GetTexRect();
+  auto const center = tileRect.Center();
+  std::vector<gpu::SolidTexturingVertex> vertices;
+  auto const append = [&](m2::PointD const & point)
+  {
+    auto const local = MapShape::ConvertToLocal(point, center, kShapeCoordScalar);
+    float const u = (point.x - fill.m_textureRect.minX()) / fill.m_textureRect.SizeX();
+    float const v = (point.y - fill.m_textureRect.minY()) / fill.m_textureRect.SizeY();
+    vertices.emplace_back(glsl::vec4(local.x, local.y, 0, 0), glsl::vec2(0, 0),
+                          glsl::vec2(uv.minX() + u * uv.SizeX(), uv.maxY() - v * uv.SizeY()));
+  };
+  vertices.reserve(fill.m_triangles.size());
+  for (auto const & point : fill.m_triangles)
+    append(point);
+  if (vertices.empty())
+    return;
+  // The tile key supplies a local precision origin only; the whole area is independent of map LOD.
+  auto state = CreateRenderState(gpu::Program::Texturing, params.m_depthLayer);
+  state.SetProgram3d(gpu::Program::Texturing);
+  state.SetDepthTestEnabled(false);
+  state.SetColorTexture(region.GetTexture());
+  state.SetTextureIndex(region.GetTextureIndex());
+  state.SetTextureFilter(dp::TextureFilter::Linear);
+  dp::AttributeProvider provider(1, static_cast<uint32_t>(vertices.size()));
+  provider.InitStream(0, gpu::SolidTexturingVertex::GetBindingInfo(), make_ref(vertices.data()));
+  batcher.InsertTriangleList(context, state, make_ref(&provider));
 }
 
 void CacheUserMarks(ref_ptr<dp::GraphicsContext> context, TileKey const & tileKey, ref_ptr<dp::TextureManager> textures,

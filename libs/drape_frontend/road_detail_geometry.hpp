@@ -19,7 +19,9 @@ public:
                               feature::RoadJunctions::Links const & junctions = {}, bool smooth = false,
                               double startOffsetMeters = 0, double endOffsetMeters = 0);
   bool IsValid() const { return m_path.IsValid(); }
+  double Length() const { return m_path.Length(); }
   std::vector<feature::RoadJunction> const & BranchJunctions() const { return m_branchJunctions; }
+  std::vector<feature::RoadJunction> const & EndJunctions() const { return m_endJunctions; }
   std::vector<m2::PointD> Surface(double widthMeters, m2::RectD const & clip, bool dashed = false) const;
   // Junction patches are drawn separately, but their reserved spans must still hide lower labels.
   std::vector<m2::PointD> LabelSurface(double widthMeters, m2::RectD const & clip) const;
@@ -41,5 +43,6 @@ private:
   std::vector<std::pair<double, double>> m_visible;
   // Keep clipping constraints independent of the lifetime of the MWM reader.
   std::vector<feature::RoadJunction> m_branchJunctions;
+  std::vector<feature::RoadJunction> m_endJunctions;
 };
 }  // namespace df

@@ -22,6 +22,8 @@ RoadDetailGeometry::RoadDetailGeometry(std::vector<m2::PointD> const & path,
   {
     auto const & arm = link.Arm();
     auto const & junction = *link.m_junction;
+    if (!smooth && arm.m_featureEndpoint && !junction.HasContinuation() && junction.m_arms.size() >= 3)
+      m_endJunctions.push_back(junction);
     if (junction.HasContinuation())
     {
       if (link.m_armIndex != junction.m_continuationA && link.m_armIndex != junction.m_continuationB)

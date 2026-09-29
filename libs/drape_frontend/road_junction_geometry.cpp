@@ -11,6 +11,7 @@
 #include <cmath>
 #include <limits>
 #include <numeric>
+#include <set>
 
 #include "3party/libtess2/Include/tesselator.h"
 
@@ -520,6 +521,109 @@ std::vector<m2::PointD> BuildRoadJunctionSurface(feature::RoadJunction const & j
                                                  double casingMeters)
 {
   return BuildJunctionSurface(junction, clip, casingMeters, BuildRoadLaneConnections(junction));
+}
+
+std::vector<m2::PointD> BuildRoadJunctionInfill(feature::RoadJunction const & junction,
+                                                JunctionGeometryGetter const & geometry, m2::RectD const & clip)
+{
+  if (!geometry || junction.HasContinuation() || junction.m_arms.size() < 3)
+    return {};
+  auto const bounds = junction.Bounds();
+  std::vector<feature::RoadJunction> nodes{junction};
+  for (auto const & arm : junction.m_arms)
+  {
+    auto const road = geometry(arm.m_featureId);
+    if (!road || !arm.m_featureEndpoint)
+      continue;
+    for (auto const & next : road->EndJunctions())
+    {
+      if (next.m_center == junction.m_center || !bounds.IsPointInside(next.m_center))
+        continue;
+      auto const other = std::find_if(next.m_arms.begin(), next.m_arms.end(), [&](auto const & a)
+      { return a.m_featureId == arm.m_featureId && a.m_forward != arm.m_forward; });
+      if (other == next.m_arms.end() || road->Length() - arm.m_cutDistance - other->m_cutDistance > arm.WidthMeters())
+        continue;
+      // A compound node is drawn once, by its lowest owner ID.
+      if (next.m_ownerFeatureId < junction.m_ownerFeatureId ||
+          (next.m_ownerFeatureId == junction.m_ownerFeatureId && next.m_center < junction.m_center))
+        return {};
+      if (std::none_of(nodes.begin(), nodes.end(), [&](auto const & n) { return n.m_center == next.m_center; }))
+        nodes.push_back(next);
+    }
+  }
+  if (nodes.size() < 2)
+    return {};
+
+  std::vector<m2::PointD> pavement;
+  auto const append = [&](std::vector<m2::PointD> const & mesh)
+  { pavement.insert(pavement.end(), mesh.begin(), mesh.end()); };
+  std::set<uint32_t> roads;
+  double laneWidth = std::numeric_limits<double>::max();
+  for (auto const & node : nodes)
+  {
+    append(BuildRoadJunctionSurface(node, bounds));
+    for (auto const & arm : node.m_arms)
+    {
+      for (auto width : arm.m_widthsCm)
+        laneWidth = std::min(laneWidth, width * 0.01);
+      if (roads.insert(arm.m_featureId).second)
+        if (auto const road = geometry(arm.m_featureId))
+          append(road->Surface(arm.WidthMeters(), bounds));
+    }
+  }
+  double const units =
+      0.00001 / mercator::DistanceOnEarth(junction.m_center, junction.m_center + m2::PointD(0.00001, 0));
+  for (auto & p : pavement)
+    p = (p - junction.m_center) / units;
+  auto const deleter = [](TESStesselator * t) { tessDeleteTess(t); };
+  std::unique_ptr<TESStesselator, decltype(deleter)> unionTess(tessNewTess(nullptr), deleter);
+  for (size_t i = 0; i < pavement.size(); i += 3)
+    tessAddContour(unionTess.get(), 2, pavement.data() + i, sizeof(m2::PointD), 3);
+  TESSreal const normal[]{0, 0, 1};
+  CHECK(tessTesselate(unionTess.get(), TESS_WINDING_NONZERO, TESS_BOUNDARY_CONTOURS, 0, 2, normal), ());
+  auto const * vertices = tessGetVertices(unionTess.get());
+  auto const * contours = tessGetElements(unionTess.get());
+  std::vector<m2::PointD> result;
+  for (int i = 0; i < tessGetElementCount(unionTess.get()); ++i)
+  {
+    auto const start = contours[2 * i], count = contours[2 * i + 1];
+    std::vector<m2::PointD> ring;
+    for (int k = 0; k < count; ++k)
+      ring.emplace_back(vertices[2 * (start + k)], vertices[2 * (start + k) + 1]);
+    double area = 0, perimeter = 0;
+    for (size_t k = 0; k < ring.size(); ++k)
+    {
+      auto const & a = ring[k];
+      auto const & b = ring[(k + 1) % ring.size()];
+      area += CrossProduct(a, b);
+      perimeter += (b - a).Length();
+    }
+    // With an explicit +Z normal, inner contours are clockwise. Close only narrow
+    // residual pockets, not large islands or the exterior between separate roads.
+    if (area >= 0 || -area / 2 > perimeter * laneWidth / 4)
+      continue;
+    std::unique_ptr<TESStesselator, decltype(deleter)> fill(tessNewTess(nullptr), deleter);
+    tessAddContour(fill.get(), 2, ring.data(), sizeof(m2::PointD), static_cast<int>(ring.size()));
+    CHECK(tessTesselate(fill.get(), TESS_WINDING_NONZERO, TESS_POLYGONS, 3, 2, normal), ());
+    auto const * points = tessGetVertices(fill.get());
+    auto const * indices = tessGetElements(fill.get());
+    for (int t = 0; t < tessGetElementCount(fill.get()); ++t)
+    {
+      std::array<m2::PointD, 3> triangle;
+      for (size_t k = 0; k < 3; ++k)
+      {
+        auto const index = indices[3 * t + k];
+        CHECK_NOT_EQUAL(index, TESS_UNDEF, ());
+        triangle[k] = junction.m_center + m2::PointD(points[2 * index], points[2 * index + 1]) * units;
+      }
+      if (CrossProduct(triangle[1] - triangle[0], triangle[2] - triangle[0]) > 0)
+        std::swap(triangle[1], triangle[2]);
+      m2::ClipTriangleByRect(clip, triangle[0], triangle[1], triangle[2],
+                             [&](auto const & a, auto const & b, auto const & c)
+      { result.insert(result.end(), {a, b, c}); });
+    }
+  }
+  return result;
 }
 
 std::vector<m2::PointD> BuildRoadJunctionFillets(feature::RoadJunction const & junction, uint32_t featureId,

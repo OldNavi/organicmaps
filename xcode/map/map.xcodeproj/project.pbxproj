@@ -54,7 +54,9 @@
 		6753464B1A4054E800A0A8C3 /* bookmark.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 675345DC1A4054E800A0A8C3 /* bookmark.hpp */; };
 		675346641A4054E800A0A8C3 /* framework.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 675345F51A4054E800A0A8C3 /* framework.cpp */; };
 		675346651A4054E800A0A8C3 /* framework.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 675345F61A4054E800A0A8C3 /* framework.hpp */; };
+		83CEC129C29788346276E0F1 /* mwm_road_events.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D6B2677E44D5A09DD2AC13AB /* mwm_road_events.cpp */; };
 		675346741A4054E800A0A8C3 /* mwm_url.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 675346051A4054E800A0A8C3 /* mwm_url.cpp */; };
+		CB9E61DC945B7497F3DCCE59 /* mwm_road_events.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 69D9B04CB7B663B558101271 /* mwm_road_events.hpp */; };
 		675346751A4054E800A0A8C3 /* mwm_url.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 675346061A4054E800A0A8C3 /* mwm_url.hpp */; };
 		6753469B1A4054E800A0A8C3 /* track.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6753462C1A4054E800A0A8C3 /* track.cpp */; };
 		6753469C1A4054E800A0A8C3 /* track.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 6753462D1A4054E800A0A8C3 /* track.hpp */; };
@@ -206,7 +208,9 @@
 		675345DC1A4054E800A0A8C3 /* bookmark.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = bookmark.hpp; sourceTree = "<group>"; };
 		675345F51A4054E800A0A8C3 /* framework.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = framework.cpp; sourceTree = "<group>"; };
 		675345F61A4054E800A0A8C3 /* framework.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = framework.hpp; sourceTree = "<group>"; };
+		D6B2677E44D5A09DD2AC13AB /* mwm_road_events.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mwm_road_events.cpp; sourceTree = "<group>"; };
 		675346051A4054E800A0A8C3 /* mwm_url.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mwm_url.cpp; sourceTree = "<group>"; };
+		69D9B04CB7B663B558101271 /* mwm_road_events.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = mwm_road_events.hpp; sourceTree = "<group>"; };
 		675346061A4054E800A0A8C3 /* mwm_url.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = mwm_url.hpp; sourceTree = "<group>"; };
 		6753462C1A4054E800A0A8C3 /* track.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = track.cpp; sourceTree = "<group>"; };
 		6753462D1A4054E800A0A8C3 /* track.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = track.hpp; sourceTree = "<group>"; };
@@ -420,7 +424,9 @@
 				BBB7060923E45F3300A7F29A /* isolines_manager.cpp */,
 				BBB7060A23E45F3300A7F29A /* isolines_manager.hpp */,
 				45F6EE9B1FB1C77500019892 /* mwm_tree.hpp */,
+				D6B2677E44D5A09DD2AC13AB /* mwm_road_events.cpp */,
 				675346051A4054E800A0A8C3 /* mwm_url.cpp */,
+				69D9B04CB7B663B558101271 /* mwm_road_events.hpp */,
 				675346061A4054E800A0A8C3 /* mwm_url.hpp */,
 				34583BCD1C88556800F94664 /* place_page_info.cpp */,
 				34583BCE1C88556800F94664 /* place_page_info.hpp */,
@@ -498,6 +504,7 @@
 				34921F661BFA0A6900737D6E /* api_mark_point.hpp in Headers */,
 				3DBD7B93240D523400ED9FE8 /* elevation_info.hpp in Headers */,
 				3D4E99821FB462B60025B48C /* everywhere_search_params.hpp in Headers */,
+				CB9E61DC945B7497F3DCCE59 /* mwm_road_events.hpp in Headers */,
 				675346751A4054E800A0A8C3 /* mwm_url.hpp in Headers */,
 				6753464B1A4054E800A0A8C3 /* bookmark.hpp in Headers */,
 				BB4E5F271FCC664A00A77250 /* transit_reader.hpp in Headers */,
@@ -681,6 +688,7 @@
 				BBB7060B23E45F3400A7F29A /* isolines_manager.cpp in Sources */,
 				45F6EE9F1FB1C77600019892 /* search_api.cpp in Sources */,
 				BB4E5F251FCC664A00A77250 /* transit_display.cpp in Sources */,
+				83CEC129C29788346276E0F1 /* mwm_road_events.cpp in Sources */,
 				675346741A4054E800A0A8C3 /* mwm_url.cpp in Sources */,
 				347B60761DD9926D0050FA24 /* traffic_manager.cpp in Sources */,
 				BBFC7E3A202D29C000531BE7 /* user_mark_layer.cpp in Sources */,

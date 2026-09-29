@@ -125,7 +125,13 @@ public class NavMenu implements DefaultLifecycleObserver
   @Override
   public void onDestroy(@NonNull LifecycleOwner owner)
   {
+    destroy();
+  }
+
+  public void destroy()
+  {
     TtsPlayer.removeStateChangedListener(mTtsStateListener);
+    mActivity.getLifecycle().removeObserver(this);
   }
 
   private void onStopClicked()
@@ -183,6 +189,19 @@ public class NavMenu implements DefaultLifecycleObserver
   public int getBottomSheetState()
   {
     return mNavBottomSheetBehavior.getState();
+  }
+
+  public void refresh()
+  {
+    refreshTts();
+    final int state = getBottomSheetState();
+    if (state == BottomSheetBehavior.STATE_EXPANDED || state == BottomSheetBehavior.STATE_COLLAPSED
+        || state == BottomSheetBehavior.STATE_HIDDEN)
+    {
+      final boolean expanded = state == BottomSheetBehavior.STATE_EXPANDED;
+      mBottomSheetBackground.setVisibility(expanded ? View.VISIBLE : View.GONE);
+      mBottomSheetBackground.setAlpha(expanded ? 1 : 0);
+    }
   }
 
   public void refreshTts()

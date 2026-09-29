@@ -45,7 +45,8 @@ import java.util.stream.Collectors;
 /** Navigation protocol consumed by instrument-cluster hosts, including RoxPremium. */
 public final class NavigationProvider extends ContentProvider
 {
-  public static final String AUTHORITY = "organicmaps.auto.navi";
+  public static final String AUTHORITY =
+      "profileable".equals(BuildConfig.BUILD_TYPE) ? BuildConfig.APPLICATION_ID + ".navi" : "organicmaps.auto.navi";
   public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
   private static final String[] DATA_PATHS = {"guidance",        "maneuver", "lanes",      "speed_camera",

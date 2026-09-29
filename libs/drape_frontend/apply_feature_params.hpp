@@ -8,6 +8,7 @@
 #include "indexer/feature_decl.hpp"
 
 #include <functional>
+#include <memory>
 
 namespace osm
 {
@@ -16,6 +17,12 @@ class Editor;
 namespace df
 {
 class MapShape;
+#ifdef OMIM_AUTO
+class RoadDetailGeometry;
+class RoadLabelOcclusion;
+class RoadDecks;
+using RoadGeometryGetter = std::function<std::shared_ptr<RoadDetailGeometry const>(FeatureID const &)>;
+#endif
 
 /// Holds everything that calculated (initialized) _once_ for the tile processing.
 struct ApplyFeatureParams
@@ -30,6 +37,9 @@ struct ApplyFeatureParams
   double m_currentScaleGtoP, m_trafficScalePtoG;
   double m_minSegmentSqrLength;
 #ifdef OMIM_AUTO
+  RoadGeometryGetter m_roadGeometry;
+  std::shared_ptr<RoadLabelOcclusion> m_roadLabels;
+  std::shared_ptr<RoadDecks> m_roadDecks;
   PoiDensity m_poiDensity = PoiDensity::High;
 #endif
 

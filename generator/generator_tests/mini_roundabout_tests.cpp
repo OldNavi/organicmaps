@@ -1,5 +1,6 @@
 #include "testing/testing.hpp"
 
+#include "generator/generator_tests_support/test_with_classificator.hpp"
 #include "generator/mini_roundabout_transformer.hpp"
 #include "generator/osm_element.hpp"
 
@@ -18,6 +19,7 @@
 namespace mini_roundabout_tests
 {
 using namespace generator;
+using generator::tests_support::TestWithClassificator;
 
 OsmElement MiniRoundabout(uint64_t id, double lat, double lon)
 {
@@ -256,5 +258,40 @@ UNIT_TEST(Manage_MiniRoundabout_EqualPoints)
   AddPointToCircle(circlePlain, circlePlain[0]);
   AddPointToCircle(circlePlain, circlePlain[0]);
   TEST_EQUAL(circlePlain.size(), 16, ());
+}
+UNIT_CLASS_TEST(TestWithClassificator, MiniRoundabout_MotorVehicleAccessOnFootway)
+{
+  MiniRoundaboutInfo info;
+  info.m_id = 1;
+  info.m_coord = {55.7, 37.6};
+  info.m_ways = {122571580, 2};
+  std::vector<MiniRoundaboutInfo> const roundabouts{info};
+  feature::SingleAffiliation affiliation("Russia_Moscow");
+  MiniRoundaboutTransformer transformer(roundabouts, affiliation);
+  auto const center = mercator::FromLatLon(info.m_coord);
+  feature::FeatureBuilder footway;
+  footway.SetOsmId(base::MakeOsmWay(122571580));
+  footway.SetLinear();
+  footway.AssignPoints({center, center + m2::PointD(0.001, 0)});
+  auto const footwayType = classif().GetTypeByPath({"highway", "footway"});
+  auto const serviceType = classif().GetTypeByPath({"highway", "service"});
+  auto const roundaboutType = classif().GetTypeByPath({"junction", "roundabout"});
+  footway.AddType(footwayType);
+  footway.AddType(classif().GetTypeByPath({"hwtag", "yescar"}));
+  TEST(MiniRoundaboutInfo::IsProcessRoad(footway), ());
+  transformer.AddRoad(std::move(footway));
+  feature::FeatureBuilder service;
+  service.SetOsmId(base::MakeOsmWay(2));
+  service.SetLinear();
+  service.AssignPoints({center, center + m2::PointD(-0.001, 0)});
+  service.AddType(serviceType);
+  transformer.AddRoad(std::move(service));
+
+  std::vector<feature::FeatureBuilder> output;
+  transformer.ProcessRoundabouts([&](auto const & feature) { output.push_back(feature); });
+  TEST_EQUAL(output.size(), 3, ());
+  TEST(output[0].HasType(roundaboutType), ());
+  TEST(output[0].HasType(serviceType), ());
+  TEST(std::any_of(output.begin(), output.end(), [&](auto const & fb) { return fb.HasType(footwayType); }), ());
 }
 }  // namespace mini_roundabout_tests

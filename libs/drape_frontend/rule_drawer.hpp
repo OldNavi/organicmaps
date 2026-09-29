@@ -43,6 +43,14 @@ public:
   ~RuleDrawer();
 
   void operator()(FeatureType & f);
+#ifdef OMIM_AUTO
+  void SetRoadGeometryGetter(RoadGeometryGetter getter) { m_applyParams.m_roadGeometry = std::move(getter); }
+  void SetRoadDecks(std::shared_ptr<RoadDecks> decks) { m_applyParams.m_roadDecks = std::move(decks); }
+  void SetRoadLabelOcclusion(std::shared_ptr<RoadLabelOcclusion> labels)
+  {
+    m_applyParams.m_roadLabels = std::move(labels);
+  }
+#endif
 
 #ifdef DRAW_TILE_NET
   void DrawTileNet();

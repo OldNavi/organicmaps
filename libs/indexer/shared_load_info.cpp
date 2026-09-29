@@ -10,11 +10,13 @@ namespace feature
 {
 SharedLoadInfo::SharedLoadInfo(FilesContainerR const & cont, DataHeader const & header,
                                feature::FeaturesOffsetsTable const * relTable,
-                               indexer::MetadataDeserializer * metaDeserializer)
+                               indexer::MetadataDeserializer * metaDeserializer,
+                               feature::RoadDetailsReader const * roadDetails)
   : m_cont(cont)
   , m_header(header)
   , m_relTable(relTable)
   , m_metaDeserializer(metaDeserializer)
+  , m_roadDetails(roadDetails)
 {
   if (m_relTable)
     m_relsReader = m_cont.GetReader(RELATIONS_FILE_TAG);

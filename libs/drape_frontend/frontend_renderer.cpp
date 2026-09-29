@@ -31,6 +31,8 @@
 
 #include "platform/trace.hpp"
 
+#include "geometry/mercator.hpp"
+
 #include "base/assert.hpp"
 #include "base/logging.hpp"
 #include "base/stl_helpers.hpp"

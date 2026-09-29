@@ -229,7 +229,9 @@ public final class Map
     if (!mSurfaceCreated || !mSurfaceAttached)
       return;
 
-    nativeDetachSurface(!activityIsChangingConfigurations);
+    // Automotive maps are frequently hidden by other head-unit screens. Keep the existing
+    // GPU tiles and contexts, as for configuration changes, while releasing the window surface.
+    nativeDetachSurface(!activityIsChangingConfigurations && !Config.isAuto());
     mSurfaceCreated = !nativeDestroySurfaceOnDetach();
     mSurfaceAttached = false;
   }

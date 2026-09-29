@@ -1,3 +1,4 @@
+#include "base/math.hpp"
 #include "geometry/mercator.hpp"
 #include "routing/camera_coverage.hpp"
 #include "routing/road_events.hpp"
@@ -108,6 +109,24 @@ UNIT_TEST(RoadEvents_NormalizedDirection)
   TEST(!event.MatchesBearing(90), ());
   event.m_directionType = 0;
   TEST(event.MatchesBearing(90), ());
+}
+
+UNIT_TEST(RoadEvents_RejectNonFiniteBearings)
+{
+  RoadEvent event;
+  for (auto kind : {RoadEventKind::Camera, RoadEventKind::Bump})
+  {
+    event.m_kind = kind;
+    for (uint8_t directionType : {0, 1, 2})
+    {
+      event.m_directionType = directionType;
+      for (double bearing : {math::Nan(), math::Infinity(), -math::Infinity()})
+      {
+        TEST(!event.MatchesBearing(bearing), (static_cast<int>(kind), directionType, bearing));
+        TEST(!event.MatchesRoadBearing(bearing), (static_cast<int>(kind), directionType, bearing));
+      }
+    }
+  }
 }
 
 UNIT_TEST(RoadEvents_DisableRetainsDatabase)

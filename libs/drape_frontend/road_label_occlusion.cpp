@@ -1,4 +1,5 @@
 #include "drape_frontend/road_label_occlusion.hpp"
+#include "drape_frontend/road_junction_geometry.hpp"
 
 #include <algorithm>
 #include <array>
@@ -12,6 +13,12 @@ void RoadLabelOcclusion::Add(int layer, double widthMeters, std::shared_ptr<Road
     m_roads.push_back({layer, widthMeters, std::move(geometry), {}});
 }
 
+void RoadLabelOcclusion::AddJunction(int layer, feature::RoadJunction const & junction)
+{
+  if (!junction.HasContinuation())
+    m_junctions.push_back({layer, junction, {}});
+}
+
 std::vector<m2::SharedSpline> RoadLabelOcclusion::Clip(std::vector<m2::SharedSpline> const & splines, int layer,
                                                        double paddingMeters, m2::RectD const & tile)
 {
@@ -21,14 +28,8 @@ std::vector<m2::SharedSpline> RoadLabelOcclusion::Clip(std::vector<m2::SharedSpl
     m2::RectD m_bounds;
   };
   std::vector<Triangle> triangles;
-  for (auto & road : m_roads)
+  auto const append = [&](std::vector<m2::PointD> const & surface)
   {
-    if (road.m_layer <= layer)
-      continue;
-    auto [it, inserted] = road.m_surfaces.try_emplace(paddingMeters);
-    if (inserted)
-      it->second = road.m_geometry->Surface(road.m_width + 2 * paddingMeters, tile);
-    auto const & surface = it->second;
     for (size_t i = 0; i < surface.size(); i += 3)
     {
       if (std::abs(CrossProduct(surface[i + 1] - surface[i], surface[i + 2] - surface[i])) < 1e-20)
@@ -38,6 +39,24 @@ std::vector<m2::SharedSpline> RoadLabelOcclusion::Clip(std::vector<m2::SharedSpl
         triangle.m_bounds.Add(point);
       triangles.push_back(triangle);
     }
+  };
+  for (auto & road : m_roads)
+  {
+    if (road.m_layer <= layer)
+      continue;
+    auto [it, inserted] = road.m_surfaces.try_emplace(paddingMeters);
+    if (inserted)
+      it->second = road.m_geometry->LabelSurface(road.m_width + 2 * paddingMeters, tile);
+    append(it->second);
+  }
+  for (auto & junction : m_junctions)
+  {
+    if (junction.m_layer <= layer)
+      continue;
+    auto [it, inserted] = junction.m_surfaces.try_emplace(paddingMeters);
+    if (inserted)
+      it->second = BuildRoadJunctionSurface(junction.m_geometry, tile, 2 * paddingMeters);
+    append(it->second);
   }
   if (triangles.empty())
     return splines;

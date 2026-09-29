@@ -119,6 +119,27 @@ UNIT_TEST(RoadJunctionGeometry_MergeOnePlusOneIntoTwoAndSplit)
   TEST_EQUAL(connections[1].m_outArm, 0, ());
 }
 
+UNIT_TEST(RoadJunctionGeometry_CloseExitDoesNotInterleaveMainLanes)
+{
+  auto const p = mercator::FromLatLon(55.707278, 37.835008);
+  feature::RoadJunction junction;
+  junction.m_center = p;
+  junction.m_arms = {Arm(10, false, p, {-30, 0}, 7), Arm(11, true, p, {30, 0}, 6), Arm(12, true, p, {30, -5}, 1)};
+  junction.m_arms[0].m_turns.assign(7, feature::RoadDetails::Through);
+  junction.m_arms[0].m_turns.back() = feature::RoadDetails::Right;
+  auto const lanes = df::BuildRoadLaneConnections(junction);
+  TEST_EQUAL(lanes.size(), 7, ());
+  for (size_t i = 0; i < 6; ++i)
+  {
+    TEST_EQUAL(lanes[i].m_outArm, 1, (i));
+    TEST_EQUAL(lanes[i].m_outLane, i, ());
+  }
+  TEST_EQUAL(lanes.back().m_outArm, 2, ());
+  auto const mesh = df::BuildRoadJunctionMesh(junction, mercator::Bounds::FullRect());
+  TEST(!mesh.m_markings.empty(), ("A valid exit must not erase every through-lane divider"));
+  TEST(df::SubtractRoadTriangles(mesh.m_markings, mesh.m_surface).empty(), ());
+}
+
 UNIT_TEST(RoadJunctionGeometry_WidthTransitionHasNoCapsule)
 {
   auto const p = mercator::FromLatLon(55.62, 37.79);
@@ -489,6 +510,47 @@ UNIT_TEST(RoadLabels_UpperCarriagewaySplitsOnlyLowerLayer)
   }
 }
 
+UNIT_TEST(RoadLabels_JunctionCutsDoNotExposeLowerRoadNames)
+{
+  auto const p = mercator::FromLatLon(55.70799, 37.8352);
+  double const unit = 0.00001 / mercator::DistanceOnEarth(p, p + m2::PointD(0.00001, 0));
+  feature::RoadJunction start, end;
+  start.m_center = p + m2::PointD(0, -35) * unit;
+  end.m_center = p + m2::PointD(0, 35) * unit;
+  feature::RoadJunctionArm arm;
+  arm.m_featureId = 1;
+  arm.m_featureEndpoint = true;
+  arm.m_forward = true;
+  arm.m_cutDistance = 28;
+  arm.m_position = p + m2::PointD(0, -7) * unit;
+  arm.m_directionAway = arm.m_nodeDirectionAway = {0, 1};
+  arm.m_normalAwayPerMeter = {-unit, 0};
+  arm.m_widthsCm = {350, 350, 350, 350, 350, 350};
+  start.m_arms.push_back(arm);
+  arm.m_forward = false;
+  arm.m_nodeDistance = 70;
+  arm.m_position = p + m2::PointD(0, 7) * unit;
+  arm.m_directionAway = arm.m_nodeDirectionAway = {0, -1};
+  arm.m_normalAwayPerMeter = {unit, 0};
+  end.m_arms.push_back(arm);
+  auto upper = std::make_shared<df::RoadDetailGeometry>(std::vector<m2::PointD>{start.m_center, end.m_center},
+                                                        feature::RoadJunctions::Links{{&start, 0}, {&end, 0}});
+  df::RoadLabelOcclusion labels;
+  labels.Add(1, 21, upper);
+  // The short MKAD bridge reserves 40% at each end for separate junction surfaces.
+  // The avenue crosses these reserved spans, not the remaining central ribbon.
+  for (double y : {-20.0, 20.0})
+  {
+    std::vector<m2::SharedSpline> lower{
+        m2::SharedSpline({p + m2::PointD(-50, y) * unit, p + m2::PointD(50, y) * unit})};
+    auto const clipped = labels.Clip(lower, 0, 1, mercator::Bounds::FullRect());
+    TEST_EQUAL(clipped.size(), 2, (y));
+    TEST_LESS(clipped[0]->GetPath().back().x, p.x - 10 * unit, ());
+    TEST_GREATER(clipped[1]->GetPath().front().x, p.x + 10 * unit, ());
+    TEST_EQUAL(labels.Clip(lower, 1, 1, mercator::Bounds::FullRect()).size(), 1, ());
+  }
+}
+
 UNIT_TEST(RoadLabels_AllowForGlyphHeightNearParallelUpperRoad)
 {
   auto const p = mercator::FromLatLon(55.62, 37.79);
@@ -558,6 +620,41 @@ UNIT_TEST(RoadJunctionGeometry_BranchSurfaceAndPaintStopAtThroughCarriageway)
 
 namespace road_detail_geometry_tests
 {
+UNIT_TEST(RoadJunctionGeometry_ShortLinkTransitionStopsAtThroughRoad)
+{
+  auto const p = mercator::FromLatLon(55.653509, 37.836131);
+  double const unit = 0.00001 / mercator::DistanceOnEarth(p, p + m2::PointD(0.00001, 0));
+  auto const q = p - m2::PointD(0, 4 * unit);
+  feature::RoadJunction junction;
+  junction.m_center = p;
+  junction.m_continuationA = 0;
+  junction.m_continuationB = 1;
+  junction.m_arms = {Arm(1, false, p, {-16, 0}, 3), Arm(2, true, p, {16, 0}, 3), Arm(3, true, p, {0, -1.6}, 1)};
+  feature::RoadJunction transition;
+  transition.m_center = q;
+  transition.m_ownerFeatureId = 4;
+  transition.m_arms = {Arm(3, false, q, {0, 1.6}, 1), Arm(4, true, q, {0, -16}, 3)};
+  junction.m_arms[2].m_featureEndpoint = transition.m_arms[0].m_featureEndpoint = true;
+  transition.m_arms[0].m_nodeDistance = 4;
+  std::map<uint32_t, std::shared_ptr<df::RoadDetailGeometry const>> roads;
+  roads[1] = std::make_shared<df::RoadDetailGeometry>(std::vector<m2::PointD>{p - m2::PointD(100 * unit, 0), p});
+  roads[2] = std::make_shared<df::RoadDetailGeometry>(std::vector<m2::PointD>{p, p + m2::PointD(100 * unit, 0)});
+  roads[3] = std::make_shared<df::RoadDetailGeometry>(std::vector<m2::PointD>{p, q},
+                                                      feature::RoadJunctions::Links{{&junction, 2}, {&transition, 0}});
+  roads[4] = std::make_shared<df::RoadDetailGeometry>(std::vector<m2::PointD>{q, q - m2::PointD(0, 100 * unit)});
+  auto const getter = [&](uint32_t id) { return roads.at(id); };
+  auto const clip = mercator::Bounds::FullRect();
+  auto const mesh = df::BuildRoadJunctionMesh(transition, clip);
+  TEST(Contains(mesh.m_surface, q), ("The transition overlaps the through road"));
+  auto const mask = df::BuildRoadBranchMask(transition, 4, getter, clip);
+  TEST(!mask.empty(), ("The wide transition owner inherits clipping across the short link"));
+  auto const surface = df::SubtractRoadTriangles(mesh.m_surface, mask);
+  TEST(!Contains(surface, q), ("No tongue on the main carriageway"));
+  TEST(Contains(surface, q - m2::PointD(0, 10 * unit)), ("The widening outside the main road remains"));
+  for (auto const & point : df::SubtractRoadTriangles(mesh.m_markings, mask))
+    TEST_LESS_OR_EQUAL(point.y, p.y - 5.249 * unit, ("Paint follows the same boundary"));
+}
+
 UNIT_TEST(RoadJunctionGeometry_RecordedBesedinskoeMergeKeepsNarrowCutPlane)
 {
   feature::RoadJunction junction;

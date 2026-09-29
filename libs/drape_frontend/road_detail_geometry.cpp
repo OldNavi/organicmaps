@@ -4,7 +4,9 @@
 #include "geometry/mercator.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <span>
 
 namespace df
 {
@@ -22,6 +24,8 @@ RoadDetailGeometry::RoadDetailGeometry(std::vector<m2::PointD> const & path,
     auto const & junction = *link.m_junction;
     if (junction.HasContinuation())
     {
+      if (link.m_armIndex != junction.m_continuationA && link.m_armIndex != junction.m_continuationB)
+        m_branchJunctions.push_back(junction);
       if (arm.m_featureEndpoint &&
           (link.m_armIndex == junction.m_continuationA || link.m_armIndex == junction.m_continuationB))
       {
@@ -105,7 +109,7 @@ std::vector<m2::PointD> RoadDetailGeometry::JunctionPatch(feature::RoadJunction 
 }
 
 void RoadDetailGeometry::Strip(double offsetMeters, double widthMeters, bool dashed, m2::RectD const & clip,
-                               std::vector<m2::PointD> & triangles, double from, double to) const
+                               std::vector<m2::PointD> & triangles, double from, double to, bool clipAtJunctions) const
 {
   auto const addTriangle = [&](m2::PointD const & a, m2::PointD const & b, m2::PointD const & c)
   {
@@ -116,6 +120,9 @@ void RoadDetailGeometry::Strip(double offsetMeters, double widthMeters, bool das
     else
       m2::ClipTriangleByRect(clip, a, c, b, emit);
   };
+  std::array const fullRange{std::pair(0.0, m_path.Length())};
+  std::span<std::pair<double, double> const> const visible =
+      clipAtJunctions ? std::span<std::pair<double, double> const>(m_visible) : fullRange;
   for (size_t i = 1; i < m_path.Points().size(); ++i)
   {
     auto const a = m_path.Points()[i - 1] + m_path.Normals()[i - 1] * (offsetMeters + widthMeters / 2);
@@ -140,7 +147,7 @@ void RoadDetailGeometry::Strip(double offsetMeters, double widthMeters, bool das
     double constexpr kDashMeters = 3.0;
     double const start = m_path.Distances()[i - 1];
     double const finish = m_path.Distances()[i];
-    for (auto const & range : m_visible)
+    for (auto const & range : visible)
     {
       double const begin = std::max({start, range.first, from});
       double const end = std::min({finish, range.second, to});
@@ -166,6 +173,13 @@ std::vector<m2::PointD> RoadDetailGeometry::Surface(double widthMeters, m2::Rect
 {
   std::vector<m2::PointD> triangles;
   Strip(0, widthMeters, dashed, clip, triangles);
+  return triangles;
+}
+
+std::vector<m2::PointD> RoadDetailGeometry::LabelSurface(double widthMeters, m2::RectD const & clip) const
+{
+  std::vector<m2::PointD> triangles;
+  Strip(0, widthMeters, false, clip, triangles, 0, m_path.Length(), false /* clipAtJunctions */);
   return triangles;
 }
 

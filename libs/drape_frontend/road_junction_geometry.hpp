@@ -32,7 +32,15 @@ struct RoadLaneConnection
 {
   size_t m_inArm = 0, m_inLane = 0, m_outArm = 0, m_outLane = 0;
   std::vector<m2::PointD> m_path;
+  std::vector<m2::PointD> m_leftEdge, m_rightEdge;
 };
+
+struct RoadJunctionMesh
+{
+  std::vector<m2::PointD> m_surface;
+  std::vector<m2::PointD> m_markings;
+};
+RoadJunctionMesh BuildRoadJunctionMesh(feature::RoadJunction const & junction, m2::RectD const & clip);
 
 std::vector<RoadLaneConnection> BuildRoadLaneConnections(feature::RoadJunction const & junction);
 std::vector<m2::PointD> BuildRoadJunctionSurface(feature::RoadJunction const & junction, m2::RectD const & clip,

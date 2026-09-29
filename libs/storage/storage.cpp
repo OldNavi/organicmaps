@@ -59,6 +59,8 @@ void DeleteFromDiskWithIndexes(LocalCountryFile const & localFile, MapFileType t
 {
   DeleteCountryIndexes(localFile);
   localFile.DeleteFromDisk(type);
+  if (type == MapFileType::Map && !localFile.IsInBundle())
+    Platform::RemoveFileIfExists(localFile.GetPath(type) + IMPORTED_MAP_MARKER_EXTENSION);
 }
 
 CountryTree::Node const & LeafNodeFromCountryId(CountryTree const & root, CountryId const & countryId)
@@ -552,7 +554,7 @@ Status Storage::CountryStatusEx(CountryId const & countryId) const
   if (GetRemoteSize(countryFile) == 0)
     return Status::UnknownError;
 
-  if (localFile->GetVersion() != m_currentVersion)
+  if (localFile->GetVersion() < m_currentVersion)
     return Status::OnDiskOutOfDate;
   return Status::OnDisk;
 }
@@ -1040,7 +1042,10 @@ void Storage::RegisterLocalFile(platform::LocalCountryFile const & localFile)
 
   /// Funny, but ptr->GetCountryFile() has valid name only. Size and hash are not initialized.
   /// @todo Store only name (CountryId) in LocalCountryFile instead of CountryFile?
-  if (m_currentVersion == ptr->GetVersion() && size != GetCountryFile(countryId).GetRemoteSize())
+  if (m_currentVersion == ptr->GetVersion() && IsLeaf(countryId) &&
+      (ptr->IsInBundle() ||
+       !Platform::IsFileExistsByFullPath(ptr->GetPath(MapFileType::Map) + IMPORTED_MAP_MARKER_EXTENSION)) &&
+      size != GetCountryFile(countryId).GetRemoteSize())
     LOG(LERROR, ("Inconsistent MWM and version for", *ptr));
 }
 

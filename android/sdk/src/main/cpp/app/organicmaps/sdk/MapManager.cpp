@@ -1,5 +1,7 @@
 #include "Framework.hpp"
 
+#include "map/search_api.hpp"
+
 #include "app/organicmaps/sdk/core/jni_helper.hpp"
 #include "app/organicmaps/sdk/core/jni_java_methods.hpp"
 
@@ -558,4 +560,37 @@ JNIEXPORT jstring Java_app_organicmaps_sdk_downloader_MapManager_nativeGetSelect
   storage::CountryId const & res = g_framework->GetPlacePageInfo().GetCountryId();
   return (res == storage::kInvalidCountryId ? nullptr : jni::ToJavaString(env, res));
 }
+JNIEXPORT jobjectArray Java_app_organicmaps_sdk_downloader_MapManager_nativeGetInstalledMapVersions(JNIEnv * env,
+                                                                                                    jclass)
+{
+  std::vector<std::shared_ptr<MwmInfo>> maps;
+  g_framework->NativeFramework()->GetDataSource().GetMwmsInfo(maps);
+  std::vector<std::string> result;
+  for (auto const & map : maps)
+  {
+    if (!map->IsRegistered())
+      continue;
+    result.push_back(map->GetCountryName());
+    result.push_back(std::to_string(map->m_version.GetSecondsSinceEpoch()));
+  }
+  return jni::ToJavaStringArray(env, result);
+}
+
+JNIEXPORT jboolean Java_app_organicmaps_sdk_downloader_MapManager_nativeBeginMapImport(JNIEnv *, jclass)
+{
+  auto & framework = *g_framework->NativeFramework();
+  auto & routing = framework.GetRoutingManager();
+  if (GetThreadedStorage().IsDownloadInProgress() || routing.IsRoutingActive() || routing.IsRouteBuilding())
+    return false;
+  framework.GetSearchAPI().CancelAllSearches();
+  routing.ResetRoutingSession();
+  g_framework->RemoveLocalMaps();
+  return true;
+}
+
+JNIEXPORT void Java_app_organicmaps_sdk_downloader_MapManager_nativeEndMapImport(JNIEnv *, jclass)
+{
+  g_framework->AddLocalMaps();
+}
+
 }  // extern "C"

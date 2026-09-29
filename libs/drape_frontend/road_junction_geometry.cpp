@@ -21,11 +21,11 @@ namespace
 using Arm = feature::RoadJunctionArm;
 
 std::vector<m2::PointD> Curve(m2::PointD const & a, m2::PointD const & aTangent, m2::PointD const & b,
-                              m2::PointD const & bTangent, double firstControlFactor = 1)
+                              m2::PointD const & bTangent, double firstControlFactor = 1, double lastControlFactor = 1)
 {
   double const control = (b - a).Length() * 0.4;
   auto const c = a + aTangent * (control * firstControlFactor);
-  auto const d = b - bTangent * control;
+  auto const d = b - bTangent * (control * lastControlFactor);
   std::vector<m2::PointD> path;
   for (int i = 0; i <= 20; ++i)
   {
@@ -65,8 +65,38 @@ void AddRibbon(std::vector<m2::PointD> const & points, m2::PointD const & startN
 }
 
 bool AddBalancedMergeLanes(feature::RoadJunction const & junction, double casing, m2::RectD const & clip,
-                           std::vector<m2::PointD> & triangles)
+                           std::vector<RoadLaneConnection> const & connections, std::vector<m2::PointD> & triangles)
 {
+  if (!connections.empty())
+  {
+    for (auto const & connection : connections)
+    {
+      auto const & in = junction.m_arms[connection.m_inArm];
+      auto const & out = junction.m_arms[connection.m_outArm];
+      auto const edge = [&](size_t index, bool left)
+      {
+        double const t = static_cast<double>(index) / (connection.m_path.size() - 1);
+        double const width =
+            std::lerp(in.m_widthsCm[connection.m_inLane] * 0.01, out.m_widthsCm[connection.m_outLane] * 0.01, t);
+        auto const extra = (connection.m_leftEdge[index] - connection.m_rightEdge[index]) * (casing / (2 * width));
+        return left ? connection.m_leftEdge[index] + extra : connection.m_rightEdge[index] - extra;
+      };
+      auto const emit = [&](m2::PointD a, m2::PointD b, m2::PointD c)
+      {
+        if (CrossProduct(b - a, c - a) > 0)
+          std::swap(b, c);
+        m2::ClipTriangleByRect(clip, a, b, c, [&](auto const & p, auto const & q, auto const & r)
+        { triangles.insert(triangles.end(), {p, q, r}); });
+      };
+      for (size_t i = 1; i < connection.m_path.size(); ++i)
+      {
+        auto const a = edge(i - 1, true), b = edge(i - 1, false), c = edge(i, true), d = edge(i, false);
+        emit(a, b, c);
+        emit(b, d, c);
+      }
+    }
+    return true;
+  }
   if (junction.m_arms.size() != 3)
     return false;
   auto const wideIt =
@@ -238,12 +268,6 @@ std::vector<m2::PointD> Outline(feature::RoadJunction const & junction, double c
   return boundary;
 }
 
-std::vector<m2::PointD> ClipMarkings(feature::RoadJunction const & junction, m2::RectD const & clip,
-                                     std::vector<m2::PointD> const & markings)
-{
-  return IntersectRoadTriangles(markings, BuildRoadJunctionSurface(junction, clip));
-}
-
 void AddSeparator(std::vector<m2::PointD> const & path, m2::RectD const & clip, std::vector<m2::PointD> & triangles)
 {
   RoadDetailGeometry geometry(path);
@@ -361,12 +385,49 @@ std::vector<RoadLaneConnection> BuildRoadLaneConnections(feature::RoadJunction c
   auto const & reference = junction.m_arms[(outArms == 1 ? outgoing : incoming).front().m_arm];
   auto const left = reference.m_normalAwayPerMeter * (reference.m_forward ? 1 : -1);
   auto const order = [&](Port const & a, Port const & b)
-  { return DotProduct(a.m_point - junction.m_center, left) > DotProduct(b.m_point - junction.m_center, left); };
-  // Intrinsic order on the single arm is already left-to-right in travel direction.
+  {
+    if (a.m_arm == b.m_arm)
+      return a.m_lane < b.m_lane;
+    auto const & first = junction.m_arms[a.m_arm];
+    auto const & second = junction.m_arms[b.m_arm];
+    // Order road bundles first. Sorting individual lane centres interleaves a close ramp
+    // with the main carriageway and assigns its turn to the wrong lane.
+    double const firstSide = DotProduct(first.m_nodeDirectionAway, left);
+    double const secondSide = DotProduct(second.m_nodeDirectionAway, left);
+    if (firstSide != secondSide)
+      return firstSide > secondSide;
+    double const position = DotProduct(first.m_position - second.m_position, left);
+    return position != 0 ? position > 0 : a.m_arm < b.m_arm;
+  };
   if (inArms != 1)
-    std::stable_sort(incoming.begin(), incoming.end(), order);
+    std::sort(incoming.begin(), incoming.end(), order);
   if (outArms != 1)
-    std::stable_sort(outgoing.begin(), outgoing.end(), order);
+    std::sort(outgoing.begin(), outgoing.end(), order);
+  auto const clearance = [&](std::vector<Port> const & ports, std::vector<Port> const & opposite)
+  {
+    double factor = 1;
+    auto const normal = left.Normalize();
+    for (size_t i = 1; i < ports.size(); ++i)
+    {
+      auto const & a = ports[i - 1];
+      auto const & b = ports[i];
+      if (a.m_arm == b.m_arm)
+        continue;
+      auto const & first = junction.m_arms[a.m_arm];
+      auto const & second = junction.m_arms[b.m_arm];
+      auto const ca = a.m_point - first.m_directionAway * ((opposite[i - 1].m_point - a.m_point).Length() * 0.4);
+      auto const cb = b.m_point - second.m_directionAway * ((opposite[i].m_point - b.m_point).Length() * 0.4);
+      double const gap = DotProduct(a.m_point - b.m_point, normal);
+      double const controlGap = DotProduct(ca - cb, normal);
+      double const laneGap = (first.m_widthsCm[a.m_lane] + second.m_widthsCm[b.m_lane]) * 0.005 *
+                             std::max(first.m_normalAwayPerMeter.Length(), second.m_normalAwayPerMeter.Length());
+      if (controlGap < laneGap && controlGap < gap)
+        factor = std::min(factor, std::clamp((gap - laneGap) / (gap - controlGap), 0.0, 1.0));
+    }
+    return factor;
+  };
+  double const inControl = inArms == 1 ? 1 : clearance(incoming, outgoing);
+  double const outControl = outArms == 1 ? 1 : clearance(outgoing, incoming);
   std::vector<RoadLaneConnection> connections;
   for (size_t i = 0; i < incoming.size(); ++i)
   {
@@ -376,14 +437,48 @@ std::vector<RoadLaneConnection> BuildRoadLaneConnections(feature::RoadJunction c
     auto const & outArm = junction.m_arms[out.m_arm];
     if (!AllowsTurn(inArm.m_turns[in.m_lane], -inArm.m_directionAway, outArm.m_directionAway))
       return {};
-    connections.push_back({in.m_arm, in.m_lane, out.m_arm, out.m_lane,
-                           Curve(in.m_point, -inArm.m_directionAway, out.m_point, outArm.m_directionAway)});
+    RoadLaneConnection connection;
+    connection.m_inArm = in.m_arm;
+    connection.m_inLane = in.m_lane;
+    connection.m_outArm = out.m_arm;
+    connection.m_outLane = out.m_lane;
+    m2::MetricPolyline path(
+        Curve(in.m_point, -inArm.m_directionAway, out.m_point, outArm.m_directionAway, inControl, outControl));
+    if (!path.IsValid())
+      return {};
+    path.SetFrame(0, in.m_point, -inArm.m_normalAwayPerMeter);
+    path.SetFrame(path.Length(), out.m_point, outArm.m_normalAwayPerMeter);
+    for (size_t point = 0; point <= 20; ++point)
+    {
+      double const t = point / 20.0;
+      auto const frame = path.Sample(path.Length() * t);
+      double const width = std::lerp(inArm.m_widthsCm[in.m_lane] * 0.01, outArm.m_widthsCm[out.m_lane] * 0.01, t);
+      connection.m_path.push_back(frame.m_position);
+      connection.m_leftEdge.push_back(frame.m_position + frame.m_leftPerMeter * (width / 2));
+      connection.m_rightEdge.push_back(frame.m_position - frame.m_leftPerMeter * (width / 2));
+    }
+    connections.push_back(std::move(connection));
+  }
+  for (size_t i = 1; i < connections.size(); ++i)
+  {
+    auto & a = connections[i - 1];
+    auto & b = connections[i];
+    size_t const first = a.m_inArm == b.m_inArm ? 0 : a.m_path.size() / 2;
+    size_t const last = a.m_outArm == b.m_outArm ? a.m_path.size() : a.m_path.size() / 2 + 1;
+    // Adjacent lanes share one boundary wherever they belong to the same carriageway.
+    // Both the fill and the divider consume these exact vertices.
+    for (size_t point = first; point < last; ++point)
+    {
+      auto const boundary = (a.m_rightEdge[point] + b.m_leftEdge[point]) * 0.5;
+      a.m_rightEdge[point] = b.m_leftEdge[point] = boundary;
+    }
   }
   return connections;
 }
 
-std::vector<m2::PointD> BuildRoadJunctionSurface(feature::RoadJunction const & junction, m2::RectD const & clip,
-                                                 double casingMeters)
+static std::vector<m2::PointD> BuildJunctionSurface(feature::RoadJunction const & junction, m2::RectD const & clip,
+                                                    double casingMeters,
+                                                    std::vector<RoadLaneConnection> const & connections)
 {
   if (junction.HasContinuation())
     return {};
@@ -416,9 +511,15 @@ std::vector<m2::PointD> BuildRoadJunctionSurface(feature::RoadJunction const & j
     { triangles.insert(triangles.end(), {a, b, c}); });
   }
   // Lane ribbons retain both lanes through a balanced Y junction, independent of traffic direction.
-  if (!AddBalancedMergeLanes(junction, casingMeters, clip, triangles))
+  if (!AddBalancedMergeLanes(junction, casingMeters, clip, connections, triangles))
     AddThroughRoads(junction, casingMeters, clip, triangles);
   return triangles;
+}
+
+std::vector<m2::PointD> BuildRoadJunctionSurface(feature::RoadJunction const & junction, m2::RectD const & clip,
+                                                 double casingMeters)
+{
+  return BuildJunctionSurface(junction, clip, casingMeters, BuildRoadLaneConnections(junction));
 }
 
 std::vector<m2::PointD> BuildRoadJunctionFillets(feature::RoadJunction const & junction, uint32_t featureId,
@@ -566,9 +667,22 @@ std::vector<m2::PointD> BuildRoadBranchMask(feature::RoadJunction const & juncti
     return {};
   if (!junction.HasContinuation())
   {
+    std::vector<m2::PointD> mask;
+    // A short link's width transition can reach the through road at its other end.
+    // Apply that road's boundary to the transition owner as well as the link itself.
+    if (junction.m_arms.size() == 2)
+      for (auto const & arm : junction.m_arms)
+        if (auto const road = geometry(arm.m_featureId))
+          for (auto const & adjacent : road->BranchJunctions())
+            if (adjacent.Bounds().IsIntersect(junction.Bounds()))
+            {
+              auto const boundary = BuildRoadBranchMask(adjacent, featureId, geometry, clip);
+              mask.insert(mask.end(), boundary.begin(), boundary.end());
+            }
     if (featureId == junction.m_ownerFeatureId)
-      return {};
-    auto mask = BuildRoadJunctionSurface(junction, clip);
+      return mask;
+    auto const surface = BuildRoadJunctionSurface(junction, clip);
+    mask.insert(mask.end(), surface.begin(), surface.end());
     auto localClip = junction.Bounds();
     if (!localClip.Intersect(clip))
       return mask;
@@ -661,12 +775,13 @@ std::vector<m2::PointD> SubtractRoadTriangles(std::vector<m2::PointD> triangles,
   return triangles;
 }
 
-std::vector<m2::PointD> BuildRoadJunctionMarkings(feature::RoadJunction const & junction, m2::RectD const & clip)
+static std::vector<m2::PointD> BuildJunctionMarkings(feature::RoadJunction const & junction, m2::RectD const & clip,
+                                                     std::vector<m2::PointD> const & surface,
+                                                     std::vector<RoadLaneConnection> const & connections)
 {
   std::vector<m2::PointD> triangles;
   if (junction.HasContinuation())
     return {};
-  auto const connections = BuildRoadLaneConnections(junction);
   for (size_t i = 1; i < connections.size(); ++i)
   {
     auto const & a = connections[i - 1];
@@ -677,38 +792,62 @@ std::vector<m2::PointD> BuildRoadJunctionMarkings(feature::RoadJunction const & 
     size_t const last = a.m_outArm == b.m_outArm ? a.m_path.size() : a.m_path.size() / 2 + 1;
     for (size_t j = first; j < last; ++j)
     {
-      double const t = static_cast<double>(j) / (a.m_path.size() - 1);
-      double const wa = junction.m_arms[a.m_inArm].m_widthsCm[a.m_inLane] * (1 - t) +
-                        junction.m_arms[a.m_outArm].m_widthsCm[a.m_outLane] * t;
-      double const wb = junction.m_arms[b.m_inArm].m_widthsCm[b.m_inLane] * (1 - t) +
-                        junction.m_arms[b.m_outArm].m_widthsCm[b.m_outLane] * t;
-      boundary.push_back(a.m_path[j] + (b.m_path[j] - a.m_path[j]) * (wa / (wa + wb)));
+      // Derive paint from the same lane edges used by the pavement ribbons.
+      boundary.push_back((a.m_rightEdge[j] + b.m_leftEdge[j]) * 0.5);
     }
     AddSeparator(boundary, clip, triangles);
   }
   if (!connections.empty() || junction.m_arms.size() != 2)
-    return ClipMarkings(junction, clip, triangles);
+    return IntersectRoadTriangles(triangles, surface);
   auto const & a = junction.m_arms[0];
   auto const & b = junction.m_arms[1];
   if (!a.m_oneWay || !b.m_oneWay || !a.m_markings || !b.m_markings || a.m_forward == b.m_forward)
-    return ClipMarkings(junction, clip, triangles);
+    return IntersectRoadTriangles(triangles, surface);
   auto const & in = a.m_forward ? b : a;
   auto const & out = a.m_forward ? a : b;
   if (in.m_widthsCm.size() == out.m_widthsCm.size())
-    return ClipMarkings(junction, clip, triangles);
+    return IntersectRoadTriangles(triangles, surface);
   auto const & wider = in.m_widthsCm.size() > out.m_widthsCm.size() ? in : out;
   using D = feature::RoadDetails;
   bool const alignRight = (wider.m_turns.front() & (D::Left | D::SlightLeft | D::SharpLeft)) &&
                           !(wider.m_turns.back() & (D::Right | D::SlightRight | D::SharpRight));
+  m2::MetricPolyline center(Curve(in.m_position, -in.m_directionAway, out.m_position, out.m_directionAway));
+  if (!center.IsValid())
+    return {};
+  center.SetFrame(0, in.m_position, -in.m_normalAwayPerMeter);
+  center.SetFrame(center.Length(), out.m_position, out.m_normalAwayPerMeter);
   for (size_t i = 1; i < wider.m_widthsCm.size(); ++i)
   {
-    auto const boundary = [&](Arm const & arm)
+    auto const offset = [&](Arm const & arm)
     {
       auto const n = arm.m_widthsCm.size();
-      return LaneBoundary(arm, alignRight ? (i >= n ? 0 : n - i) : std::min(i, n));
+      size_t const boundary = alignRight ? (i >= n ? 0 : n - i) : std::min(i, n);
+      double value = arm.WidthMeters() / 2;
+      for (size_t lane = 0; lane < boundary; ++lane)
+        value -= arm.m_widthsCm[lane] * 0.01;
+      return value;
     };
-    AddSeparator(Curve(boundary(in), -in.m_directionAway, boundary(out), out.m_directionAway), clip, triangles);
+    std::vector<m2::PointD> boundary;
+    for (size_t point = 0; point < center.Points().size(); ++point)
+      boundary.push_back(center.Points()[point] +
+                         center.Normals()[point] *
+                             std::lerp(offset(in), offset(out), center.Distances()[point] / center.Length()));
+    AddSeparator(boundary, clip, triangles);
   }
-  return ClipMarkings(junction, clip, triangles);
+  return IntersectRoadTriangles(triangles, surface);
 }
+RoadJunctionMesh BuildRoadJunctionMesh(feature::RoadJunction const & junction, m2::RectD const & clip)
+{
+  auto const connections = BuildRoadLaneConnections(junction);
+  RoadJunctionMesh result;
+  result.m_surface = BuildJunctionSurface(junction, clip, 0, connections);
+  result.m_markings = BuildJunctionMarkings(junction, clip, result.m_surface, connections);
+  return result;
+}
+
+std::vector<m2::PointD> BuildRoadJunctionMarkings(feature::RoadJunction const & junction, m2::RectD const & clip)
+{
+  return BuildRoadJunctionMesh(junction, clip).m_markings;
+}
+
 }  // namespace df

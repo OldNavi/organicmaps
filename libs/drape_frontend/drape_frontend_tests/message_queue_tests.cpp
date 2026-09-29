@@ -125,6 +125,42 @@ UNIT_TEST(MessageQueue_PriorityOrder)
   TEST(queue.PopMessage(false) == nullptr, ());
 }
 
+UNIT_TEST(MessageQueue_LatestStateOvertakesGeometry)
+{
+  using Type = df::Message::Type;
+  df::MessageQueue queue;
+  queue.PushMessage(make_unique_dp<TestMessage>(1, Type::FlushTile), df::MessagePriority::Normal);
+  for (int i = 0; i < 1000; ++i)
+    queue.PushMessage(make_unique_dp<TestMessage>(i, Type::SetMapLangIndex), df::MessagePriority::HighLatest);
+  queue.PushMessage(make_unique_dp<TestMessage>(2, Type::Invalidate), df::MessagePriority::High);
+  queue.PushMessage(make_unique_dp<TestMessage>(3, Type::UpdateReadManager), df::MessagePriority::UberHighSingleton);
+
+  TEST_EQUAL(PopId(queue), 3, ());
+  TEST_EQUAL(PopId(queue), 2, ());
+  TEST_EQUAL(PopId(queue), 999, ());
+  TEST_EQUAL(PopId(queue), 1, ());
+  TEST(queue.PopMessage(false) == nullptr, ());
+}
+
+UNIT_TEST(MessageQueue_LatestStateKeepsOtherTypesAndPriorities)
+{
+  using Type = df::Message::Type;
+  df::MessageQueue queue;
+  queue.PushMessage(make_unique_dp<TestMessage>(1, Type::SetMapLangIndex), df::MessagePriority::Normal);
+  queue.PushMessage(make_unique_dp<TestMessage>(2, Type::SetMapLangIndex), df::MessagePriority::HighLatest);
+  queue.PushMessage(make_unique_dp<TestMessage>(3, Type::Allow3dBuildings), df::MessagePriority::HighLatest);
+  queue.PushMessage(make_unique_dp<TestMessage>(4, Type::SetMapLangIndex), df::MessagePriority::High);
+  queue.PushMessage(make_unique_dp<TestMessage>(5, Type::SetMapLangIndex), df::MessagePriority::HighLatest);
+  queue.PushMessage(make_unique_dp<TestMessage>(6, Type::SetMapLangIndex), df::MessagePriority::Low);
+
+  TEST_EQUAL(PopId(queue), 4, ());
+  TEST_EQUAL(PopId(queue), 5, ());
+  TEST_EQUAL(PopId(queue), 3, ());
+  TEST_EQUAL(PopId(queue), 1, ());
+  TEST_EQUAL(PopId(queue), 6, ());
+  TEST(queue.PopMessage(false) == nullptr, ());
+}
+
 // Filtering drops matching messages both from the queue and on arrival, until it is disabled;
 // InstantFilter makes a single pass and leaves no filter installed.
 UNIT_TEST(MessageQueue_Filtering)

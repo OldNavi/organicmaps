@@ -1064,4 +1064,15 @@
     <string name="road_events_update_days">Days: %d</string>
     <string name="road_events_update_days_invalid">Enter a whole number of days greater than zero</string>
     <string name="road_events_auto_login_required">Sign in again to resume automatic updates</string>
+    <string name="usb_maps_title">Maps from USB</string>
+    <string name="usb_maps_permission">Allow file access to find maps in omdata/maps on a removable drive.</string>
+    <string name="usb_maps_allow">Allow access</string>
+    <string name="usb_maps_copying">Copying and verifying maps…</string>
+    <string name="usb_maps_waiting">Maps are copied. Waiting for navigation and map downloads to finish before applying them.</string>
+    <string name="usb_maps_destination">Maps storage: %s</string>
+    <string name="usb_maps_new">new map</string>
+    <string name="usb_maps_update">update</string>
+    <string name="usb_maps_finished">Maps installed: %d</string>
+    <string name="usb_maps_cancelled">Import cancelled. Existing maps have been kept.</string>
+    <string name="usb_maps_errors">These files could not be imported. Check the USB drive, map files and available storage space.</string>
 </resources>

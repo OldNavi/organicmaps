@@ -1075,4 +1075,15 @@
     <string name="road_events_update_days">Дней: %d</string>
     <string name="road_events_update_days_invalid">Введите целое число дней больше нуля</string>
     <string name="road_events_auto_login_required">Для автообновления войдите в источник снова</string>
+    <string name="usb_maps_title">Карты с USB</string>
+    <string name="usb_maps_permission">Разрешите доступ к файлам для поиска карт в папке omdata/maps на съёмном носителе.</string>
+    <string name="usb_maps_allow">Разрешить доступ</string>
+    <string name="usb_maps_copying">Копирование и проверка карт…</string>
+    <string name="usb_maps_waiting">Карты скопированы. Они будут подключены после завершения навигации и загрузки карт.</string>
+    <string name="usb_maps_destination">Хранилище карт: %s</string>
+    <string name="usb_maps_new">новая карта</string>
+    <string name="usb_maps_update">обновление</string>
+    <string name="usb_maps_finished">Установлено карт: %d</string>
+    <string name="usb_maps_cancelled">Импорт отменён. Установленные карты сохранены.</string>
+    <string name="usb_maps_errors">Не удалось импортировать следующие файлы. Проверьте USB-носитель, файлы карт и свободное место в хранилище.</string>
 </resources>

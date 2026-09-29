@@ -5,6 +5,7 @@
 #include "geometry/mercator.hpp"
 #include "indexer/classificator.hpp"
 #include "indexer/feature.hpp"
+#include "indexer/feature_algo.hpp"
 #include "indexer/feature_utils.hpp"
 #include "indexer/scales.hpp"
 #include "platform/platform.hpp"

@@ -39,8 +39,10 @@
 		45F6EE9F1FB1C77600019892 /* search_api.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 45F6EE9C1FB1C77500019892 /* search_api.cpp */; };
 		56C116602090E5670068BBC0 /* extrapolator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 56C1165E2090E5670068BBC0 /* extrapolator.cpp */; };
 		BCB523315ACC4AB582EEFE7B /* vehicle_motion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72D6C32D21C36F85B5516AC0 /* vehicle_motion.cpp */; };
+		F4938508F703DB868FE90B6A /* mwm_road_events.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CD2B3E772202A7D23631D9AC /* mwm_road_events.cpp */; };
 		56C116612090E5670068BBC0 /* extrapolator.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 56C1165F2090E5670068BBC0 /* extrapolator.hpp */; };
 		CE47E68582298EA06B62CD66 /* vehicle_motion.hpp in Headers */ = {isa = PBXBuildFile; fileRef = DAB7C6F4E94EF83608DC8D74 /* vehicle_motion.hpp */; };
+		583C94B5CC9CA72015CEAFE1 /* mwm_road_events.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 16C0CE190268A59522523397 /* mwm_road_events.hpp */; };
 		5F5CEB79A933763811137BEA /* share.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CE6D8A55305278317BD00A6C /* share.hpp */; };
 		670E39401C46C5C700E9C0A6 /* gps_tracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 670E393E1C46C5C700E9C0A6 /* gps_tracker.cpp */; };
 		670E39411C46C5C700E9C0A6 /* gps_tracker.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 670E393F1C46C5C700E9C0A6 /* gps_tracker.hpp */; };
@@ -187,8 +189,10 @@
 		45F6EE9C1FB1C77500019892 /* search_api.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = search_api.cpp; sourceTree = "<group>"; };
 		56C1165E2090E5670068BBC0 /* extrapolator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = extrapolator.cpp; path = extrapolation/extrapolator.cpp; sourceTree = "<group>"; };
 		72D6C32D21C36F85B5516AC0 /* vehicle_motion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = vehicle_motion.cpp; path = extrapolation/vehicle_motion.cpp; sourceTree = "<group>"; };
+		CD2B3E772202A7D23631D9AC /* mwm_road_events.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = mwm_road_events.cpp; path = mwm_road_events.cpp; sourceTree = "<group>"; };
 		56C1165F2090E5670068BBC0 /* extrapolator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = extrapolator.hpp; path = extrapolation/extrapolator.hpp; sourceTree = "<group>"; };
 		DAB7C6F4E94EF83608DC8D74 /* vehicle_motion.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = vehicle_motion.hpp; path = extrapolation/vehicle_motion.hpp; sourceTree = "<group>"; };
+		16C0CE190268A59522523397 /* mwm_road_events.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = mwm_road_events.hpp; path = mwm_road_events.hpp; sourceTree = "<group>"; };
 		56D1C15D20A0AB9D005C689E /* extrapolator_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = extrapolator_tests.cpp; sourceTree = "<group>"; };
 		670E393E1C46C5C700E9C0A6 /* gps_tracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gps_tracker.cpp; sourceTree = "<group>"; };
 		670E393F1C46C5C700E9C0A6 /* gps_tracker.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = gps_tracker.hpp; sourceTree = "<group>"; };
@@ -401,8 +405,10 @@
 				3D4E99801FB462B60025B48C /* everywhere_search_params.hpp */,
 				56C1165E2090E5670068BBC0 /* extrapolator.cpp */,
 				72D6C32D21C36F85B5516AC0 /* vehicle_motion.cpp */,
+				CD2B3E772202A7D23631D9AC /* mwm_road_events.cpp */,
 				56C1165F2090E5670068BBC0 /* extrapolator.hpp */,
 				DAB7C6F4E94EF83608DC8D74 /* vehicle_motion.hpp */,
+				16C0CE190268A59522523397 /* mwm_road_events.hpp */,
 				39E3C60223312BA800FB0C37 /* features_fetcher.cpp */,
 				39E3C60123312BA800FB0C37 /* features_fetcher.hpp */,
 				675345F51A4054E800A0A8C3 /* framework.cpp */,
@@ -505,6 +511,7 @@
 				BBFC7E3B202D29C000531BE7 /* user_mark_layer.hpp in Headers */,
 				56C116612090E5670068BBC0 /* extrapolator.hpp in Headers */,
 				CE47E68582298EA06B62CD66 /* vehicle_motion.hpp in Headers */,
+				583C94B5CC9CA72015CEAFE1 /* mwm_road_events.hpp in Headers */,
 				BB1C0196241BF73C0067FD5C /* track_mark.hpp in Headers */,
 				675346491A4054E800A0A8C3 /* bookmark_manager.hpp in Headers */,
 				F6B2830A1C1B03320081957A /* gps_track.hpp in Headers */,
@@ -700,6 +707,7 @@
 				AC0AE5A62FDF0DDF00A44725 /* raster_tile_provider.cpp in Sources */,
 				56C116602090E5670068BBC0 /* extrapolator.cpp in Sources */,
 				BCB523315ACC4AB582EEFE7B /* vehicle_motion.cpp in Sources */,
+				F4938508F703DB868FE90B6A /* mwm_road_events.cpp in Sources */,
 				39E3C60423312BA800FB0C37 /* features_fetcher.cpp in Sources */,
 				45201E931CE4AC90008A4842 /* api_mark_point.cpp in Sources */,
 				BBA014AD2073C784007402E4 /* bookmark_helpers.cpp in Sources */,

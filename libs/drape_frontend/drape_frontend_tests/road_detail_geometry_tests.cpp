@@ -1034,3 +1034,192 @@ UNIT_TEST(RoadJunctionGeometry_RecordedCrossingKeepsThroughSurface)
     }
 }
 }  // namespace road_detail_geometry_tests
+
+namespace road_detail_geometry_tests
+{
+UNIT_TEST(RoadJunctionGeometry_ApakovaCompoundIntersectionHasNoPockets)
+{
+  // Connected nodes from the 2026-09-27 extract, around 55.72754, 37.614728.
+  std::vector<feature::RoadJunction> nodes;
+  auto const node = [&](uint32_t owner, m2::PointD center, std::initializer_list<feature::RoadJunctionArm> arms)
+  {
+    feature::RoadJunction junction;
+    junction.m_ownerFeatureId = owner;
+    junction.m_center = center;
+    junction.m_arms = arms;
+    nodes.push_back(std::move(junction));
+  };
+  auto const arm = [](uint32_t id, bool forward, bool oneWay, double distance, double cut, m2::PointD position,
+                      m2::PointD direction, m2::PointD nodeDirection, m2::PointD normal, size_t lanes)
+  {
+    feature::RoadJunctionArm a;
+    a.m_featureId = id;
+    a.m_forward = forward;
+    a.m_featureEndpoint = true;
+    a.m_oneWay = oneWay;
+    a.m_markings = true;
+    a.m_nodeDistance = distance;
+    a.m_cutDistance = cut;
+    a.m_position = position;
+    a.m_directionAway = direction;
+    a.m_nodeDirectionAway = nodeDirection;
+    a.m_normalAwayPerMeter = normal;
+    a.m_widthsCm.assign(lanes, 350);
+    a.m_turns.assign(lanes, 0);
+    return a;
+  };
+  node(3430, {37.614776499999998, 67.4128671},
+       {arm(3426, false, true, 120.1576495603592, 26.25, {37.614409472190161, 67.412741887187437},
+            {-0.99994917900626934, 0.010081637004365667}, {-0.46295185387928484, -0.88638342774994006},
+            {-1.6083583885106799e-07, -1.5952534786192624e-05}, 4),
+        arm(3429, true, true, 0, 8.97373492313838, {37.614644016489855, 67.412919047245524},
+            {-0.98002378068741791, 0.19888033911661551}, {-0.88626414322232894, 0.46318016844246623},
+            {-3.179013677299579e-06, -1.5665243818079645e-05}, 2),
+        arm(3430, true, false, 0, 14.397134691769294, {37.61470997606294, 67.413086926574124},
+            {-0.28937198375002426, 0.95721672311999229}, {-0.28964776566688077, 0.95713330933793306},
+            {-1.5270101771013374e-05, -4.6162374045663073e-06}, 5),
+        arm(13533, false, true, 68.59955316823537, 26.25, {37.614901714540544, 67.412467594021308},
+            {0.26815373071161758, -0.96337613459408533}, {0.31501280446969993, -0.94908742116842681},
+            {1.5368736051187904e-05, 4.2778555129815567e-06}, 4)});
+  node(3431, {37.614610299999995, 67.413416699999999},
+       {arm(3430, false, false, 35.99283672942323, 14.397134691769294, {37.614676714094408, 67.413196839861172},
+            {0.28923408445214183, -0.9572584000107448}, {0.2884984498307212, -0.95748036243323076},
+            {1.5270791626587732e-05, 4.6140451051941245e-06}, 5),
+        arm(3431, true, false, 0, 13.743737724241086, {37.614547419999994, 67.413626739999998},
+            {-0.28679549685000078, 0.95799182824623352}, {-0.28679549685000083, 0.95799182824623363},
+            {-1.5282585068679353e-05, -4.5751711535453076e-06}, 7),
+        arm(106567, true, false, 0, 13.221381723442988, {37.614570848228546, 67.413209506398218},
+            {-0.23021565084334533, -0.97313963751702914}, {-0.18703178516535918, -0.98235386258611479},
+            {1.553926230675032e-05, -3.6761233924266983e-06}, 2)});
+  node(3427, {37.614430200000001, 67.412935399999995},
+       {arm(3427, true, true, 0, 21, {37.614095426674801, 67.412947832555844},
+            {-0.99931112534245625, 0.037111652709004586}, {-0.99931112534245625, 0.037111652709004586},
+            {-5.9202638197781991e-07, -1.5941584564977636e-05}, 4),
+        arm(3429, false, true, 22.43433730784595, 8.97373492313838, {37.614573035790883, 67.412926888337807},
+            {0.99222647565341149, -0.12444525307302808}, {0.99988167780788928, -0.015382795067220571},
+            {1.9872051917708331e-06, 1.5844377789756682e-05}, 2),
+        arm(106567, false, false, 33.05345430860747, 13.221381723442988, {37.614542149047296, 67.413108093908278},
+            {0.32112841243750828, 0.94703566074639756}, {0.77405389395842494, 0.63311971162474434},
+            {-1.511836058423099e-05, 5.1264544032539657e-06}, 2)});
+  std::map<uint32_t, std::vector<m2::PointD>> const paths{
+      {3426,
+       {{37.61291099796378, 67.41278445283163},
+        {37.614394259560072, 67.412741537487079},
+        {37.614523005593753, 67.412738855278036},
+        {37.614539098847956, 67.412744219696094},
+        {37.614627611746101, 67.412746901905138},
+        {37.614702713599087, 67.412773723995485},
+        {37.614750993361696, 67.41281932154908},
+        {37.614777815452044, 67.412867601311717}}},
+      {3427, {{37.614429128277521, 67.412934656537573}, {37.613211405375694, 67.412980254091167}}},
+      {3429,
+       {{37.614777815452044, 67.412867601311717},
+        {37.614713442435203, 67.412899787820123},
+        {37.61463297616416, 67.412921245492413},
+        {37.614474725831116, 67.412934656537573},
+        {37.614429128277521, 67.412934656537573}}},
+      {3430,
+       {{37.614777815452044, 67.412867601311717},
+        {37.614638340582246, 67.413326259056674},
+        {37.614611518491898, 67.413417454163863}}},
+      {3431, {{37.614611518491898, 67.413417454163863}, {37.614453268158826, 67.413940484925661}}},
+      {13533,
+       {{37.615075540654914, 67.411816175370035},
+        {37.614928019158015, 67.412371392640267},
+        {37.614901197067667, 67.412465269956471},
+        {37.614855599514073, 67.412631566916644},
+        {37.614777815452044, 67.412867601311717}}},
+      {106567,
+       {{37.614611518491898, 67.413417454163863},
+        {37.614590060819609, 67.413304801384385},
+        {37.614568603147319, 67.413194830813978},
+        {37.614525687802768, 67.413055355944152},
+        {37.614501547921463, 67.413009758390558},
+        {37.614466679204014, 67.412964160836964},
+        {37.614429128277521, 67.412934656537573}}}};
+  auto const makeRoads = [&](bool roundabout)
+  {
+    std::map<uint32_t, std::shared_ptr<df::RoadDetailGeometry const>> result;
+    for (auto const & [id, path] : paths)
+    {
+      feature::RoadJunctions::Links links;
+      for (auto const & n : nodes)
+        for (size_t i = 0; i < n.m_arms.size(); ++i)
+          if (n.m_arms[i].m_featureId == id)
+            links.push_back({&n, i});
+      result[id] = std::make_shared<df::RoadDetailGeometry>(path, links, roundabout);
+    }
+    return result;
+  };
+  auto roads = makeRoads(false);
+  auto const getter = [&](uint32_t id) { return roads.at(id); };
+  auto const & owner =
+      *std::find_if(nodes.begin(), nodes.end(), [](auto const & n) { return n.m_ownerFeatureId == 3427; });
+  auto const clip = mercator::Bounds::FullRect();
+  auto const infill = df::BuildRoadJunctionInfill(owner, getter, clip);
+  TEST(!infill.empty(), ());
+  for (auto const point :
+       {m2::PointD(37.61458669344006, 67.41286308700604), m2::PointD(37.614582212075554, 67.41301298866627)})
+    TEST(Contains(infill, point), ("Both narrow pockets are paved", point));
+  TEST(!Contains(infill, m2::PointD(37.6143, 67.41315)), ("The outer sidewalk remains outside the road"));
+  for (auto const & n : nodes)
+    if (n.m_ownerFeatureId != owner.m_ownerFeatureId)
+      TEST(df::BuildRoadJunctionInfill(n, getter, clip).empty(), ("Only one owner fills the compound node"));
+  auto const bounds = owner.Bounds();
+  m2::RectD const left(bounds.minX(), bounds.minY(), owner.m_center.x, bounds.maxY());
+  m2::RectD const right(owner.m_center.x, bounds.minY(), bounds.maxX(), bounds.maxY());
+  TEST_ALMOST_EQUAL_ABS(
+      Area(df::BuildRoadJunctionInfill(owner, getter, left)) + Area(df::BuildRoadJunctionInfill(owner, getter, right)),
+      Area(infill), 1e-15, ());
+  roads = makeRoads(true);
+  TEST(df::BuildRoadJunctionInfill(owner, getter, clip).empty(), ("Roundabout islands are never filled"));
+}
+
+UNIT_TEST(RoadJunctionGeometry_CompoundIntersectionKeepsLargeIsland)
+{
+  auto const p = mercator::FromLatLon(55.72754, 37.614728);
+  double const unit = 0.00001 / mercator::DistanceOnEarth(p, p + m2::PointD(0.00001, 0));
+  std::array<m2::PointD, 3> const points{p, p + m2::PointD(50, 0) * unit, p + m2::PointD(25, 43) * unit};
+  auto const center = (points[0] + points[1] + points[2]) / 3;
+  std::vector<feature::RoadJunction> nodes(3);
+  std::map<uint32_t, std::vector<m2::PointD>> paths;
+  for (size_t i = 0; i < nodes.size(); ++i)
+  {
+    size_t const next = (i + 1) % nodes.size(), previous = (i + 2) % nodes.size();
+    auto const outward = (points[i] - center).Normalize();
+    auto & node = nodes[i];
+    node.m_center = points[i];
+    node.m_ownerFeatureId = 20 + i;
+    node.m_arms = {Arm(10 + i, true, points[i], (points[next] - points[i]).Normalize() * 22.5, 2),
+                   Arm(10 + previous, false, points[i], (points[previous] - points[i]).Normalize() * 22.5, 2),
+                   Arm(20 + i, true, points[i], outward * 14, 2)};
+    for (auto & arm : node.m_arms)
+    {
+      arm.m_oneWay = false;
+      arm.m_featureEndpoint = true;
+      if (!arm.m_forward)
+        arm.m_nodeDistance = mercator::DistanceOnEarth(points[previous], points[i]);
+    }
+    paths[10 + i] = {points[i], points[next]};
+    paths[20 + i] = {points[i], points[i] + outward * (70 * unit)};
+  }
+  std::map<uint32_t, std::shared_ptr<df::RoadDetailGeometry const>> roads;
+  for (auto const & [id, path] : paths)
+  {
+    feature::RoadJunctions::Links links;
+    for (auto const & node : nodes)
+      for (size_t i = 0; i < node.m_arms.size(); ++i)
+        if (node.m_arms[i].m_featureId == id)
+          links.push_back({&node, i});
+    roads[id] = std::make_shared<df::RoadDetailGeometry>(path, links);
+  }
+  auto const getter = [&](uint32_t id) { return roads.at(id); };
+  auto const clip = mercator::Bounds::FullRect();
+  for (auto const & node : nodes)
+  {
+    TEST(!Contains(df::BuildRoadJunctionSurface(node, clip), center), ());
+    TEST(!Contains(df::BuildRoadJunctionInfill(node, getter, clip), center),
+         ("A real island is wider than the residual slivers between junction surfaces"));
+  }
+}
+}  // namespace road_detail_geometry_tests

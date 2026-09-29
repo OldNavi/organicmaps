@@ -4,6 +4,7 @@
 
 namespace features_dumper
 {
+void DumpRoadDetails(std::string const & fPath);
 void DumpTypes(std::string const & fPath);
 void DumpPrefixes(std::string const & fPath);
 

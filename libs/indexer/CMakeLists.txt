@@ -103,6 +103,10 @@ set(SRC
   rank_table.hpp
   route_relation.cpp
   route_relation.hpp
+  road_junctions.cpp
+  road_junctions.hpp
+  road_details.cpp
+  road_details.hpp
   road_shields_parser.cpp
   road_shields_parser.hpp
   scale_index.hpp

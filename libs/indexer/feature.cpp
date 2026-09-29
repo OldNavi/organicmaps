@@ -884,6 +884,20 @@ std::string const & FeatureType::GetRef()
   return m_params.ref;
 }
 
+feature::RoadJunctions::Links FeatureType::GetRoadJunctions() const
+{
+  if (!m_loadInfo || !m_loadInfo->m_roadDetails)
+    return {};
+  return m_loadInfo->m_roadDetails->GetJunctions(m_id.m_index);
+}
+
+std::optional<feature::RoadDetails> FeatureType::GetRoadDetails() const
+{
+  if (!m_loadInfo || !m_loadInfo->m_roadDetails)
+    return {};
+  return m_loadInfo->m_roadDetails->Get(m_id.m_index);
+}
+
 feature::Metadata const & FeatureType::GetMetadata()
 {
   ParseMetadata();

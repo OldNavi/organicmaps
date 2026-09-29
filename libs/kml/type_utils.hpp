@@ -59,6 +59,10 @@ MarkId constexpr kInvalidMarkId = std::numeric_limits<MarkId>::max();
 MarkId constexpr kDebugMarkId = kInvalidMarkId - 1;
 // Reserved mark namespace for viewport layers that are not owned by BookmarkManager.
 MarkGroupId constexpr kExternalMarkGroupId = 15;
+inline bool IsExternalMarkId(MarkId id)
+{
+  return id != kInvalidMarkId && id != kDebugMarkId && (id >> 60) == kExternalMarkGroupId;
+}
 TrackId constexpr kInvalidTrackId = std::numeric_limits<TrackId>::max();
 TrackId constexpr kTempRelationTrackId = kInvalidTrackId - 1;
 // The only values Organic Maps ever writes into the vestigial "Collections" slots,

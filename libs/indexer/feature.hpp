@@ -1,6 +1,8 @@
 #pragma once
+
 #include "indexer/feature_data.hpp"
 #include "indexer/metadata_serdes.hpp"
+#include "indexer/road_details.hpp"
 #include "indexer/route_relation.hpp"
 
 #include "geometry/point2d.hpp"
@@ -180,6 +182,8 @@ public:
   std::string const & GetRef();
 
   feature::Metadata const & GetMetadata();
+  std::optional<feature::RoadDetails> GetRoadDetails() const;
+  feature::RoadJunctions::Links GetRoadJunctions() const;
 
   // Gets single metadata string. Does not parse all metadata.
   std::string_view GetMetadata(feature::Metadata::EType type);

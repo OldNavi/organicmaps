@@ -151,6 +151,7 @@ DEFINE_double(stats_geom_min_factor, 2.0f,
               "Consider feature's geometry scale "
               "similar to a more detailed one if it has <min_factor times less elements.");
 DEFINE_bool(stats_types, false, "Print feature stats by type.");
+DEFINE_bool(dump_road_details, false, "Prints lane widths and flags stored in the optional road details section.");
 DEFINE_bool(dump_types, false, "Prints all types combinations and their total count.");
 DEFINE_bool(dump_prefixes, false, "Prints statistics on feature's' name prefixes.");
 DEFINE_bool(dump_search_tokens, false, "Print statistics on search tokens.");
@@ -551,6 +552,9 @@ MAIN_WITH_ERROR_HANDLING([](int argc, char ** argv)
     }
     LOG(LINFO, ("Stats written to file", FLAGS_output + STATS_EXTENSION));
   }
+
+  if (FLAGS_dump_road_details)
+    features_dumper::DumpRoadDetails(dataFile);
 
   if (FLAGS_dump_types)
     features_dumper::DumpTypes(dataFile);

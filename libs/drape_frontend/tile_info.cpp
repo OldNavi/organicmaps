@@ -8,6 +8,15 @@
 #include "base/scope_guard.hpp"
 
 #include <algorithm>
+#ifdef OMIM_AUTO
+#include <map>
+#include "drape_frontend/road_detail_geometry.hpp"
+#include "drape_frontend/road_junction_geometry.hpp"
+#include "drape_frontend/road_label_occlusion.hpp"
+#include "geometry/mercator.hpp"
+#include "indexer/classificator.hpp"
+#include "indexer/feature.hpp"
+#endif
 
 namespace df
 {
@@ -56,8 +65,79 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
   {
     std::sort(m_featureInfo.begin(), m_featureInfo.end());
 
+#ifdef OMIM_AUTO
+    std::map<FeatureID, std::shared_ptr<RoadDetailGeometry const>> roadGeometry;
+#endif
     RuleDrawer drawer(std::bind(&TileInfo::IsCancelled, this), model.m_isCountryLoadedByName, make_ref(m_context),
                       m_context->GetMapLangIndex());
+#ifdef OMIM_AUTO
+    if (GetTileKey().m_zoomLevel >= 17)
+    {
+      auto labels = std::make_shared<RoadLabelOcclusion>();
+      auto decks = std::make_shared<RoadDecks>();
+      auto const bridgeDeckType = classif().GetTypeByPath({"man_made", "bridge"});
+      ApplyFeatureParams labelParams;
+      labelParams.Init(GetTileKey());
+      ftypes::IsBridgeOrTunnelChecker const bridgeOrTunnel;
+      model.ReadFeatures([&](FeatureType & feature)
+      {
+        ThrowIfCancelled();
+        auto const details = feature.GetRoadDetails();
+        int const layer = feature.GetLayer() == feature::LAYER_EMPTY ? 0 : feature.GetLayer();
+        if (feature.GetGeomType() == feature::GeomType::Area && feature::TypesHolder(feature).Has(bridgeDeckType))
+        {
+          std::vector<m2::PointD> triangles;
+          feature.ForEachTriangle([&](auto const & a, auto const & b, auto const & c)
+          { triangles.insert(triangles.end(), {a, b, c}); }, FeatureType::BEST_GEOMETRY);
+          decks->Add(layer, std::move(triangles));
+          return;
+        }
+        if (!details && (feature.GetGeomType() != feature::GeomType::Line || layer <= 0 || !bridgeOrTunnel(feature)))
+          return;
+        std::vector<m2::PointD> path;
+        feature.ForEachPoint([&](auto const & point) { path.push_back(point); }, FeatureType::BEST_GEOMETRY);
+        auto geometry = std::make_shared<RoadDetailGeometry>(
+            path, feature.GetRoadJunctions(), details && details->m_roundabout,
+            details ? details->m_startOffsetCm * 0.01 : 0, details ? details->m_endOffsetCm * 0.01 : 0);
+        double width = details ? details->WidthMeters() : 0;
+        if (!details && geometry->IsValid())
+        {
+          // Older maps and pedestrian bridges still use style widths in pixels.
+          Stylist style(feature, GetTileKey().GetRenderZoom(), m_context->GetMapLangIndex(), false);
+          for (auto const * rule : style.m_lineRules)
+            if (!rule->pathsym.has_value())
+              width = std::max(width, static_cast<double>(rule->width));
+          double const metersPerUnit =
+              mercator::DistanceOnEarth(path.front(), path.front() + m2::PointD(0.00001, 0)) / 0.00001;
+          width *= labelParams.m_vparams.GetVisualScale() * metersPerUnit / labelParams.m_currentScaleGtoP;
+        }
+        roadGeometry.emplace(feature.GetID(), geometry);
+        labels->Add(layer, width, std::move(geometry));
+      }, m_featureInfo);
+      drawer.SetRoadLabelOcclusion(std::move(labels));
+      drawer.SetRoadDecks(std::move(decks));
+    }
+    drawer.SetRoadGeometryGetter([&](FeatureID const & id) -> std::shared_ptr<RoadDetailGeometry const>
+    {
+      ThrowIfCancelled();
+      if (auto const it = roadGeometry.find(id); it != roadGeometry.end())
+        return it->second;
+      std::shared_ptr<RoadDetailGeometry const> geometry;
+      model.ReadFeatures([&](FeatureType & feature)
+      {
+        if (auto const details = feature.GetRoadDetails())
+        {
+          std::vector<m2::PointD> path;
+          feature.ForEachPoint([&](auto const & point) { path.push_back(point); }, FeatureType::BEST_GEOMETRY);
+          geometry =
+              std::make_shared<RoadDetailGeometry>(path, feature.GetRoadJunctions(), details->m_roundabout,
+                                                   details->m_startOffsetCm * 0.01, details->m_endOffsetCm * 0.01);
+        }
+      }, {id});
+      roadGeometry.emplace(id, geometry);
+      return geometry;
+    });
+#endif
     model.ReadFeatures([&drawer](FeatureType & ft) { drawer(ft); }, m_featureInfo);
 #ifdef DRAW_TILE_NET
     drawer.DrawTileNet();

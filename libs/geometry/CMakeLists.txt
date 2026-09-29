@@ -32,6 +32,8 @@ set(SRC
   latlon.hpp
   line2d.cpp
   line2d.hpp
+  metric_polyline.cpp
+  metric_polyline.hpp
   mercator.cpp
   mercator.hpp
   meter.hpp

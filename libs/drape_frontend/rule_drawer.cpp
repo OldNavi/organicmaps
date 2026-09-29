@@ -467,7 +467,18 @@ void RuleDrawer::operator()(FeatureType & f)
 
   // FeatureType::GetLimitRect call invokes full geometry reading and decoding.
   // That's why this code follows after all lightweight return options.
-  if (!m_applyParams.m_tileRect.IsIntersect(f.GetLimitRect(m_zoomLevel)))
+  auto bounds = f.GetLimitRect(m_zoomLevel);
+#ifdef OMIM_AUTO
+  if (geomType == feature::GeomType::Line && m_applyParams.m_tileKey.m_zoomLevel >= 17)
+  {
+    if (auto const details = f.GetRoadDetails())
+      bounds = details->BoundsWithRoadWidth(bounds);
+    for (auto const & link : f.GetRoadJunctions())
+      if (!link.m_junction->HasContinuation() && link.m_junction->m_ownerFeatureId == f.GetID().m_index)
+        bounds.Add(link.m_junction->Bounds());
+  }
+#endif
+  if (!m_applyParams.m_tileRect.IsIntersect(bounds))
     return;
 
   if (geomType == feature::GeomType::Area)

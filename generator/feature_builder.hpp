@@ -1,6 +1,7 @@
 #pragma once
 
 #include "indexer/feature_data.hpp"
+#include "indexer/road_details.hpp"
 
 #include "platform/platform.hpp"
 
@@ -152,6 +153,16 @@ public:
   Metadata const & GetMetadata() const { return m_params.GetMetadata(); }
   Metadata & GetMetadata() { return m_params.GetMetadata(); }
 
+  std::optional<RoadDetails> const & GetRoadDetails() const { return m_roadDetails; }
+  void SetRoadDetails(std::optional<RoadDetails> details)
+  {
+    m_roadDetails = std::move(details);
+    if (!m_roadDetails)
+      m_roadNodeIds = {};
+  }
+  std::vector<uint64_t> const & GetRoadNodeIds() const { return m_roadNodeIds; }
+  void SetRoadNodeIds(std::vector<uint64_t> nodes) { m_roadNodeIds = std::move(nodes); }
+
   // To work with types and names based on drawing.
   // Check classificator types for their compatibility with feature geometry type.
   // Need to call when using any classificator types manipulating.
@@ -211,6 +222,8 @@ protected:
   m2::RectD m_limitRect;
   std::vector<base::GeoObjectId> m_osmIds;
   FeatureBuilderParams m_params;
+  std::optional<RoadDetails> m_roadDetails;
+  std::vector<uint64_t> m_roadNodeIds;
   /// Not used in GEOM_POINTs
   int64_t m_coastCell;
 };

@@ -49,7 +49,7 @@ std::optional<IRoadGraph::EdgeProjectionT> MatchRoad(m2::PointD const & position
                                                      std::vector<IRoadGraph::EdgeProjectionT> const & candidates,
                                                      double maximumDistance, bool allowJunctionOverlap)
 {
-  if (direction.IsAlmostZero() || !std::isfinite(accuracy) || accuracy <= 0 || accuracy > 30)
+  if (direction.IsAlmostZero() || !math::is_finite(accuracy) || accuracy <= 0 || accuracy > 30)
     return {};
   struct Candidate
   {
@@ -167,7 +167,7 @@ RoadInfoSnapshot RoadInfoReader::Read(location::GpsInfo const & location)
   SCOPE_GUARD(release, [this] { m_source.FreeHandles(); });
   RoadInfoSnapshot result;
   double const time = location.m_timestamp;
-  if (!std::isfinite(time) || !std::isfinite(location.m_latitude) || !std::isfinite(location.m_longitude) ||
+  if (!math::is_finite(time) || !math::is_finite(location.m_latitude) || !math::is_finite(location.m_longitude) ||
       std::abs(location.m_latitude) > 85.0 || std::abs(location.m_longitude) > 180.0)
   {
 #ifdef OMIM_AUTO
@@ -186,7 +186,7 @@ RoadInfoSnapshot RoadInfoReader::Read(location::GpsInfo const & location)
     m_previousMatch.reset();
     m_direction = {};
   }
-  if (location.HasBearing() && std::isfinite(location.m_bearing) && location.m_speed >= 1.0)
+  if (location.HasBearing() && math::is_finite(location.m_bearing) && location.m_speed >= 1.0)
   {
     double const angle = math::DegToRad(location.m_bearing);
     m_direction = {std::sin(angle), std::cos(angle)};

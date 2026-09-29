@@ -2,6 +2,7 @@
 
 #include "generator/osm_element.hpp"
 
+#include "base/math.hpp"
 #include "base/string_utils.hpp"
 
 #include <algorithm>
@@ -27,7 +28,7 @@ uint16_t Width(std::string value)
   if (value.ends_with(" m"))
     value.resize(value.size() - 2);
   double meters = 0.0;
-  if (!strings::to_double(value, meters) || !std::isfinite(meters) || meters < 0.5 || meters > 150)
+  if (!strings::to_double(value, meters) || !math::is_finite(meters) || meters < 0.5 || meters > 150)
     return 0;
   return static_cast<uint16_t>(std::lround(meters * 100));
 }

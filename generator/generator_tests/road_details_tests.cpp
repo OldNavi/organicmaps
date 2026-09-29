@@ -129,6 +129,13 @@ UNIT_TEST(RoadDetails_InvalidAndMissingTags)
   TEST_EQUAL(details->m_lanes[2].m_widthCm, 400, ());
   auto const mismatched = ParseRoadDetails(Way({{"lanes", "2"}, {"width:lanes", "3|4|5"}}));
   TEST_ALMOST_EQUAL_ABS(mismatched->WidthMeters(), 7.0, 1e-9, ());
+  for (auto const * width : {"nan", "inf", "-inf", "1e999"})
+  {
+    auto const invalid = ParseRoadDetails(Way({{"lanes", "1"}, {"width", width}, {"width:lanes", width}}));
+    TEST(invalid, (width));
+    TEST_EQUAL(invalid->m_lanes[0].m_widthCm, 350, (width));
+    TEST(invalid->m_lanes[0].m_source == RoadDetails::WidthSource::Default, (width));
+  }
 }
 
 UNIT_TEST(RoadDetails_InferredRoadWidthsWithoutInventedMarkings)

@@ -41,6 +41,8 @@ struct RoadJunctionMesh
   std::vector<m2::PointD> m_markings;
 };
 RoadJunctionMesh BuildRoadJunctionMesh(feature::RoadJunction const & junction, m2::RectD const & clip);
+std::vector<m2::PointD> BuildRoadJunctionInfill(feature::RoadJunction const & junction,
+                                                JunctionGeometryGetter const & geometry, m2::RectD const & clip);
 
 std::vector<RoadLaneConnection> BuildRoadLaneConnections(feature::RoadJunction const & junction);
 std::vector<m2::PointD> BuildRoadJunctionSurface(feature::RoadJunction const & junction, m2::RectD const & clip,

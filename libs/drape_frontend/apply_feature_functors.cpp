@@ -885,8 +885,12 @@ bool ApplyLineFeatureGeometry::ProcessRoadDetails(Stylist::LineRulesT const & li
     for (auto const * junction : junctions)
     {
       if (junction->m_ownerFeatureId == m_f.GetID().m_index)
+      {
         drawSurface(rule == surface ? junctionMeshes.at(junction).m_surface
                                     : BuildRoadJunctionSurface(*junction, clip, casing));
+        if (rule == surface && !details->m_roundabout && m_f.GetLayer() <= 0)
+          drawSurface(BuildRoadJunctionInfill(*junction, roadGeometry, clip));
+      }
       drawSurface(BuildRoadJunctionFillets(*junction, m_f.GetID().m_index, roadGeometry, clip, casing));
       // A layer=1 bridge polygon can overlap the layer=0 approach at their shared cut plane.
       // Promote just the connecting ribbon above the deck, retaining the approach's real geometry.
@@ -911,9 +915,7 @@ bool ApplyLineFeatureGeometry::ProcessRoadDetails(Stylist::LineRulesT const & li
   }
   if (m_params.m_tileKey.m_zoomLevel >= 18 && details->m_markings)
   {
-    auto const color = ToDrapeColor(surface->color);
-    bool const dark = color.GetRed() + color.GetGreen() + color.GetBlue() < 384;
-    params.m_color = dark ? dp::Color(180, 185, 190) : dp::Color(135, 140, 145);
+    params.m_color = GetColorConstant("RoadLaneMarking");
     // Leave more than one depth-buffer step even on a 16-bit Android surface.
     params.m_depth = PriorityToDepth(surface->priority, drule::line, 0) + 2.0;
     insert(geometry.Markings(*details, clip));
@@ -927,9 +929,7 @@ bool ApplyLineFeatureGeometry::ProcessRoadDetails(Stylist::LineRulesT const & li
   }
   if (m_params.m_tileKey.m_zoomLevel >= 19)
   {
-    auto const color = ToDrapeColor(surface->color);
-    params.m_color =
-        color.GetRed() + color.GetGreen() + color.GetBlue() < 384 ? dp::Color(185, 190, 195) : dp::Color(120, 125, 130);
+    params.m_color = GetColorConstant("RoadLaneSymbol");
     params.m_depth = PriorityToDepth(surface->priority, drule::line, 0) + 3.0;
     insert(geometry.Arrows(*details, clip));
   }

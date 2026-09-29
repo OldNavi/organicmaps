@@ -42,6 +42,11 @@ divisions from zoom 18, and lane-aligned direction/turn arrows from zoom 19.
 Generic frequent arrows along the road centre are suppressed for detailed roads.
 Glyph size is bounded by lane width and spacing is measured in metres. Explicit
 `through|through|right` is represented by two through arrows and a right arrow.
+Paint colors come from the current style's named palette: `RoadLaneMarking`
+controls dividers, while `RoadLaneSymbol` controls arrows and bus pictograms.
+All six light/dark style variants define these entries in `style.mapcss`; light
+styles use white and dark styles use dimmed light paint. The renderer does not
+infer paint colors from the brightness of the road surface.
 
 The junction model handles balanced one-way merges and splits, including
 `1 + 1 -> 2` and `2 -> 1 + 1`, and width transitions. Turn masks constrain the
@@ -86,6 +91,12 @@ just because the width change is stored as a separate OSM node. Raised bridge
 casings are clipped against the combined pavement of the bridge, junction and
 connected approaches, retaining the outside border without dark blocks inside
 the approaching carriageway.
+Closely spaced general junctions connected by short roads can enclose narrow
+unpainted pockets between their separate meshes. Their neighboring pavement is
+combined before tile clipping; only narrow interior contours are filled by one
+owner. This preserves the outside boundary and larger islands. Roundabout
+geometry is excluded. This is a cartographic inference from lane widths, not
+surveyed island geometry or an inference of hatched road markings.
 
 Balanced merges and splits retain individual lane ribbons through the common
 surface, including `1 + 1 <-> 2` and `3 <-> 2 + 1`. Their control points keep the lanes apart

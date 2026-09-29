@@ -53,6 +53,13 @@ public class MwmApplication extends Application implements Application.ActivityL
   @NonNull
   private OrganicMaps mOrganicMaps;
 
+  private app.organicmaps.downloader.UsbMapImportManager mUsbMapImport;
+
+  public app.organicmaps.downloader.UsbMapImportManager getUsbMapImport()
+  {
+    return mUsbMapImport;
+  }
+
   @SuppressWarnings("NotNullFieldNotInitialized")
   @NonNull
   private DisplayManager mDisplayManager;
@@ -126,6 +133,7 @@ public class MwmApplication extends Application implements Application.ActivityL
     Logger.i(TAG, "Initializing application");
 
     sInstance = this;
+    mUsbMapImport = new app.organicmaps.downloader.UsbMapImportManager(this);
 
     PreferenceManager.setDefaultValues(this, R.xml.prefs_main, false);
     mOrganicMaps = new OrganicMaps(getApplicationContext(), BuildConfig.FLAVOR, BuildConfig.APPLICATION_ID,
@@ -158,6 +166,7 @@ public class MwmApplication extends Application implements Application.ActivityL
     return mOrganicMaps.init(() -> {
       ThemeSwitcher.INSTANCE.synchronizeApplicationTheme();
       app.organicmaps.cluster.NavigationProvider.initialize(this);
+      mUsbMapImport.start();
       ProcessLifecycleOwner.get().getLifecycle().addObserver(mProcessLifecycleObserver);
       if (onComplete != null)
         onComplete.run();
@@ -200,6 +209,8 @@ public class MwmApplication extends Application implements Application.ActivityL
     Utils.showOnLockScreen(Config.isShowOnLockScreenEnabled(), activity);
     getSensorHelper().setRotation(activity.getWindowManager().getDefaultDisplay().getRotation());
     mTopActivity = new WeakReference<>(activity);
+    if (activity instanceof MwmActivity map)
+      mUsbMapImport.resume(map);
   }
 
   @Override
@@ -207,6 +218,7 @@ public class MwmApplication extends Application implements Application.ActivityL
   {
     Logger.d(TAG, "activity = " + activity);
     mTopActivity = null;
+    mUsbMapImport.pause(activity);
   }
 
   @Override

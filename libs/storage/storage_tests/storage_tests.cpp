@@ -529,6 +529,30 @@ UNIT_CLASS_TEST(StorageTest, CountryDownloading)
   }
 }
 
+UNIT_TEST(StorageTest_ImportedMapsKeepOfficialCatalogue)
+{
+  Storage storage;
+  auto const catalogue = version::FOR_TESTING_MWM1;
+  storage.SetCurrentDataVersionForTesting(catalogue);
+  storage.Init(&OnCountryDownloaded, [](CountryId const &, LocalFilePtr const) { return false; });
+  auto const countryId = storage.FindCountryIdByFile("Azerbaijan");
+  auto const country = storage.GetCountryFile(countryId);
+  for (auto const version : {catalogue, version::FOR_TESTING_MWM2})
+  {
+    auto file = CreateDummyMapFile(country, version, 1024);
+    auto const marker = file->GetPath(MapFileType::Map) + IMPORTED_MAP_MARKER_EXTENSION;
+    {
+      FileWriter writer(marker);
+    }
+    storage.RegisterAllLocalMaps();
+    TEST_EQUAL(storage.GetCurrentDataVersion(), catalogue, ());
+    TEST_EQUAL(storage.GetLatestLocalFile(countryId)->GetVersion(), version, ());
+    TEST_EQUAL(storage.CountryStatusEx(countryId), Status::OnDisk, ());
+    storage.DeleteCountry(countryId, MapFileType::Map);
+    TEST(!Platform::IsFileExistsByFullPath(marker), ());
+  }
+}
+
 UNIT_TEST(StorageTest_DeleteTwoVersionsOfTheSameCountry)
 {
   Storage storage;

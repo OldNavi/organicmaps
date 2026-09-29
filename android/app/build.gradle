@@ -325,8 +325,13 @@ android.productFlavors.configureEach { flavor ->
 }
 androidComponents.onVariants(androidComponents.selector().withFlavor('default', 'auto')) { variant ->
   tasks.named("check${variant.name.capitalize()}ApkPermissions").configure { task ->
+    task.allowedPermissions.set(task.allowedPermissions.get().findAll {
+      !it.pattern().contains("READ_EXTERNAL_STORAGE")
+    })
     task.allowedPermissions.add(java.util.regex.Pattern.compile(
         "name='android.permission.ACCESS_BACKGROUND_LOCATION'"))
+    task.allowedPermissions.add(java.util.regex.Pattern.compile("name='android.permission.MANAGE_EXTERNAL_STORAGE'"))
+    task.allowedPermissions.add(java.util.regex.Pattern.compile("name='android.permission.READ_EXTERNAL_STORAGE' maxSdkVersion='29'"))
   }
 }
 

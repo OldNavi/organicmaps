@@ -247,10 +247,20 @@ void FindAllLocalMapsAndCleanup(int64_t latestVersion, string const & dataDir,
   {
     string const & subdir = fwt.first;
     int64_t version;
-    if (!ParseVersion(subdir, version) || version > latestVersion)
+    if (!ParseVersion(subdir, version))
       continue;
 
     string const fullPath = base::JoinPath(dir, subdir);
+    if (version > latestVersion)
+    {
+      // A USB import can be newer than the catalogue shipped with the app.
+      std::vector<LocalCountryFile> imported;
+      FindAllLocalMapsInDirectoryAndCleanup(fullPath, version, latestVersion, imported);
+      for (auto const & file : imported)
+        if (Platform::IsFileExistsByFullPath(file.GetPath(MapFileType::Map) + IMPORTED_MAP_MARKER_EXTENSION))
+          localFiles.push_back(file);
+      continue;
+    }
     if (0 == FindAllLocalMapsInDirectoryAndCleanup(fullPath, version, latestVersion, localFiles))
     {
       Platform::EError err = Platform::RmDir(fullPath);

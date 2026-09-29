@@ -45,6 +45,7 @@ auto constexpr TMP_OFFSETS_EXT = OFFSET_EXT EXTENSION_TMP;
 #define HEADER_FILE_TAG "header"
 #define VERSION_FILE_TAG "version"
 #define METADATA_FILE_TAG "meta"
+#define IMPORTED_MAP_MARKER_EXTENSION ".imported"
 #define ROAD_DETAILS_FILE_TAG "road_details"
 #define ROAD_JUNCTIONS_FILE_TAG "road_junctions"
 #define ALTITUDES_FILE_TAG "altitudes"

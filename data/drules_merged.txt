@@ -269,6 +269,8 @@ named-colors:
   RatingGood c011
   RatingNone c012
   RatingText c023
+  RoadLaneMarking c023
+  RoadLaneSymbol c023
   RoadShieldBlackText c022
   RoadShieldBlueBackground c028
   RoadShieldGreenBackground c029

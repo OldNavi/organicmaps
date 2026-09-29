@@ -1899,16 +1899,19 @@ void FrontendRenderer::RenderFrame()
                                 ? kVSyncIntervalMetalVulkan
                                 : kVSyncInterval;
 
-    double availableTime;
+    // Heavy frames can already exceed vsync here. Still give tile/control messages a
+    // bounded budget instead of processing just one and accumulating a backlog.
+    auto const messageDeadline =
+        std::chrono::steady_clock::now() +
+        std::chrono::duration<double>(std::max(0.004, syncInverval - m_frameData.m_timer.ElapsedSeconds()));
     do
     {
       if (!ProcessSingleMessage(false /* waitForMessage */))
         break;
       m_frameData.m_forceFullRedrawNextFrame = true;
       m_frameData.m_inactiveFramesCounter = 0;
-      availableTime = syncInverval - m_frameData.m_timer.ElapsedSeconds();
     }
-    while (availableTime > 0.0);
+    while (std::chrono::steady_clock::now() < messageDeadline);
   }
 
 #ifndef DISABLE_SCREEN_PRESENTATION

@@ -51,7 +51,7 @@ bool IsSpeedCamera(RoadEventKind kind)
 
 bool RoadEvent::MatchesBearing(double travelBearing) const
 {
-  if (!std::isfinite(travelBearing))
+  if (!math::is_finite(travelBearing))
     return false;
   if (m_directionType == 0)
     return true;
@@ -132,6 +132,8 @@ std::vector<size_t> RoadEventStore::Query(m2::RectD const & rect, uint32_t categ
 
 bool RoadEvent::MatchesRoadBearing(double travelBearing) const
 {
+  if (!math::is_finite(travelBearing))
+    return false;
   if (!IsSpeedCamera(m_kind) && m_kind != RoadEventKind::RedLight && m_kind != RoadEventKind::LaneControl)
     return MatchesBearing(travelBearing);
   if (m_directionType == 0)

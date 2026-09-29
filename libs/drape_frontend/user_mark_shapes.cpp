@@ -348,7 +348,7 @@ drape_ptr<dp::OverlayHandle> CreateUserMarkOverlayHandle(UserMarkRenderParams co
   m2::PointD const pivot(renderInfo.m_pivot.x + tileKey.GetTileXOffset(), renderInfo.m_pivot.y);
   if ((renderInfo.m_markId >> 60) == kml::kExternalMarkGroupId)
     return make_unique_dp<dp::SelectionHandle>(overlayId, renderInfo.m_anchor, pivot,
-                                               pixelRect.RightTop() - pixelRect.LeftBottom(), m2::PointD(symbolOffset),
+                                               pixelRect.RightTop() - pixelRect.LeftBottom(), renderInfo.m_pixelOffset,
                                                renderInfo.m_minZoom);
   drape_ptr<dp::OverlayHandle> handle = make_unique_dp<dp::SquareHandle>(
       overlayId, renderInfo.m_anchor, pivot, pixelRect.RightTop() - pixelRect.LeftBottom(), renderInfo.m_pixelOffset,

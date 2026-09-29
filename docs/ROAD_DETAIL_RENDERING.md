@@ -30,7 +30,11 @@ node sequence as an optional trailing extension. Older records are still read.
 The spatial index includes road footprints and junction patches. Immutable
 section data is shared across active MwmValues through the existing MwmInfo
 weak-cache lifetime; tile readers do not each expand the complete junction table.
-They do not share FileReader's mutable cache. Existing maps without these sections keep the original renderer.
+They do not share FileReader's mutable cache. Junction data is read sequentially
+into a temporary memory region and uses a sorted, flat feature-to-arm lookup,
+avoiding per-field file-cache lookups and per-road hash/vector allocations.
+The automotive renderer retains GPU tiles and contexts when its window surface
+is hidden, so reopening the existing Activity does not rebuild the map scene. Existing maps without these sections keep the original renderer.
 Existing routing lane guidance remains unchanged.
 
 Under `OMIM_AUTO`, roads use metre-width ground ribbons from zoom 17, lane
@@ -58,6 +62,8 @@ Road-name and shield layout excludes portions covered by a higher road layer at
 detail zooms, including a glyph-height margin. Pedestrian bridges and bridges in
 older maps use their style widths for this mask. Whole labels are laid out on the
 remaining path segments rather than clipped through their letters.
+The occlusion mask includes the uncut road ribbon: intervals reserved for
+separate junction surfaces must not become holes in a bridge's label mask.
 
 Missing lane counts are recorded separately from explicit `lane_markings=no`.
 The generator can estimate width between mapped continuations of the same road
@@ -74,6 +80,12 @@ contour. Junction surfaces are tessellated from their boundary instead of widene
 to a convex hull. Branch surfaces and paint are subtracted from the continuing
 carriageway footprint near a junction, including the overlap before an acute
 merge reaches its centerline cut distance.
+Two-arm width transitions inherit this boundary from a connected short link's
+adjacent junction. Their fill and markings cannot protrude onto the through road
+just because the width change is stored as a separate OSM node. Raised bridge
+casings are clipped against the combined pavement of the bridge, junction and
+connected approaches, retaining the outside border without dark blocks inside
+the approaching carriageway.
 
 Balanced merges and splits retain individual lane ribbons through the common
 surface, including `1 + 1 <-> 2` and `3 <-> 2 + 1`. Their control points keep the lanes apart
@@ -81,6 +93,17 @@ instead of pulling both toward the OSM junction node. This also applies to a
 two-way road separating into an incoming and an outgoing one-way arm.
 Through-road ribbons also remain covered inside general junction surfaces,
 preventing concave corner curves from cutting holes into the carriageway.
+
+Lane connections order complete incoming/outgoing road bundles before the lanes
+inside each bundle. A nearby ramp must not interleave with the main road's lanes
+when their cut planes overlap in lateral projection. Matched connections carry
+shared left/right boundaries. The pavement and its dividers use these same
+vertices, and the divider mesh is clipped against the resulting junction surface.
+Width transitions interpolate their boundaries along the same metric centre curve
+as the pavement. Label masks also include the junction surface at its owner layer.
+These algorithms were implemented locally; the survey in
+[OSM_LANE_RENDERING_REFERENCES.md](OSM_LANE_RENDERING_REFERENCES.md) describes the
+external design references without copying their code.
 
 Automotive road-shield backgrounds require their text overlay to participate in
 placement. A missing layout or unavailable glyphs hide the group before it can

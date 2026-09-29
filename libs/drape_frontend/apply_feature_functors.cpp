@@ -811,6 +811,10 @@ bool ApplyLineFeatureGeometry::ProcessRoadDetails(Stylist::LineRulesT const & li
         std::find(junctions.begin(), junctions.end(), link.m_junction) == junctions.end())
       junctions.push_back(link.m_junction);
   auto const & clip = m_params.m_tileRect;
+  std::map<feature::RoadJunction const *, RoadJunctionMesh> junctionMeshes;
+  for (auto const * junction : junctions)
+    if (junction->m_ownerFeatureId == m_f.GetID().m_index)
+      junctionMeshes.emplace(junction, BuildRoadJunctionMesh(*junction, clip));
   AreaViewParams params;
   params.m_tileCenter = clip.Center();
   params.m_rank = m_f.GetRank();
@@ -836,6 +840,31 @@ bool ApplyLineFeatureGeometry::ProcessRoadDetails(Stylist::LineRulesT const & li
     return m_params.m_roadDecks ? m_params.m_roadDecks->Mask(junction, m_f.GetLayer(), clip)
                                 : std::vector<m2::PointD>{};
   };
+  std::vector<m2::PointD> casingMask;
+  if (m_f.GetLayer() > 0 && !junctions.empty())
+  {
+    // A raised bridge outline must not cut into the connected approach's pavement.
+    casingMask = geometry.LabelSurface(details->WidthMeters(), clip);
+    for (auto const * junction : junctions)
+    {
+      auto const surface = junctionMeshes.contains(junction) ? junctionMeshes.at(junction).m_surface
+                                                             : BuildRoadJunctionSurface(*junction, clip);
+      casingMask.insert(casingMask.end(), surface.begin(), surface.end());
+      auto localClip = junction->Bounds();
+      if (!localClip.Intersect(clip))
+        continue;
+      for (auto const & arm : junction->m_arms)
+      {
+        if (arm.m_featureId == m_f.GetID().m_index)
+          continue;
+        if (auto const connected = roadGeometry(arm.m_featureId))
+        {
+          auto const pavement = connected->LabelSurface(arm.WidthMeters(), localClip);
+          casingMask.insert(casingMask.end(), pavement.begin(), pavement.end());
+        }
+      }
+    }
+  }
   auto const point = path.front();
   double const metersPerUnit = mercator::DistanceOnEarth(point, point + m2::PointD(0.00001, 0)) / 0.00001;
   for (auto const * rule : lineRules)
@@ -846,12 +875,19 @@ bool ApplyLineFeatureGeometry::ProcessRoadDetails(Stylist::LineRulesT const & li
     params.m_depth = PriorityToDepth(rule->priority, drule::line, 0);
     double const casing = std::max(0.0f, rule->width - surface->width) * m_params.m_vparams.GetVisualScale() *
                           metersPerUnit / m_params.m_currentScaleGtoP;
-    insert(geometry.Surface(details->WidthMeters() + casing, clip, rule != surface && rule->dashdot.has_value()));
+    auto const drawSurface = [&](std::vector<m2::PointD> triangles)
+    {
+      if (rule != surface && !casingMask.empty())
+        triangles = SubtractRoadTriangles(std::move(triangles), casingMask);
+      insert(std::move(triangles));
+    };
+    drawSurface(geometry.Surface(details->WidthMeters() + casing, clip, rule != surface && rule->dashdot.has_value()));
     for (auto const * junction : junctions)
     {
       if (junction->m_ownerFeatureId == m_f.GetID().m_index)
-        insert(BuildRoadJunctionSurface(*junction, clip, casing));
-      insert(BuildRoadJunctionFillets(*junction, m_f.GetID().m_index, roadGeometry, clip, casing));
+        drawSurface(rule == surface ? junctionMeshes.at(junction).m_surface
+                                    : BuildRoadJunctionSurface(*junction, clip, casing));
+      drawSurface(BuildRoadJunctionFillets(*junction, m_f.GetID().m_index, roadGeometry, clip, casing));
       // A layer=1 bridge polygon can overlap the layer=0 approach at their shared cut plane.
       // Promote just the connecting ribbon above the deck, retaining the approach's real geometry.
       if (rule == surface && elevatedConnection(*junction))
@@ -878,12 +914,13 @@ bool ApplyLineFeatureGeometry::ProcessRoadDetails(Stylist::LineRulesT const & li
     auto const color = ToDrapeColor(surface->color);
     bool const dark = color.GetRed() + color.GetGreen() + color.GetBlue() < 384;
     params.m_color = dark ? dp::Color(180, 185, 190) : dp::Color(135, 140, 145);
-    params.m_depth = PriorityToDepth(surface->priority, drule::line, 0) + 0.5;
+    // Leave more than one depth-buffer step even on a 16-bit Android surface.
+    params.m_depth = PriorityToDepth(surface->priority, drule::line, 0) + 2.0;
     insert(geometry.Markings(*details, clip));
     for (auto const * junction : junctions)
     {
       if (junction->m_ownerFeatureId == m_f.GetID().m_index)
-        insert(BuildRoadJunctionMarkings(*junction, clip));
+        insert(junctionMeshes.at(junction).m_markings);
       if (elevatedConnection(*junction))
         insert(BuildElevatedRoadConnection(*junction, roadGeometry, clip, true, deckMask(*junction)));
     }
@@ -893,7 +930,7 @@ bool ApplyLineFeatureGeometry::ProcessRoadDetails(Stylist::LineRulesT const & li
     auto const color = ToDrapeColor(surface->color);
     params.m_color =
         color.GetRed() + color.GetGreen() + color.GetBlue() < 384 ? dp::Color(185, 190, 195) : dp::Color(120, 125, 130);
-    params.m_depth = PriorityToDepth(surface->priority, drule::line, 0) + 0.6;
+    params.m_depth = PriorityToDepth(surface->priority, drule::line, 0) + 3.0;
     insert(geometry.Arrows(*details, clip));
   }
   return true;

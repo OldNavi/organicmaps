@@ -13,6 +13,7 @@ class RoadLabelOcclusion
 {
 public:
   void Add(int layer, double widthMeters, std::shared_ptr<RoadDetailGeometry const> geometry);
+  void AddJunction(int layer, feature::RoadJunction const & junction);
   std::vector<m2::SharedSpline> Clip(std::vector<m2::SharedSpline> const & splines, int layer, double paddingMeters,
                                      m2::RectD const & tile);
 
@@ -24,6 +25,13 @@ private:
     std::shared_ptr<RoadDetailGeometry const> m_geometry;
     std::map<double, std::vector<m2::PointD>> m_surfaces;
   };
+  struct Junction
+  {
+    int m_layer;
+    feature::RoadJunction m_geometry;
+    std::map<double, std::vector<m2::PointD>> m_surfaces;
+  };
   std::vector<Road> m_roads;
+  std::vector<Junction> m_junctions;
 };
 }  // namespace df

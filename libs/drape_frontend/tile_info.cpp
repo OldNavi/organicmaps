@@ -75,6 +75,7 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
     {
       auto labels = std::make_shared<RoadLabelOcclusion>();
       auto decks = std::make_shared<RoadDecks>();
+      std::set<feature::RoadJunction const *> labelJunctions;
       auto const bridgeDeckType = classif().GetTypeByPath({"man_made", "bridge"});
       ApplyFeatureParams labelParams;
       labelParams.Init(GetTileKey());
@@ -96,9 +97,10 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
           return;
         std::vector<m2::PointD> path;
         feature.ForEachPoint([&](auto const & point) { path.push_back(point); }, FeatureType::BEST_GEOMETRY);
-        auto geometry = std::make_shared<RoadDetailGeometry>(
-            path, feature.GetRoadJunctions(), details && details->m_roundabout,
-            details ? details->m_startOffsetCm * 0.01 : 0, details ? details->m_endOffsetCm * 0.01 : 0);
+        auto const junctions = feature.GetRoadJunctions();
+        auto geometry = std::make_shared<RoadDetailGeometry>(path, junctions, details && details->m_roundabout,
+                                                             details ? details->m_startOffsetCm * 0.01 : 0,
+                                                             details ? details->m_endOffsetCm * 0.01 : 0);
         double width = details ? details->WidthMeters() : 0;
         if (!details && geometry->IsValid())
         {
@@ -113,6 +115,10 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
         }
         roadGeometry.emplace(feature.GetID(), geometry);
         labels->Add(layer, width, std::move(geometry));
+        for (auto const & link : junctions)
+          if (link.m_junction->m_ownerFeatureId == feature.GetID().m_index &&
+              labelJunctions.insert(link.m_junction).second)
+            labels->AddJunction(layer, *link.m_junction);
       }, m_featureInfo);
       drawer.SetRoadLabelOcclusion(std::move(labels));
       drawer.SetRoadDecks(std::move(decks));

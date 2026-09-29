@@ -41,7 +41,7 @@ public:
   void Flush(TMapShapes && shapes);
   void FlushOverlays(TMapShapes && shapes);
   void FlushTrafficGeometry(TrafficSegmentsGeometry && geometry);
-  void EndReadTile();
+  void EndReadTile(bool cancelled = false);
 
 private:
   void PostMessage(drape_ptr<Message> && message);
@@ -57,5 +57,7 @@ private:
   int8_t m_mapLangIndex;
   dp::BackgroundMode m_backgroundMode;
   float m_areaOpacity;
+  TMapShapes m_geometry;
+  TMapShapes m_overlays;
 };
 }  // namespace df

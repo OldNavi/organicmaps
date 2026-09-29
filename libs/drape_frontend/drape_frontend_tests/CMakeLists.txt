@@ -10,11 +10,13 @@ set(SRC
   navigator_test.cpp
   path_text_test.cpp
   rainbow_line_gpu_test.cpp
+  requested_tiles_tests.cpp
   screen_operations_tests.cpp
   search_mark_overlay_filter_tests.cpp
   shape_test_fixture.cpp
   shape_test_fixture.hpp
   stylist_tests.cpp
+  tile_read_batch_tests.cpp
   user_event_stream_tests.cpp
   visual_params_fixture.hpp
   visual_params_tests.cpp

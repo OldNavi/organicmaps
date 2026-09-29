@@ -135,16 +135,31 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
 {
   switch (message->GetType())
   {
+  case Message::Type::ReadTileBatch:
+  {
+    ref_ptr<TileReadBatchMessage> msg = message;
+    auto const & key = msg->GetKey();
+    if (!m_requestedTiles->CheckTileKey(key) || !m_readManager->CheckTileGeneration(key))
+      break;
+
+    // Start/end stay balanced even when a whole queued tile is skipped after a zoom change.
+    TileReadStartMessage start(key);
+    AcceptMessage(make_ref(&start));
+    MapShapeReadedMessage geometry(key, std::move(msg->m_geometry));
+    AcceptMessage(make_ref(&geometry));
+    OverlayMapShapeReadedMessage overlays(key, std::move(msg->m_overlays));
+    AcceptMessage(make_ref(&overlays));
+    TileReadEndMessage end(key);
+    AcceptMessage(make_ref(&end));
+    break;
+  }
   case Message::Type::UpdateReadManager:
   {
-    TTilesCollection tiles = m_requestedTiles->GetTiles();
+    ScreenBase screen;
+    bool have3dBuildings, forceRequest, forceUserMarksRequest;
+    TTilesCollection tiles = m_requestedTiles->Get(screen, have3dBuildings, forceRequest, forceUserMarksRequest);
     if (!tiles.empty())
     {
-      ScreenBase screen;
-      bool have3dBuildings;
-      bool forceRequest;
-      bool forceUserMarksRequest;
-      m_requestedTiles->GetParams(screen, have3dBuildings, forceRequest, forceUserMarksRequest);
       m_readManager->UpdateCoverage(screen, have3dBuildings, forceRequest, forceUserMarksRequest, tiles, m_texMng,
                                     make_ref(m_metalineManager));
       m_updateCurrentCountryFn(screen.ClipRect().Center(), (*tiles.begin()).m_zoomLevel);
@@ -205,12 +220,18 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
   case Message::Type::FinishTileRead:
   {
     ref_ptr<FinishTileReadMessage> msg = message;
+    auto tiles = msg->MoveTiles();
+    // Old completion messages must not recreate marks for a discarded zoom/generation.
+    std::erase_if(tiles, [this](auto const & key)
+    { return !m_requestedTiles->CheckTileKey(key) || !m_readManager->CheckTileGeneration(key); });
+    if (tiles.empty())
+      break;
     CHECK(m_context != nullptr, ());
     if (msg->NeedForceUpdateUserMarks())
-      for (auto const & tileKey : msg->GetTiles())
+      for (auto const & tileKey : tiles)
         m_userMarkGenerator->GenerateUserMarksGeometry(m_context, tileKey, m_texMng);
     m_commutator->PostMessage(ThreadsCommutator::RenderThread,
-                              make_unique_dp<FinishTileReadMessage>(msg->MoveTiles(), msg->NeedForceUpdateUserMarks()),
+                              make_unique_dp<FinishTileReadMessage>(std::move(tiles), msg->NeedForceUpdateUserMarks()),
                               MessagePriority::Normal);
     break;
   }

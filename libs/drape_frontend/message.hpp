@@ -114,7 +114,8 @@ public:
     AddTileBackgroundImage,
     SetTileBackgroundData,
     SetTileBackgroundMode,
-    AssignTileBackgroundImage
+    AssignTileBackgroundImage,
+    ReadTileBatch
   };
 
   virtual ~Message() = default;

@@ -3,6 +3,8 @@
 #include "drape/texture_manager.hpp"
 #include "drape_frontend/message_subclasses.hpp"
 
+#include <algorithm>
+#include <iterator>
 #include <utility>
 
 namespace df
@@ -36,17 +38,17 @@ ref_ptr<MetalineManager> EngineContext::GetMetalineManager() const
 
 void EngineContext::BeginReadTile()
 {
-  PostMessage(make_unique_dp<TileReadStartMessage>(m_tileKey));
+  ASSERT(m_geometry.empty() && m_overlays.empty(), ());
 }
 
 void EngineContext::Flush(TMapShapes && shapes)
 {
-  PostMessage(make_unique_dp<MapShapeReadedMessage>(m_tileKey, std::move(shapes)));
+  std::move(shapes.begin(), shapes.end(), std::back_inserter(m_geometry));
 }
 
 void EngineContext::FlushOverlays(TMapShapes && shapes)
 {
-  PostMessage(make_unique_dp<OverlayMapShapeReadedMessage>(m_tileKey, std::move(shapes)));
+  std::move(shapes.begin(), shapes.end(), std::back_inserter(m_overlays));
 }
 
 void EngineContext::FlushTrafficGeometry(TrafficSegmentsGeometry && geometry)
@@ -56,9 +58,12 @@ void EngineContext::FlushTrafficGeometry(TrafficSegmentsGeometry && geometry)
                             MessagePriority::Low);
 }
 
-void EngineContext::EndReadTile()
+void EngineContext::EndReadTile(bool cancelled)
 {
-  PostMessage(make_unique_dp<TileReadEndMessage>(m_tileKey));
+  if (!cancelled)
+    PostMessage(make_unique_dp<TileReadBatchMessage>(m_tileKey, std::move(m_geometry), std::move(m_overlays)));
+  m_geometry.clear();
+  m_overlays.clear();
 }
 
 void EngineContext::PostMessage(drape_ptr<Message> && message)

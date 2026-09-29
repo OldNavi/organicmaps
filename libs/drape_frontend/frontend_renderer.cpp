@@ -266,7 +266,7 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
     dp::RenderState const & state = msg->GetState();
     TileKey const & key = msg->GetKey();
     drape_ptr<dp::RenderBucket> bucket = msg->AcceptBuffer();
-    if (key.m_zoomLevel == GetCurrentZoom() && CheckTileGenerations(key))
+    if (key.m_zoomLevel == GetCurrentZoom() && m_requestedTiles->CheckTileKey(key) && CheckTileGenerations(key))
     {
       PrepareBucket(state, bucket);
       AddToRenderGroup<RenderGroup>(state, std::move(bucket), key);
@@ -281,6 +281,7 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
     for (auto & overlayRenderData : renderData)
     {
       if (overlayRenderData.m_tileKey.m_zoomLevel == GetCurrentZoom() &&
+          m_requestedTiles->CheckTileKey(overlayRenderData.m_tileKey) &&
           CheckTileGenerations(overlayRenderData.m_tileKey))
       {
         PrepareBucket(overlayRenderData.m_state, overlayRenderData.m_bucket);
@@ -346,7 +347,8 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
     TUserMarksRenderData marksRenderData = msg->AcceptRenderData();
     for (auto & renderData : marksRenderData)
     {
-      if (renderData.m_tileKey.m_zoomLevel == GetCurrentZoom() && CheckTileGenerations(renderData.m_tileKey))
+      if (renderData.m_tileKey.m_zoomLevel == GetCurrentZoom() &&
+          m_requestedTiles->CheckTileKey(renderData.m_tileKey) && CheckTileGenerations(renderData.m_tileKey))
       {
         PrepareBucket(renderData.m_state, renderData.m_bucket);
         AddToRenderGroup<UserMarkRenderGroup>(renderData.m_state, std::move(renderData.m_bucket), renderData.m_tileKey);

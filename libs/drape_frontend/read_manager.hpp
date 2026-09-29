@@ -46,6 +46,11 @@ public:
   void InvalidateAll();
 
   bool CheckTileKey(TileKey const & tileKey) const;
+  // Coverage keys have no generation; only completed reads may use this stricter check.
+  bool CheckTileGeneration(TileKey const & key) const
+  {
+    return key.m_generation == m_generationCounter && CheckTileKey(key);
+  }
   void Allow3dBuildings(bool allow3dBuildings);
 
   void SetMapLangIndex(int8_t mapLangIndex);
@@ -83,6 +88,7 @@ private:
   bool m_allow3dBuildings;
   bool m_trafficEnabled;
   bool m_isolinesEnabled;
+  TTilesCollection m_seenTiles;
   bool m_modeChanged;
   int8_t m_mapLangIndex;
   dp::BackgroundMode m_backgroundMode = dp::BackgroundMode::Default;

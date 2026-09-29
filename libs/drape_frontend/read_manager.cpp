@@ -131,9 +131,17 @@ void ReadManager::UpdateCoverage(ScreenBase const & screen, bool have3dBuildings
   m_modeChanged |= (m_have3dBuildings != have3dBuildings);
   m_have3dBuildings = have3dBuildings;
 
+  size_t constexpr kMaxTileHistory = 512;
+  forceUpdate |= m_seenTiles.size() > kMaxTileHistory;
+  // Late buffers from a cancelled read must not merge with a new read of the same cell.
+  for (auto const & key : tiles)
+    if (m_seenTiles.contains(key) && !CheckTileKey(key))
+      forceUpdate = true;
+
   if (m_modeChanged || forceUpdate || MustDropAllTiles(screen))
   {
     m_modeChanged = false;
+    m_seenTiles.clear();
 
     for (auto const & info : m_tileInfos)
       CancelTileInfo(info);
@@ -176,6 +184,7 @@ void ReadManager::UpdateCoverage(ScreenBase const & screen, bool have3dBuildings
       PushTaskBackForTileKey(tileKey, texMng, metalineMng);
   }
 
+  m_seenTiles.insert(tiles.begin(), tiles.end());
   m_currentViewport = screen;
 }
 

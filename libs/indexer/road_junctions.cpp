@@ -5,6 +5,7 @@
 
 #include "defines.hpp"
 
+#include <algorithm>
 #include <bit>
 #include <numeric>
 
@@ -81,14 +82,18 @@ std::unique_ptr<RoadJunctions> RoadJunctions::Load(FilesContainerR const & conta
 {
   if (!container.IsExist(ROAD_JUNCTIONS_FILE_TAG))
     return {};
-  auto reader = container.GetReader(ROAD_JUNCTIONS_FILE_TAG);
+  // Decode a sequential section from one read, without millions of small page-cache lookups.
+  auto const bytes = container.GetMemoryRegion(ROAD_JUNCTIONS_FILE_TAG);
+  MemReader reader(bytes->ImmutableData(), bytes->Size());
   ReaderSource source(reader);
   auto const version = ReadPrimitiveFromSource<uint8_t>(source);
   CHECK_LESS_OR_EQUAL(version, 1, ());
   auto result = std::make_unique<RoadJunctions>();
   result->m_junctions.resize(ReadVarUint<uint32_t>(source));
-  for (auto & junction : result->m_junctions)
+  result->m_links.reserve(result->m_junctions.size() * 3);
+  for (uint32_t j = 0; j < result->m_junctions.size(); ++j)
   {
+    auto & junction = result->m_junctions[j];
     junction.m_ownerFeatureId = ReadVarUint<uint32_t>(source);
     if (version >= 1)
     {
@@ -129,15 +134,21 @@ std::unique_ptr<RoadJunctions> RoadJunctions::Load(FilesContainerR const & conta
         arm.m_widthsCm[j] = base::asserted_cast<uint16_t>(ReadVarUint<uint32_t>(source));
         arm.m_turns[j] = base::asserted_cast<uint16_t>(ReadVarUint<uint32_t>(source));
       }
-      result->m_links[arm.m_featureId].push_back({&junction, i});
+      result->m_links.push_back({arm.m_featureId, j, base::asserted_cast<uint32_t>(i)});
     }
   }
+  // A flat immutable lookup avoids a hash node and a separate vector allocation per road.
+  std::sort(result->m_links.begin(), result->m_links.end());
   return result;
 }
 
 RoadJunctions::Links RoadJunctions::Get(uint32_t featureId) const
 {
-  auto const it = m_links.find(featureId);
-  return it == m_links.end() ? Links{} : it->second;
+  auto it = std::lower_bound(m_links.begin(), m_links.end(), featureId,
+                             [](auto const & link, uint32_t id) { return link.m_featureId < id; });
+  Links result;
+  for (; it != m_links.end() && it->m_featureId == featureId; ++it)
+    result.push_back({&m_junctions[it->m_junctionIndex], it->m_armIndex});
+  return result;
 }
 }  // namespace feature

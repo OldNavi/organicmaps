@@ -40,6 +40,8 @@ named-colors:
   RatingGood #003C8C3C
   RatingNone #00249CF2
   RatingText #00FFFFFF
+  RoadLaneMarking #00FFFFFF
+  RoadLaneSymbol #00FFFFFF
   RoadShieldBlackText #00000000
   RoadShieldBlueBackground #001A5EC1
   RoadShieldGreenBackground #00309302

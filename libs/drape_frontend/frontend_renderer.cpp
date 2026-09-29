@@ -29,6 +29,8 @@
 #include "indexer/drawing_rules.hpp"
 #include "indexer/scales.hpp"
 
+#include "geometry/mercator.hpp"
+
 #include "platform/trace.hpp"
 
 #include "base/assert.hpp"

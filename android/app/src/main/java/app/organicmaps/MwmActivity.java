@@ -23,11 +23,14 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +40,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.CallSuper;
+import androidx.annotation.IdRes;
 import androidx.annotation.Keep;
+import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
@@ -51,6 +56,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import app.organicmaps.api.Const;
 import app.organicmaps.base.BaseMwmFragmentActivity;
@@ -206,6 +212,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
 
   private boolean mRemoveDisplayListener = true;
   private int mLastUiMode;
+  private boolean mThemeRefreshPending;
 
   public static Intent createShowMapIntent(@NonNull Context context, @Nullable String countryId)
   {
@@ -447,24 +454,103 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     super.onConfigurationChanged(newConfig);
 
-    final boolean recreateForConfig = shouldRecreateForUiMode(mLastUiMode, newConfig.uiMode);
+    final int oldMode = mLastUiMode;
     mLastUiMode = newConfig.uiMode;
-
-    if (recreateForConfig)
+    if (shouldRecreateForUiMode(oldMode, newConfig.uiMode, "auto".equals(BuildConfig.FLAVOR)))
       recreate();
+    else if ((oldMode & Configuration.UI_MODE_NIGHT_MASK) != (newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK))
+    {
+      mThemeRefreshPending = true;
+      // Configuration callbacks can arrive during a fragment transaction or after its state was saved.
+      getWindow().getDecorView().post(this::refreshMapTheme);
+    }
   }
 
-  static boolean shouldRecreateForUiMode(int oldMode, int newMode)
+  static boolean shouldRecreateForUiMode(int oldMode, int newMode, boolean automotive)
   {
+    if (automotive || oldMode == newMode)
+      return false;
     final int newType = newMode & Configuration.UI_MODE_TYPE_MASK;
     final int oldType = oldMode & Configuration.UI_MODE_TYPE_MASK;
-
     final boolean carModeChanged =
         newType != oldType && (newType == Configuration.UI_MODE_TYPE_CAR || oldType == Configuration.UI_MODE_TYPE_CAR);
-
     final boolean nightModeChanged =
         (oldMode & Configuration.UI_MODE_NIGHT_MASK) != (newMode & Configuration.UI_MODE_NIGHT_MASK);
     return !carModeChanged || nightModeChanged;
+  }
+
+  private void refreshMapTheme()
+  {
+    final FragmentManager manager = getSupportFragmentManager();
+    if (!mThemeRefreshPending || !getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)
+        || manager.isStateSaved() || isFinishing())
+      return;
+    mThemeRefreshPending = false;
+    setTheme(R.style.MwmTheme_MainActivity);
+    ThemeSwitcher.INSTANCE.synchronizeMapStyle(this, mMapController.isRenderingActive());
+
+    // Refresh only overlays. Detaching the MapView would destroy its Surface and interrupt navigation rendering.
+    final var fragments = new ArrayList<Fragment>();
+    final FragmentTransaction detach = manager.beginTransaction();
+    for (Fragment fragment : manager.getFragments())
+    {
+      if (fragment.isAdded() && fragment.getView() != null)
+      {
+        fragments.add(fragment);
+        detach.detach(fragment);
+      }
+    }
+    detach.commitNow();
+
+    mNavigationController.destroy();
+    reinflateMapOverlay(R.id.navigation_frame, R.layout.layout_nav, () -> {
+      mNavigationController = new NavigationController(
+          this, v -> onSettingsOptionSelected(), v -> openVoiceInstructionsSettings(), this::updateBottomWidgetsOffset);
+    });
+    mNavigationController.show(RoutingController.get().isNavigating());
+    mNavigationController.update(RoutingController.get().getCachedRoutingInfo());
+    mNavigationController.refresh();
+
+    if (mOnmapDownloader != null)
+      mOnmapDownloader.onPause();
+    reinflateMapOverlay(R.id.onmap_downloader, R.layout.onmap_downloader, this::initOnmapDownloader);
+    mOnmapDownloader.onResume();
+    mOnmapDownloader.updateState(false);
+
+    final CharSequence chooserTitle = mPointChooserTitle.getText();
+    final CharSequence chooserHint = mPointChooserHint.getText();
+    reinflateMapOverlay(R.id.position_chooser, R.layout.position_chooser, this::initPositionChooser);
+    mPointChooserTitle.setText(chooserTitle);
+    mPointChooserHint.setText(chooserHint);
+    reinflateMapOverlay(R.id.toolbar, R.layout.toolbar_with_search, () -> {});
+
+    // Separate transactions are required: detach+attach in one transaction keeps the old views.
+    final FragmentTransaction attach = manager.beginTransaction();
+    for (Fragment fragment : fragments)
+      attach.attach(fragment);
+    attach.commitNow();
+    updateViewsInsets();
+    makeNavigationBarTransparentInLightMode();
+    refreshLightStatusBar();
+    ViewCompat.requestApplyInsets(findViewById(R.id.coordinator));
+    Logger.i(TAG, "Map theme refreshed without recreating activity or surface");
+  }
+
+  private void reinflateMapOverlay(@IdRes int viewId, @LayoutRes int layoutId, @NonNull Runnable bind)
+  {
+    final View oldView = findViewById(viewId);
+    final ViewGroup parent = (ViewGroup) oldView.getParent();
+    final int index = parent.indexOfChild(oldView);
+    final int visibility = oldView.getVisibility();
+    final SparseArray<Parcelable> state = new SparseArray<>();
+    oldView.saveHierarchyState(state);
+    final View view = getLayoutInflater().inflate(layoutId, parent, false);
+    view.setId(viewId);
+    parent.removeViewAt(index);
+    parent.addView(view, index, oldView.getLayoutParams());
+    bind.run();
+    view.restoreHierarchyState(state);
+    view.setVisibility(visibility);
   }
 
   /**
@@ -1039,6 +1125,7 @@ public class MwmActivity extends BaseMwmFragmentActivity
   {
     super.onResumeFragments();
     RoutingController.get().restore();
+    getWindow().getDecorView().post(this::refreshMapTheme);
   }
 
   @Override

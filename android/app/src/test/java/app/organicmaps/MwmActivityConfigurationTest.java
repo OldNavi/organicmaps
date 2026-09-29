@@ -8,28 +8,38 @@ import org.junit.Test;
 
 public class MwmActivityConfigurationTest
 {
+  private static final int DAY = Configuration.UI_MODE_NIGHT_NO;
+  private static final int NIGHT = Configuration.UI_MODE_NIGHT_YES;
+  private static final int PHONE = Configuration.UI_MODE_TYPE_NORMAL;
+  private static final int CAR = Configuration.UI_MODE_TYPE_CAR;
+
   @Test
-  public void carModeOnlyPreservesMapActivity()
+  public void automotiveThemeChangesPreserveMapSurface()
   {
-    assertFalse(MwmActivity.shouldRecreateForUiMode(Configuration.UI_MODE_TYPE_NORMAL | Configuration.UI_MODE_NIGHT_NO,
-                                                    Configuration.UI_MODE_TYPE_CAR | Configuration.UI_MODE_NIGHT_NO));
+    for (int oldType : new int[] {PHONE, CAR})
+      for (int newType : new int[] {PHONE, CAR})
+      {
+        assertFalse(MwmActivity.shouldRecreateForUiMode(oldType | DAY, newType | NIGHT, true));
+        assertFalse(MwmActivity.shouldRecreateForUiMode(oldType | NIGHT, newType | DAY, true));
+      }
   }
 
   @Test
-  public void enteringCarModeAtNightRecreatesSearchViews()
+  public void standardThemeChangesStillRecreateViews()
   {
-    assertTrue(MwmActivity.shouldRecreateForUiMode(Configuration.UI_MODE_TYPE_NORMAL | Configuration.UI_MODE_NIGHT_NO,
-                                                   Configuration.UI_MODE_TYPE_CAR | Configuration.UI_MODE_NIGHT_YES));
-    assertTrue(MwmActivity.shouldRecreateForUiMode(Configuration.UI_MODE_TYPE_CAR | Configuration.UI_MODE_NIGHT_YES,
-                                                   Configuration.UI_MODE_TYPE_NORMAL | Configuration.UI_MODE_NIGHT_NO));
+    assertTrue(MwmActivity.shouldRecreateForUiMode(PHONE | DAY, PHONE | NIGHT, false));
+    assertTrue(MwmActivity.shouldRecreateForUiMode(PHONE | DAY, CAR | NIGHT, false));
+    assertTrue(MwmActivity.shouldRecreateForUiMode(CAR | NIGHT, PHONE | DAY, false));
   }
 
   @Test
-  public void themeAndOtherConfigurationChangesStillRecreate()
+  public void redundantUpdatesAndCarModeOnlyDoNotRecreate()
   {
-    assertTrue(MwmActivity.shouldRecreateForUiMode(Configuration.UI_MODE_TYPE_CAR | Configuration.UI_MODE_NIGHT_NO,
-                                                   Configuration.UI_MODE_TYPE_CAR | Configuration.UI_MODE_NIGHT_YES));
-    assertTrue(MwmActivity.shouldRecreateForUiMode(Configuration.UI_MODE_TYPE_CAR | Configuration.UI_MODE_NIGHT_YES,
-                                                   Configuration.UI_MODE_TYPE_CAR | Configuration.UI_MODE_NIGHT_YES));
+    for (boolean automotive : new boolean[] {true, false})
+    {
+      assertFalse(MwmActivity.shouldRecreateForUiMode(PHONE | DAY, CAR | DAY, automotive));
+      assertFalse(MwmActivity.shouldRecreateForUiMode(CAR | NIGHT, PHONE | NIGHT, automotive));
+      assertFalse(MwmActivity.shouldRecreateForUiMode(CAR | NIGHT, CAR | NIGHT, automotive));
+    }
   }
 }

@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -121,7 +120,7 @@ public class RoadAutoUpdateTest
 
     RoadDataManager.UpdateResult run() throws Exception
     {
-      var future = new CompletableFuture<RoadDataManager.UpdateResult>();
+      var future = new RoadUpdateCompletion();
       main(() -> manager.updateAutomatically(source.id(), "RU", stopped::get, future));
       return future.get(10, TimeUnit.SECONDS);
     }
@@ -250,7 +249,7 @@ public class RoadAutoUpdateTest
           Thread.currentThread().interrupt();
         }
       };
-      var first = new CompletableFuture<RoadDataManager.UpdateResult>();
+      var first = new RoadUpdateCompletion();
       main(() -> f.manager.updateAutomatically(f.source.id(), "RU", f.stopped::get, first));
       try
       {

@@ -26,8 +26,9 @@
 
 namespace feature
 {
+class RoadDetailsReader;
 class FeaturesOffsetsTable;
-}
+}  // namespace feature
 namespace indexer
 {
 class MetadataDeserializer;
@@ -114,6 +115,7 @@ private:
   // only in the MwmSet critical section, protected by a lock.  So,
   // there's an implicit synchronization on this field.
   std::weak_ptr<feature::FeaturesOffsetsTable> m_ftTable, m_relTable;
+  std::weak_ptr<feature::RoadDetailsReader const> m_roadDetails;
 };
 
 class MwmValue;
@@ -396,6 +398,7 @@ public:
   // m_ftTable should always present, m_relTable maybe nullptr.
   std::shared_ptr<feature::FeaturesOffsetsTable> m_ftTable, m_relTable;
   std::unique_ptr<indexer::MetadataDeserializer> m_metaDeserializer;
+  std::shared_ptr<feature::RoadDetailsReader const> m_roadDetails;
   std::unique_ptr<HouseToStreetTable> m_house2street, m_house2place;
 
 public:

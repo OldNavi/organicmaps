@@ -24,6 +24,9 @@ set(SRC
   tile_background_coverage_tests.cpp
   tile_background_renderer_tests.cpp
   tile_read_batch_tests.cpp
+  road_detail_geometry_tests.cpp
+  road_shield_overlay_tests.cpp
+  road_shield_gpu_tests.cpp
   user_area_snapshot_tests.cpp
   user_event_stream_tests.cpp
   visual_params_fixture.hpp

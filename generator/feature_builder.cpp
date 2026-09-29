@@ -346,6 +346,9 @@ bool FeatureBuilder::operator==(FeatureBuilder const & fb) const
   if (m_polygons.size() != fb.m_polygons.size())
     return false;
 
+  if (m_roadDetails != fb.m_roadDetails || m_roadNodeIds != fb.m_roadNodeIds)
+    return false;
+
   if (m_osmIds != fb.m_osmIds)
     return false;
 
@@ -362,7 +365,8 @@ bool FeatureBuilder::IsExactEq(FeatureBuilder const & fb) const
     return false;
 
   return (m_polygons == fb.m_polygons && m_limitRect == fb.m_limitRect && m_osmIds == fb.m_osmIds &&
-          m_params == fb.m_params && m_coastCell == fb.m_coastCell);
+          m_params == fb.m_params && m_coastCell == fb.m_coastCell && m_roadDetails == fb.m_roadDetails &&
+          m_roadNodeIds == fb.m_roadNodeIds);
 }
 
 void FeatureBuilder::SerializeForIntermediate(Buffer & data) const
@@ -392,6 +396,14 @@ void FeatureBuilder::SerializeForIntermediate(Buffer & data) const
 
   // Save OSM IDs to link meta information with sorted features later.
   rw::WriteVectorOfPOD(sink, m_osmIds);
+  if (m_roadDetails)
+  {
+    WriteToSink(sink, uint8_t{2});  // Optional road details extension version.
+    m_roadDetails->Write(sink);
+    WriteVarUint(sink, static_cast<uint32_t>(m_roadNodeIds.size()));
+    for (auto node : m_roadNodeIds)
+      WriteVarUint(sink, node);
+  }
 
   // Check for correct serialization.
 #ifdef DEBUG
@@ -434,6 +446,20 @@ void FeatureBuilder::DeserializeFromIntermediate(Buffer & data)
   }
 
   rw::ReadVectorOfPOD(source, m_osmIds);
+  m_roadDetails.reset();
+  m_roadNodeIds = {};
+  if (source.PtrUint8() < reinterpret_cast<uint8_t const *>(data.data() + data.size()))
+  {
+    auto const version = ReadPrimitiveFromSource<uint8_t>(source);
+    CHECK_LESS_OR_EQUAL(version, 2, ());
+    m_roadDetails.emplace().Read(source, version);
+    if (version >= 1)
+    {
+      m_roadNodeIds.resize(ReadVarUint<uint32_t>(source));
+      for (auto & node : m_roadNodeIds)
+        node = ReadVarUint<uint64_t>(source);
+    }
+  }
 
   CHECK(IsValid(), (*this));
 }
@@ -460,6 +486,14 @@ void FeatureBuilder::SerializeAccuratelyForIntermediate(Buffer & data) const
 
   // Save OSM IDs to link meta information with sorted features later.
   rw::WriteVectorOfPOD(sink, m_osmIds);
+  if (m_roadDetails)
+  {
+    WriteToSink(sink, uint8_t{2});  // Optional road details extension version.
+    m_roadDetails->Write(sink);
+    WriteVarUint(sink, static_cast<uint32_t>(m_roadNodeIds.size()));
+    for (auto node : m_roadNodeIds)
+      WriteVarUint(sink, node);
+  }
 
   // Check for correct serialization.
 #ifdef DEBUG
@@ -499,6 +533,20 @@ void FeatureBuilder::DeserializeAccuratelyFromIntermediate(Buffer & data)
   }
 
   rw::ReadVectorOfPOD(source, m_osmIds);
+  m_roadDetails.reset();
+  m_roadNodeIds = {};
+  if (source.PtrUint8() < reinterpret_cast<uint8_t const *>(data.data() + data.size()))
+  {
+    auto const version = ReadPrimitiveFromSource<uint8_t>(source);
+    CHECK_LESS_OR_EQUAL(version, 2, ());
+    m_roadDetails.emplace().Read(source, version);
+    if (version >= 1)
+    {
+      m_roadNodeIds.resize(ReadVarUint<uint32_t>(source));
+      for (auto & node : m_roadNodeIds)
+        node = ReadVarUint<uint64_t>(source);
+    }
+  }
 
   CHECK(IsValid(), (*this));
 }

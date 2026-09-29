@@ -386,7 +386,7 @@ void ColoredSymbolShape::Draw(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::
     dp::OverlayID overlayId(m_params.m_featureId, m_params.m_markId, m_tile.coords, m_textIndex);
     m2::PointD const pivot(m_point.x + m_tile.xOffset, m_point.y);
 
-    if ((m_params.m_markId >> 60) == kml::kExternalMarkGroupId && !m_params.m_isBadge)
+    if (kml::IsExternalMarkId(m_params.m_markId) && !m_params.m_isBadge)
     {
       handle = make_unique_dp<dp::SelectionHandle>(overlayId, m_params.m_anchor, pivot, m2::PointD(pixelSize),
                                                    m2::PointD(m_params.m_offset), m_params.m_minVisibleScale);
@@ -411,6 +411,7 @@ void ColoredSymbolShape::Draw(ref_ptr<dp::GraphicsContext> context, ref_ptr<dp::
       handle->SetSpecialLayerOverlay(true);
     }
     handle->SetOverlayRank(m_params.m_startOverlayRank);
+    handle->SetRequiredOverlayRank(m_params.m_requiredOverlayRank);
   }
   auto state = CreateRenderState(gpu::Program::ColoredSymbol, m_params.m_depthLayer);
   state.SetProgram3d(gpu::Program::ColoredSymbolBillboard);

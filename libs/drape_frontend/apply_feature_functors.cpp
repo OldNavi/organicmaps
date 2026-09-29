@@ -1,5 +1,10 @@
 #include "drape_frontend/apply_feature_functors.hpp"
 #include "drape_frontend/apply_feature_params.hpp"
+#ifdef OMIM_AUTO
+#include "drape_frontend/road_detail_geometry.hpp"
+#include "drape_frontend/road_junction_geometry.hpp"
+#include "drape_frontend/road_label_occlusion.hpp"
+#endif
 
 #include "drape_frontend/area_shape.hpp"
 #include "drape_frontend/color_constants.hpp"
@@ -750,16 +755,150 @@ void ApplyLineFeatureGeometry::ProcessLineRules(Stylist::LineRulesT const & line
   // see ClipSplinesBuilder::Release.
   m_clippedSplines = m_builder.Release(isIsoline);
 
+#ifdef OMIM_AUTO
+  // The physical road may reach this tile while its reference line is outside it.
+  bool const detailed = ProcessRoadDetails(lineRules);
   if (m_clippedSplines.empty())
     return;
-
+  for (drule::LineRule const * r : lineRules)
+    if (!detailed)
+      ProcessRule(*r);
+#else
+  if (m_clippedSplines.empty())
+    return;
   for (drule::LineRule const * r : lineRules)
     ProcessRule(*r);
+#endif
 
 #ifdef LINES_GENERATION_CALC_FILTERED_POINTS
   LinesStat::Get().InsertLine(m_f.GetID(), m_tileKey.m_zoomLevel, m_readCount, static_cast<int>(builtSize));
 #endif
 }
+
+#ifdef OMIM_AUTO
+bool ApplyLineFeatureGeometry::ProcessRoadDetails(Stylist::LineRulesT const & lineRules)
+{
+  if (m_params.m_tileKey.m_zoomLevel < 17)
+    return false;
+  auto const details = m_f.GetRoadDetails();
+  if (!details)
+    return false;
+  drule::LineRule const * surface = nullptr;
+  for (auto const * rule : lineRules)
+  {
+    if (rule->pathsym.has_value())
+      continue;
+    if (!surface || (surface->dashdot.has_value() && !rule->dashdot.has_value()) ||
+        (surface->dashdot.has_value() == rule->dashdot.has_value() && rule->width < surface->width))
+      surface = rule;
+  }
+  if (!surface)
+    return false;
+  std::vector<m2::PointD> path;
+  m_f.ForEachPoint([&](auto const & p) { path.push_back(p); }, FeatureType::BEST_GEOMETRY);
+  auto const junctionLinks = m_f.GetRoadJunctions();
+  auto const cachedGeometry = m_params.m_roadGeometry ? m_params.m_roadGeometry(m_f.GetID()) : nullptr;
+  auto const geometryPtr = cachedGeometry ? cachedGeometry
+                                          : std::make_shared<RoadDetailGeometry>(
+                                                path, junctionLinks, details->m_roundabout,
+                                                details->m_startOffsetCm * 0.01, details->m_endOffsetCm * 0.01);
+  auto const & geometry = *geometryPtr;
+  if (!geometry.IsValid())
+    return false;
+  std::vector<feature::RoadJunction const *> junctions;
+  for (auto const & link : junctionLinks)
+    if (link.m_junction->Bounds().IsIntersect(m_params.m_tileRect) &&
+        std::find(junctions.begin(), junctions.end(), link.m_junction) == junctions.end())
+      junctions.push_back(link.m_junction);
+  auto const & clip = m_params.m_tileRect;
+  AreaViewParams params;
+  params.m_tileCenter = clip.Center();
+  params.m_rank = m_f.GetRank();
+  JunctionGeometryGetter const roadGeometry = [&](uint32_t id)
+  { return m_params.m_roadGeometry ? m_params.m_roadGeometry({m_f.GetID().m_mwmId, id}) : nullptr; };
+  std::vector<m2::PointD> branchMask;
+  for (auto const * junction : junctions)
+  {
+    auto const mask = BuildRoadBranchMask(*junction, m_f.GetID().m_index, roadGeometry, clip);
+    branchMask.insert(branchMask.end(), mask.begin(), mask.end());
+  }
+  auto const insert = [&](std::vector<m2::PointD> triangles)
+  {
+    if (!branchMask.empty())
+      triangles = SubtractRoadTriangles(std::move(triangles), branchMask);
+    if (!triangles.empty())
+      m_params.m_insertShape(make_unique_dp<AreaShape>(std::move(triangles), BuildingOutline{}, params));
+  };
+  auto const elevatedConnection = [&](feature::RoadJunction const & junction)
+  { return m_f.GetLayer() > 0 && junction.m_ownerFeatureId == m_f.GetID().m_index; };
+  auto const deckMask = [&](feature::RoadJunction const & junction)
+  {
+    return m_params.m_roadDecks ? m_params.m_roadDecks->Mask(junction, m_f.GetLayer(), clip)
+                                : std::vector<m2::PointD>{};
+  };
+  auto const point = path.front();
+  double const metersPerUnit = mercator::DistanceOnEarth(point, point + m2::PointD(0.00001, 0)) / 0.00001;
+  for (auto const * rule : lineRules)
+  {
+    if (rule->pathsym.has_value())
+      continue;
+    params.m_color = ToDrapeColor(rule->color);
+    params.m_depth = PriorityToDepth(rule->priority, drule::line, 0);
+    double const casing = std::max(0.0f, rule->width - surface->width) * m_params.m_vparams.GetVisualScale() *
+                          metersPerUnit / m_params.m_currentScaleGtoP;
+    insert(geometry.Surface(details->WidthMeters() + casing, clip, rule != surface && rule->dashdot.has_value()));
+    for (auto const * junction : junctions)
+    {
+      if (junction->m_ownerFeatureId == m_f.GetID().m_index)
+        insert(BuildRoadJunctionSurface(*junction, clip, casing));
+      insert(BuildRoadJunctionFillets(*junction, m_f.GetID().m_index, roadGeometry, clip, casing));
+      // A layer=1 bridge polygon can overlap the layer=0 approach at their shared cut plane.
+      // Promote just the connecting ribbon above the deck, retaining the approach's real geometry.
+      if (rule == surface && elevatedConnection(*junction))
+        insert(BuildElevatedRoadConnection(*junction, roadGeometry, clip, false, deckMask(*junction)));
+    }
+  }
+  if (m_relsInfo.HasColors())
+  {
+    auto const colors = m_relsInfo.GetColors();
+    LineViewParams route;
+    ExtractLineParams(*surface, m_params.m_vparams.GetVisualScale(), route);
+    route.m_tileCenter = params.m_tileCenter;
+    route.m_color = colors[0];
+    route.m_width = 3 * m_params.m_vparams.GetVisualScale() * colors.size();
+    route.m_depth = PriorityToDepth(surface->priority, drule::line, 0) + 10;
+    route.m_baseGtoPScale = m_params.m_currentScaleGtoP;
+    route.m_zoomLevel = m_params.m_tileKey.GetRenderZoom();
+    route.m_rainbowColors = colors;
+    for (auto const & spline : m_clippedSplines)
+      m_params.m_insertShape(make_unique_dp<LineShape>(spline, route));
+  }
+  if (m_params.m_tileKey.m_zoomLevel >= 18 && details->m_markings)
+  {
+    auto const color = ToDrapeColor(surface->color);
+    bool const dark = color.GetRed() + color.GetGreen() + color.GetBlue() < 384;
+    params.m_color = dark ? dp::Color(180, 185, 190) : dp::Color(135, 140, 145);
+    params.m_depth = PriorityToDepth(surface->priority, drule::line, 0) + 0.5;
+    insert(geometry.Markings(*details, clip));
+    for (auto const * junction : junctions)
+    {
+      if (junction->m_ownerFeatureId == m_f.GetID().m_index)
+        insert(BuildRoadJunctionMarkings(*junction, clip));
+      if (elevatedConnection(*junction))
+        insert(BuildElevatedRoadConnection(*junction, roadGeometry, clip, true, deckMask(*junction)));
+    }
+  }
+  if (m_params.m_tileKey.m_zoomLevel >= 19)
+  {
+    auto const color = ToDrapeColor(surface->color);
+    params.m_color =
+        color.GetRed() + color.GetGreen() + color.GetBlue() < 384 ? dp::Color(185, 190, 195) : dp::Color(120, 125, 130);
+    params.m_depth = PriorityToDepth(surface->priority, drule::line, 0) + 0.6;
+    insert(geometry.Arrows(*details, clip));
+  }
+  return true;
+}
+#endif
 
 void ApplyLineFeatureGeometry::ProcessRule(drule::LineRule const & lineRule)
 {
@@ -889,6 +1028,9 @@ void ApplyLineFeatureAdditional::GetRoadShieldsViewParams(ref_ptr<dp::TextureMan
       symbolParams.m_outlineWidth = static_cast<float>(1.0 * mainScale);
     }
     symbolParams.m_sizeInPixels = shieldPixelSize;
+#ifdef OMIM_AUTO
+    symbolParams.m_requiredOverlayRank = textParams.m_startOverlayRank;
+#endif
     symbolParams.m_outlineWidth = GetRoadShieldOutlineWidth(symbolParams.m_outlineWidth, shield);
     symbolParams.m_color = GetRoadShieldColor(symbolParams.m_color, shield);
   }
@@ -900,6 +1042,9 @@ void ApplyLineFeatureAdditional::GetRoadShieldsViewParams(ref_ptr<dp::TextureMan
     poiParams.m_depthTestEnabled = false;
     poiParams.m_depth = m_shieldDepth;
     poiParams.m_symbolName = GetRoadShieldSymbolName(shield, fontScale);
+#ifdef OMIM_AUTO
+    poiParams.m_requiredOverlayRank = textParams.m_startOverlayRank;
+#endif
     poiParams.m_maskColor.clear();
     poiParams.m_anchor = anchor;
     poiParams.m_offset = GetShieldOffset(anchor, 0.5, 0.5);
@@ -949,6 +1094,22 @@ void ApplyLineFeatureAdditional::ProcessAdditionalLineRules(drule::PathTextRule 
   ASSERT(pathtextRule || shieldRule, ());
   double const visScale = m_params.m_vparams.GetVisualScale();
 
+  auto visibleSplines = m_clippedSplines;
+#ifdef OMIM_AUTO
+  if (m_params.m_roadLabels && !visibleSplines.empty())
+  {
+    double height = shieldRule ? shieldRule->height : 0;
+    if (pathtextRule && pathtextRule->primary)
+      height = std::max(height, static_cast<double>(pathtextRule->primary->height));
+    // One conversion per tile keeps identical font sizes from producing a cache entry per latitude.
+    auto const origin = m_params.m_tileRect.Center();
+    double const metersPerUnit = mercator::DistanceOnEarth(origin, origin + m2::PointD(0.00001, 0)) / 0.00001;
+    double const padding = std::max(kMinVisibleFontSize, height * visScale) * m_params.m_vparams.GetFontScale() *
+                           metersPerUnit / m_params.m_currentScaleGtoP;
+    int const layer = m_f.GetLayer() == feature::LAYER_EMPTY ? 0 : m_f.GetLayer();
+    visibleSplines = m_params.m_roadLabels->Clip(visibleSplines, layer, padding, m_params.m_tileRect);
+  }
+#endif
   struct ShieldParams
   {
     TextViewParams m_text;
@@ -1002,7 +1163,7 @@ void ApplyLineFeatureAdditional::ProcessAdditionalLineRules(drule::PathTextRule 
     params.m_lang = m_captions.GetMainTextLang();
 
     uint32_t textIndex = kPathTextBaseTextIndex;
-    for (auto const & spline : m_clippedSplines)
+    for (auto const & spline : visibleSplines)
     {
       PathTextViewParams p = params;
       auto shape = make_unique_dp<PathTextShape>(spline, p, m_params.m_tileKey, textIndex);
@@ -1051,7 +1212,7 @@ void ApplyLineFeatureAdditional::ProcessAdditionalLineRules(drule::PathTextRule 
   else if (m_shieldRule)
   {
     // Position shields without captions.
-    for (auto const & spline : m_clippedSplines)
+    for (auto const & spline : visibleSplines)
     {
       double const pixelLength = 300.0 * visScale;
       std::vector<double> offsets;

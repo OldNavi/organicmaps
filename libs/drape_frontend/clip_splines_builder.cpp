@@ -29,7 +29,17 @@ void ClipSplinesBuilder::Build(FeatureType & f, int zoomLevel, bool isIsoline)
   // that lets Release() skip the GetRectCase bbox pass for fully-contained
   // features. GetLimitRect triggers the same parse that ForEachPoint would,
   // so it doesn't add cost.
-  m2::RectD const limitRect = f.GetLimitRect(zoomLevel);
+  m2::RectD limitRect = f.GetLimitRect(zoomLevel);
+#ifdef OMIM_AUTO
+  if (!isIsoline && m_params.m_tileKey.m_zoomLevel >= 17)
+  {
+    if (auto const details = f.GetRoadDetails())
+      limitRect = details->BoundsWithRoadWidth(limitRect);
+    for (auto const & link : f.GetRoadJunctions())
+      if (!link.m_junction->HasContinuation() && link.m_junction->m_ownerFeatureId == f.GetID().m_index)
+        limitRect.Add(link.m_junction->Bounds());
+  }
+#endif
   if (limitRect.IsValid())
   {
     m2::RectD checkRect = m_params.m_tileRect;

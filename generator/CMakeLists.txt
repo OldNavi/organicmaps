@@ -68,6 +68,10 @@ set(SRC
   feature_generator.hpp
   feature_helpers.cpp
   feature_helpers.hpp
+  road_junctions_builder.cpp
+  road_junctions_builder.hpp
+  road_details_parser.cpp
+  road_details_parser.hpp
   feature_maker.cpp
   feature_maker.hpp
   feature_maker_base.cpp

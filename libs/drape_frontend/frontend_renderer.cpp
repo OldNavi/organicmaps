@@ -1957,7 +1957,7 @@ void FrontendRenderer::UpdateRoadEventBadges(ScreenBase const & modelView)
     group->ForEachOverlay([&](ref_ptr<dp::OverlayHandle> const & handle)
     {
       auto const id = handle->GetOverlayID().m_markId;
-      if ((id >> 60) != kml::kExternalMarkGroupId)
+      if (!kml::IsExternalMarkId(id))
         return;
       handle->BeforeUpdate();
       bool const ready = handle->Update(modelView);
@@ -2015,7 +2015,7 @@ void FrontendRenderer::RenderUserMarksLayer(ScreenBase const & modelView, DepthL
       group->ForEachOverlay([&modelView](ref_ptr<dp::OverlayHandle> const & handle)
       {
         // External numeric sign labels are not managed by the POI displacement tree.
-        if ((handle->GetOverlayID().m_markId >> 60) == kml::kExternalMarkGroupId && handle->HasDynamicAttributes()
+        if (kml::IsExternalMarkId(handle->GetOverlayID().m_markId) && handle->HasDynamicAttributes()
 #ifdef OMIM_AUTO
             && !handle->IsBadge()
 #endif
@@ -3265,7 +3265,7 @@ void FrontendRenderer::SearchInNonDisplaceableUserMarksLayer(ScreenBase const & 
       if (!h->IsVisible())
         return;
       // Keep the existing selection path for ordinary bookmarks and other user marks.
-      if (layerId == DepthLayer::UserMarkLayer && (h->GetOverlayID().m_markId >> 60) != kml::kExternalMarkGroupId)
+      if (layerId == DepthLayer::UserMarkLayer && !kml::IsExternalMarkId(h->GetOverlayID().m_markId))
         return;
 
       dp::OverlayHandle::Rects shapes;

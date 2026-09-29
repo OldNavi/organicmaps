@@ -37,7 +37,6 @@ bool OsmID2FeatureID::ReadFromFile(std::string const & filename)
 
 void OsmID2FeatureID::AddIds(CompositeId const & osmId, uint32_t featureId)
 {
-  ASSERT(!base::IsExist(m_data, std::make_pair(osmId, featureId)), (osmId));
   m_data.emplace_back(osmId, featureId);
 }
 

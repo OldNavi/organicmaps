@@ -11,6 +11,7 @@
 namespace feature
 {
 class FeaturesOffsetsTable;
+class RoadDetailsReader;
 }  // namespace feature
 
 /// @note This class is NOT Thread-Safe (like the RecordReader and a generic Reader).
@@ -21,7 +22,8 @@ class FeaturesVector
 public:
   FeaturesVector(FilesContainerR const & cont, feature::DataHeader const & header,
                  feature::FeaturesOffsetsTable const * ftTable, feature::FeaturesOffsetsTable const * relTable,
-                 indexer::MetadataDeserializer * metaDeserializer);
+                 indexer::MetadataDeserializer * metaDeserializer,
+                 feature::RoadDetailsReader const * roadDetails = nullptr);
 
   std::unique_ptr<FeatureType> GetByIndex(uint32_t index) const;
   feature::RouteRelation GetRelation(uint32_t index) const;
@@ -82,6 +84,7 @@ class FeaturesVectorTest
   std::unique_ptr<feature::FeaturesOffsetsTable> m_ftTable;
   std::unique_ptr<feature::FeaturesOffsetsTable> m_relTable;
   std::unique_ptr<indexer::MetadataDeserializer> m_metaDeserializer;
+  std::unique_ptr<feature::RoadDetailsReader> m_roadDetails;
   FeaturesVector m_vector;
 
 public:

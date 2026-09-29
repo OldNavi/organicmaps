@@ -168,6 +168,12 @@ set(SRC
   route_builder.hpp
   route_renderer.cpp
   route_renderer.hpp
+  road_junction_geometry.cpp
+  road_junction_geometry.hpp
+  road_label_occlusion.cpp
+  road_label_occlusion.hpp
+  road_detail_geometry.cpp
+  road_detail_geometry.hpp
   route_shape.cpp
   route_shape.hpp
   search_mark_overlay_filter.cpp
@@ -241,6 +247,7 @@ target_link_libraries(${PROJECT_NAME}
     traffic
     transit
     shaders
+    tess2
 )
 
 omim_add_test_subdirectory(drape_frontend_tests)

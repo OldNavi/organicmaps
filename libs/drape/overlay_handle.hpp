@@ -131,6 +131,12 @@ public:
   using RankT = uint8_t;  // Same as OverlayRank
   RankT GetOverlayRank() const { return m_overlayRank; }
   void SetOverlayRank(RankT overlayRank) { m_overlayRank = overlayRank; }
+  int GetRequiredOverlayRank() const { return m_requiredOverlayRank; }
+  void SetRequiredOverlayRank(int rank)
+  {
+    ASSERT(rank >= -1 && rank < OverlayRanksCount, (rank));
+    m_requiredOverlayRank = static_cast<int8_t>(rank);
+  }
 
   void EnableCaching(bool enable);
   bool IsCachingEnabled() const { return m_caching; }
@@ -169,6 +175,7 @@ protected:
   double m_extendingSize;
   double m_pivotZ;
   RankT m_overlayRank;
+  int8_t m_requiredOverlayRank = -1;
 
   using TOffsetNode = std::pair<BindingInfo, MutateRegion>;
   TOffsetNode const & GetOffsetNode(uint8_t bufferID) const;

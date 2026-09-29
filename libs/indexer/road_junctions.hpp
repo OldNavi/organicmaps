@@ -7,7 +7,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
 namespace feature
@@ -59,6 +58,13 @@ public:
 
 private:
   std::vector<RoadJunction> m_junctions;
-  std::unordered_map<uint32_t, Links> m_links;
+  struct LinkIndex
+  {
+    uint32_t m_featureId;
+    uint32_t m_junctionIndex;
+    uint32_t m_armIndex;
+    auto operator<=>(LinkIndex const &) const = default;
+  };
+  std::vector<LinkIndex> m_links;
 };
 }  // namespace feature

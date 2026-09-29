@@ -37,6 +37,54 @@ OsmElement Way(std::initializer_list<OsmElement::Tag> tags)
   return element;
 }
 
+UNIT_TEST(RoadJunctions_MultipleLinksAndConcurrentLookups)
+{
+  platform::tests_support::ScopedFile file("road-junction-links.mwm",
+                                           platform::tests_support::ScopedFile::Mode::Create);
+  std::vector<feature::RoadJunction> junctions(3);
+  std::vector<std::vector<uint32_t>> const featureIds{{90, 7, 90}, {7, 1}, {90, 7}};
+  for (size_t j = 0; j < junctions.size(); ++j)
+  {
+    junctions[j].m_ownerFeatureId = static_cast<uint32_t>(j);
+    for (auto id : featureIds[j])
+    {
+      feature::RoadJunctionArm arm;
+      arm.m_featureId = id;
+      arm.m_widthsCm = {350};
+      arm.m_turns = {0};
+      junctions[j].m_arms.push_back(arm);
+    }
+  }
+  {
+    FilesContainerW container(file.GetFullPath());
+    auto writer = container.GetWriter(ROAD_JUNCTIONS_FILE_TAG);
+    feature::RoadJunctions::Write(*writer, junctions);
+  }
+  auto reader = feature::RoadJunctions::Load(FilesContainerR(file.GetFullPath()));
+  auto const check = [&]
+  {
+    for (uint32_t id : {0, 1, 7, 90, 91})
+    {
+      auto const links = reader->Get(id);
+      size_t index = 0;
+      for (size_t j = 0; j < junctions.size(); ++j)
+        for (size_t arm = 0; arm < featureIds[j].size(); ++arm)
+          if (featureIds[j][arm] == id)
+          {
+            TEST_LESS(index, links.size(), (id));
+            TEST_EQUAL(links[index].m_junction->m_ownerFeatureId, j, (id));
+            TEST_EQUAL(links[index].m_armIndex, arm, (id));
+            TEST_EQUAL(links[index].Arm().m_featureId, id, ());
+            ++index;
+          }
+      TEST_EQUAL(index, links.size(), (id));
+    }
+  };
+  std::thread other(check);
+  check();
+  other.join();
+}
+
 UNIT_TEST(RoadDetails_ExplicitFiveLanes)
 {
   auto const details =

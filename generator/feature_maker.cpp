@@ -3,6 +3,7 @@
 #include "generator/holes.hpp"
 #include "generator/osm2type.hpp"
 #include "generator/osm_element_helpers.hpp"
+#include "generator/road_details_parser.hpp"
 
 #include "indexer/classificator.hpp"
 #include "indexer/feature_algo.hpp"
@@ -103,6 +104,14 @@ bool FeatureMakerSimple::BuildFromWay(OsmElement & p, FeatureBuilderParams const
   }
   fb.AssignPoints(std::move(points));
 
+  fb.SetRoadDetails(ParseRoadDetails(p));
+  if (fb.GetRoadDetails())
+  {
+    auto roadNodes = nodes;
+    if (params.GetReversedGeometry())
+      std::reverse(roadNodes.begin(), roadNodes.end());
+    fb.SetRoadNodeIds(std::move(roadNodes));
+  }
   fb.SetOsmId(base::MakeOsmWay(p.m_id));
   fb.SetParams(params);
 

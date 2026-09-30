@@ -85,6 +85,33 @@ static bool SortFunc(T const & first, T const & second)
   return first.second > second.second;
 }
 
+void DumpRoadDetails(std::string const & fPath)
+{
+  cout << "feature_id\tname\tlane_widths_cm\twidth_m\toneway\tmarkings\tjunction_arms\tturn_masks\n";
+  feature::ForEachFeature(fPath, [](FeatureType & feature, uint32_t id)
+  {
+    auto const details = feature.GetRoadDetails();
+    if (!details)
+      return;
+    cout << id << '\t' << feature.GetDefaultName() << '\t';
+    for (size_t i = 0; i < details->m_lanes.size(); ++i)
+    {
+      if (i != 0)
+        cout << '|';
+      cout << details->m_lanes[i].m_widthCm;
+    }
+    cout << '\t' << details->WidthMeters() << '\t' << details->m_oneWay << '\t' << details->m_markings << '\t'
+         << feature.GetRoadJunctions().size() << '\t';
+    for (size_t i = 0; i < details->m_lanes.size(); ++i)
+    {
+      if (i != 0)
+        cout << '|';
+      cout << details->m_lanes[i].m_turns;
+    }
+    cout << '\n';
+  });
+}
+
 void DumpTypes(string const & fPath)
 {
   TypesCollector doClass;

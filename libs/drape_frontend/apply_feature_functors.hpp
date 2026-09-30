@@ -159,6 +159,9 @@ public:
 
 private:
   void ProcessRule(drule::LineRule const & lineRule);
+#ifdef OMIM_AUTO
+  bool ProcessRoadDetails(Stylist::LineRulesT const & lineRules);
+#endif
 
   RelationsDrawInfo m_relsInfo;
   ClipSplinesBuilder m_builder;

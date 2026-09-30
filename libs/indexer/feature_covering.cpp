@@ -109,6 +109,34 @@ void GetIntersection(FeatureType & f, FeatureIntersector<DEPTH_LEVELS> & fIsect)
   f.ForEachPoint(fIsect, scale);
   f.ForEachTriangle(fIsect, scale);
 
+  if (f.GetGeomType() == feature::GeomType::Line)
+  {
+    if (auto const details = f.GetRoadDetails())
+    {
+      std::vector<m2::PointD> points;
+      f.ForEachPoint([&](auto const & point) { points.push_back(point); }, scale);
+      for (size_t i = 1; i < points.size(); ++i)
+      {
+        m2::RectD segment;
+        segment.Add(points[i - 1]);
+        segment.Add(points[i]);
+        auto const bounds = details->BoundsWithRoadWidth(segment);
+        // Include the road's physical footprint, not only its reference line, in the spatial index.
+        fIsect(bounds.LeftBottom(), bounds.LeftTop(), bounds.RightTop());
+        fIsect(bounds.LeftBottom(), bounds.RightTop(), bounds.RightBottom());
+      }
+    }
+  }
+
+  for (auto const & link : f.GetRoadJunctions())
+  {
+    if (link.m_junction->HasContinuation() || link.m_junction->m_ownerFeatureId != f.GetID().m_index)
+      continue;
+    auto const bounds = link.m_junction->Bounds();
+    fIsect(bounds.LeftBottom(), bounds.LeftTop(), bounds.RightTop());
+    fIsect(bounds.LeftBottom(), bounds.RightTop(), bounds.RightBottom());
+  }
+
   CHECK(!(fIsect.m_trg.empty() && fIsect.m_polyline.empty()) && f.GetLimitRect(scale).IsValid(), (f.DebugString()));
 }
 

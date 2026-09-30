@@ -96,8 +96,9 @@ add_subdirectory(succinct)
 
 add_subdirectory(vulkan_wrapper)
 
+add_subdirectory(libtess2)
+
 if (PLATFORM_DESKTOP)
-  add_subdirectory(libtess2)
 
   set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
   set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")

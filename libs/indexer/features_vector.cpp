@@ -1,14 +1,16 @@
 #include "features_vector.hpp"
 #include "dat_section_header.hpp"
 #include "features_offsets_table.hpp"
+#include "road_details.hpp"
 
 #include "platform/constants.hpp"
 
 FeaturesVector::FeaturesVector(FilesContainerR const & cont, feature::DataHeader const & header,
                                feature::FeaturesOffsetsTable const * ftTable,
                                feature::FeaturesOffsetsTable const * relTable,
-                               indexer::MetadataDeserializer * metaDeserializer)
-  : m_loadInfo(cont, header, relTable, metaDeserializer)
+                               indexer::MetadataDeserializer * metaDeserializer,
+                               feature::RoadDetailsReader const * roadDetails)
+  : m_loadInfo(cont, header, relTable, metaDeserializer, roadDetails)
   , m_table(ftTable)
 {
   InitRecordsReader();
@@ -55,7 +57,8 @@ FeaturesVectorTest::FeaturesVectorTest(FilesContainerR const & cont)
                    ? feature::FeaturesOffsetsTable::Load(m_cont, RELATION_OFFSETS_FILE_TAG)
                    : nullptr)
   , m_metaDeserializer(m_cont.IsExist(METADATA_FILE_TAG) ? indexer::MetadataDeserializer::Load(m_cont) : nullptr)
-  , m_vector(m_cont, m_header, m_ftTable.get(), m_relTable.get(), m_metaDeserializer.get())
+  , m_roadDetails(feature::RoadDetailsReader::Load(m_cont))
+  , m_vector(m_cont, m_header, m_ftTable.get(), m_relTable.get(), m_metaDeserializer.get(), m_roadDetails.get())
 {}
 
 FeaturesVectorTest::~FeaturesVectorTest() = default;

@@ -1,4 +1,5 @@
 #include "indexer/mwm_set.hpp"
+#include "indexer/road_details.hpp"
 
 #include "indexer/features_offsets_table.hpp"
 #include "indexer/metadata_serdes.hpp"  // needed for MwmValue dtor
@@ -428,6 +429,15 @@ MwmValue::~MwmValue() {}
 
 void MwmValue::SetTable(MwmInfoEx & info)
 {
+  // MwmSet serializes creation. Road profiles and junctions are immutable and can be large;
+  // tile, search and nested neighbor readers must not each expand a full copy.
+  m_roadDetails = info.m_roadDetails.lock();
+  if (!m_roadDetails)
+  {
+    m_roadDetails = feature::RoadDetailsReader::Load(m_cont);
+    info.m_roadDetails = m_roadDetails;
+  }
+
   m_ftTable = info.m_ftTable.lock();
   if (!m_ftTable)
   {

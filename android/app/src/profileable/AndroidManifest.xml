@@ -5,6 +5,10 @@
     Enables Studio Profiler / simpleperf on this Release-like build without
     touching the production manifest. -->
   <application>
+    <provider
+      android:name="app.organicmaps.cluster.NavigationProvider"
+      android:authorities="${applicationId}.navi"
+      tools:replace="android:authorities" />
     <profileable
       android:shell="true"
       android:enabled="true"

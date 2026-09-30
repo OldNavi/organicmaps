@@ -22,7 +22,12 @@ public:
   void SetRound();
   bool IsRound() const { return m_isRound; }
 
-  void ZeroParams() { m_params.MakeZero(); }
+  void ZeroParams()
+  {
+    m_params.MakeZero();
+    m_roadDetails.reset();
+    m_roadNodeIds = {};
+  }
 
   void AppendFeature(MergedFeatureBuilder const & fb, bool fromBegin, bool toBack);
 

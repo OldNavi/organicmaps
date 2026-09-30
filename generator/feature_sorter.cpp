@@ -7,6 +7,7 @@
 #include "generator/gen_mwm_info.hpp"
 #include "generator/geometry_holder.hpp"
 #include "generator/region_meta.hpp"
+#include "generator/road_junctions_builder.hpp"
 #include "generator/search_index_builder.hpp"
 
 #include "routing/routing_helpers.hpp"
@@ -63,6 +64,16 @@ public:
 
   void Finish() override
   {
+    auto const junctions = m_roadJunctionsBuilder.Build();
+    RoadDetailsBuilder roadDetails;
+    m_roadJunctionsBuilder.ForEachRoad([&](uint32_t id, RoadDetails details)
+    {
+      details.ArrangeForDrivingSide(m_regionData.Get(RegionData::RD_DRIVING) == "l");
+      roadDetails.Put(id, details);
+    });
+    for (auto const & junction : junctions)
+      if (!junction.HasContinuation())
+        m_bounds.Add(junction.Bounds());
     // write version information
     {
       FilesContainerW writer(m_filename);
@@ -131,6 +142,20 @@ public:
       FilesContainerW writer(m_filename, FileWriter::OP_WRITE_EXISTING);
       auto w = writer.GetWriter(METADATA_FILE_TAG);
       m_metadataBuilder.Freeze(*w);
+    }
+
+    if (!roadDetails.Empty())
+    {
+      FilesContainerW writer(m_filename, FileWriter::OP_WRITE_EXISTING);
+      auto w = writer.GetWriter(ROAD_DETAILS_FILE_TAG);
+      roadDetails.Freeze(*w);
+    }
+
+    if (!junctions.empty())
+    {
+      FilesContainerW writer(m_filename, FileWriter::OP_WRITE_EXISTING);
+      auto w = writer.GetWriter(ROAD_JUNCTIONS_FILE_TAG);
+      RoadJunctions::Write(*w, junctions);
     }
 
     if (m_header.GetType() == DataHeader::MapType::Country || m_header.GetType() == DataHeader::MapType::World)
@@ -297,6 +322,9 @@ public:
       if (!fb.GetMetadata().Empty())
         m_metadataBuilder.Put(featureId, fb.GetMetadata());
 
+      if (fb.IsLine() && fb.GetRoadDetails())
+        m_roadJunctionsBuilder.Add(featureId, fb);
+
       if (fb.HasOsmIds())
         m_osm2ft.AddIds(generator::MakeCompositeId(fb), featureId);
     }
@@ -345,6 +373,7 @@ private:
 
   generator::BoundaryPostcodesEnricher m_boundaryPostcodesEnricher;
   indexer::MetadataBuilder m_metadataBuilder;
+  generator::RoadJunctionsBuilder m_roadJunctionsBuilder;
 
   DataHeader m_header;
   RegionData m_regionData;

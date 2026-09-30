@@ -267,9 +267,14 @@ public class NavigationController implements TrafficManager.TrafficCallback, Nav
     mNavMenu.collapseNavBottomSheet();
   }
 
+  public void destroy()
+  {
+    mNavMenu.destroy();
+  }
+
   public void refresh()
   {
-    mNavMenu.refreshTts();
+    mNavMenu.refresh();
   }
 
   @Override

@@ -70,6 +70,8 @@ colors
   TrafficArrowLight-color: #C4C4C4;
   TrafficArrowDark-color: #191919;
   TrafficOutline-color: #383838;
+  RoadLaneMarking-color: #B4B9BE;
+  RoadLaneSymbol-color: #B9BEC3;
   RoadShieldBlackText-color: #212121;
   RoadShieldWhiteText-color: #B7B6B6;
   RoadShieldUKYellowText-color: #B49E0E;

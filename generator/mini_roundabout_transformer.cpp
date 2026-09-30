@@ -261,8 +261,9 @@ void MiniRoundaboutTransformer::ProcessRoundabouts(std::function<void(feature::F
         continue;
 
       feature->AssignPoints(std::move(road));
+      // A footway with motor_vehicle=yes is routable but has no ordinary motor-road class.
       if (!UpdateRoadType(feature->GetTypes(), roadType))
-        LOG(LERROR, ("Unrecognized roundabout way type for", geoWayId));
+        LOG(LWARNING, ("Using the connected-road/default class for mini_roundabout", geoWayId));
 
       foundRoad = true;
     }

@@ -118,7 +118,7 @@
 @subway_label: #B7C0D2; /* .label-metro__navi */
 @water_label: #B5B6B5; /* .label-water */
 @park_label: #7395BB; /* .label-flora__navi */
-@shield_text: #000000; /* .label-shields */
-@shield_text_halo: #000000; /* .label-shields */
+@shield_text: #DFE3EC; /* .label-shields */
+@shield_text_halo: #DFE3EC; /* .label-shields */
 @shield: #232C3F; /* ground-99 */
 @shield_outline: #454E5F; /* ground-85 */

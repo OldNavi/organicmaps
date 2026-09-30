@@ -45850,3 +45850,58 @@ uk = Пошук уздовж маршруту не підтримується.
     tags = android-app
     en = Sign in again to resume automatic updates
     ru = Для автообновления войдите в источник снова
+
+  [usb_maps_title]
+    tags = android-app
+    en = Maps from USB
+    ru = Карты с USB
+
+  [usb_maps_permission]
+    tags = android-app
+    en = Allow file access to find maps in omdata/maps on a removable drive.
+    ru = Разрешите доступ к файлам для поиска карт в папке omdata/maps на съёмном носителе.
+
+  [usb_maps_allow]
+    tags = android-app
+    en = Allow access
+    ru = Разрешить доступ
+
+  [usb_maps_copying]
+    tags = android-app
+    en = Copying and verifying maps…
+    ru = Копирование и проверка карт…
+
+  [usb_maps_waiting]
+    tags = android-app
+    en = Maps are copied. Waiting for navigation and map downloads to finish before applying them.
+    ru = Карты скопированы. Они будут подключены после завершения навигации и загрузки карт.
+
+  [usb_maps_destination]
+    tags = android-app
+    en = Maps storage: %s
+    ru = Хранилище карт: %s
+
+  [usb_maps_new]
+    tags = android-app
+    en = new map
+    ru = новая карта
+
+  [usb_maps_update]
+    tags = android-app
+    en = update
+    ru = обновление
+
+  [usb_maps_finished]
+    tags = android-app
+    en = Maps installed: %d
+    ru = Установлено карт: %d
+
+  [usb_maps_cancelled]
+    tags = android-app
+    en = Import cancelled. Existing maps have been kept.
+    ru = Импорт отменён. Установленные карты сохранены.
+
+  [usb_maps_errors]
+    tags = android-app
+    en = These files could not be imported. Check the USB drive, map files and available storage space.
+    ru = Не удалось импортировать следующие файлы. Проверьте USB-носитель, файлы карт и свободное место в хранилище.

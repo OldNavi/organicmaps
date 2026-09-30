@@ -198,6 +198,7 @@ drape_ptr<dp::OverlayHandle> PoiSymbolShape::CreateOverlayHandle(m2::RectD const
     handle->SetSpecialLayerOverlay(true);
   }
   handle->SetOverlayRank(m_params.m_startOverlayRank);
+  handle->SetRequiredOverlayRank(m_params.m_requiredOverlayRank);
   return handle;
 }
 

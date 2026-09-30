@@ -52,7 +52,10 @@ function android_code {
   # 21_00_00_00_00 is the the greatest value Google Play allows for versionCode.
   # See https://developer.android.com/studio/publish/versioning for details.
   local cutYear=${DATE:2}
-  echo "${cutYear//./}$(printf %02d "$COUNT")"
+  # A bulk rebase can reach the 128-entry log limit. Keep CC within its two-digit
+  # slot; additional builds that day share code 99, while android_name keeps COUNT.
+  local androidCount=$((COUNT > 99 ? 99 : COUNT))
+  echo "${cutYear//./}$(printf %02d "$androidCount")"
 }
 
 function qt_int_version {

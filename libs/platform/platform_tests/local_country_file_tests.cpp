@@ -262,6 +262,21 @@ UNIT_TEST(LocalCountryFile_AllLocalFilesLookup)
   TEST_EQUAL(1, localFilesSet.count(expectedItalyFile), (localFiles));
 }
 
+UNIT_TEST(LocalCountryFile_ImportedMapNewerThanCatalogue)
+{
+  ScopedDir future("991201");
+  ScopedFile imported(future, CountryFile("ImportedRegion"), MapFileType::Map);
+  ScopedFile unmarked(future, CountryFile("UnmarkedRegion"), MapFileType::Map);
+  ScopedFile marker(future.GetRelativePath() + "/ImportedRegion.mwm" IMPORTED_MAP_MARKER_EXTENSION,
+                    ScopedFile::Mode::Create);
+  std::vector<LocalCountryFile> files;
+  platform::FindAllLocalMapsAndCleanup(260928, files);
+  auto const found = [&](std::string const & name)
+  { return std::any_of(files.begin(), files.end(), [&](auto const & file) { return file.GetCountryName() == name; }); };
+  TEST(found("ImportedRegion"), ());
+  TEST(!found("UnmarkedRegion"), ());
+}
+
 UNIT_TEST(LocalCountryFile_PreparePlaceForCountryFiles)
 {
   Platform & platform = GetPlatform();

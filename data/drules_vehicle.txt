@@ -40,6 +40,8 @@ named-colors:
   RatingGood #003C8C3C
   RatingNone #00249CF2
   RatingText #00FFFFFF
+  RoadLaneMarking #00FFFFFF/#00B4B9BE
+  RoadLaneSymbol #00FFFFFF/#00B9BEC3
   RoadShieldBlackText #00000000/#00212121
   RoadShieldBlueBackground #001A5EC1/#00294C88
   RoadShieldGreenBackground #00309302/#00136C30
@@ -2057,54 +2059,54 @@ type highway-motorway
   z10
     line width=2.5 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=30
   z11
     line width=3.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=60
   z12
     line width=3.7 color=#00859DBE/#007081A5 join=bevel cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=100
   z13
     line width=4.6 color=#00859DBE/#007081A5 join=round cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=120
   z14
     line width=6.4 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=4.9 color=#0088A1C2/#006C7EA3 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=175
   z15
     line width=7.7 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=6 color=#008CA4C5/#00697AA0 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=250
   z16
     line width=11.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=9 color=#008FA8C9/#0065779E join=round cap=round priority=250
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=300
   z17
     line width=17.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=15 color=#00A1B2CA/#0061739B join=round cap=round priority=250
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z18
     line width=27.7 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=25 color=#00B3BCCC/#005D6F98 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z19
     line width=37 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=34 color=#00B1BACB/#005F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z20
     line width=37 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=34 color=#00B1BACB/#005F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
 type highway-motorway-bridge
   z6
     line width=0.9 color=#B36B83A3/#B38E9BB9 join=bevel cap=butt priority=250
@@ -2117,70 +2119,70 @@ type highway-motorway-bridge
   z10
     line width=2.5 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=30
   z11
     line width=3.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=60
   z12
     line width=3.7 color=#00859DBE/#007081A5 join=bevel cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=100
   z13
     line width=10 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=9.6 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=4.6 color=#00859DBE/#007081A5 join=round cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=120
   z14
     line width=10.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=9.8 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=6.4 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=4.9 color=#0088A1C2/#006C7EA3 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=175
   z15
     line width=12.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=12 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=7.7 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=6 color=#008CA4C5/#00697AA0 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=250
   z16
     line width=18.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=18 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=11.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=9 color=#008FA8C9/#0065779E join=round cap=round priority=250
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=300
   z17
     line width=33.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=31.6 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=17.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=15 color=#00A1B2CA/#0061739B join=round cap=round priority=250
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z18
     line width=54 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=52 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=27.7 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=25 color=#00B3BCCC/#005D6F98 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z19
     line width=72 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=70 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=37 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=34 color=#00B1BACB/#005F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z20
     line width=72 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=70 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=37 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=34 color=#00B1BACB/#005F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
 type highway-motorway-tunnel
   z6
     line width=0.9 color=#B36B83A3/#B38E9BB9 join=bevel cap=butt priority=250
@@ -2193,56 +2195,56 @@ type highway-motorway-tunnel
   z10
     line width=2.5 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=30
   z11
     line width=3.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=60
   z12
     line width=4.7 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[2,2] priority=249
     line width=3.7 color=#00859DBE/#007081A5 join=bevel cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=100
   z13
     line width=6.2 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=249
     line width=4.6 color=#1A859DBE/#1A7081A5 join=round cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=120
   z14
     line width=6.5 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=249
     line width=4.9 color=#1A88A1C2/#1A6C7EA3 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=175
   z15
     line width=8 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=6 color=#338CA4C5/#33697AA0 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=250
   z16
     line width=11 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=9 color=#338FA8C9/#3365779E join=round cap=round priority=250
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=300
   z17
     line width=17 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=15 color=#33A1B2CA/#3361739B join=round cap=round priority=250
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z18
     line width=27 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=25 color=#33B3BCCC/#335D6F98 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z19
     line width=36 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=34 color=#33B1BACB/#335F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z20
     line width=36 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=34 color=#33B1BACB/#335F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
 type highway-motorway_junction
   z15
     caption primary[height=9 color=#006A6A6A/#00B7C0D2] priority=4200
@@ -2260,173 +2262,173 @@ type highway-motorway_link
   z10
     line width=1.3 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=30
   z11
     line width=2 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=60
   z12
     line width=2.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=100
   z13
     line width=2.8 color=#4D859DBE/#4D7081A5 join=round cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=120
   z14
     line width=4.27 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=3.37 color=#4D88A1C2/#4D6C7EA3 join=round cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=175
   z15
     line width=6.1 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=5 color=#008CA4C5/#00697AA0 join=round cap=butt priority=168
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=250
   z16
     line width=8.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=7.2 color=#4D8FA8C9/#4D65779E join=round cap=round priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=300
   z17
     line width=14 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=12 color=#4DA1B2CA/#4D61739B join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z18
     line width=20.3 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=18 color=#4DB3BCCC/#4D5D6F98 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z19
     line width=26.5 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=24 color=#4DB1BACB/#4D5F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z20
     line width=26.5 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=24 color=#4DB1BACB/#4D5F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
 type highway-motorway_link-bridge
   z10
     line width=1.3 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=30
   z11
     line width=2 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=60
   z12
     line width=2.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=100
   z13
     line width=2.8 color=#4D859DBE/#4D7081A5 join=round cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=120
   z14
     line width=7.54 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=6.74 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=4.27 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=3.37 color=#4D88A1C2/#4D6C7EA3 join=round cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=175
   z15
     line width=10.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=10 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=6.1 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=5 color=#008CA4C5/#00697AA0 join=round cap=butt priority=168
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=250
   z16
     line width=15.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=14.4 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=8.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=7.2 color=#4D8FA8C9/#4D65779E join=round cap=round priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=300
   z17
     line width=27.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=25.6 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=14 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=12 color=#4DA1B2CA/#4D61739B join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z18
     line width=40 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=38 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=20.3 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=18 color=#4DB3BCCC/#4D5D6F98 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z19
     line width=52 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=50 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=26.5 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=24 color=#4DB1BACB/#4D5F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z20
     line width=52 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=50 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=26.5 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=24 color=#4DB1BACB/#4D5F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
 type highway-motorway_link-tunnel
   z10
     line width=1.3 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=30
   z11
     line width=2 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=60
   z12
     line width=2.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=100
   z13
     line width=4.4 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=167
     line width=2.8 color=#1A859DBE/#1A7081A5 join=round cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=120
   z14
     line width=4.97 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=167
     line width=3.37 color=#1A88A1C2/#1A6C7EA3 join=round cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=175
   z15
     line width=7 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=5 color=#338CA4C5/#33697AA0 join=round cap=butt priority=168
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=250
   z16
     line width=9.2 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=7.2 color=#338FA8C9/#3365779E join=round cap=round priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=300
   z17
     line width=14 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=12 color=#33A1B2CA/#3361739B join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z18
     line width=20 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=18 color=#33B3BCCC/#335D6F98 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z19
     line width=26 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=24 color=#33B1BACB/#335F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z20
     line width=26 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=24 color=#33B1BACB/#335F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
 type highway-path
   z17
     line width=0.9 color=#66C7926B/#669C5A07 join=round cap=round dash=[3.5,2] priority=130
@@ -2510,54 +2512,54 @@ type highway-primary
   z10
     line width=1.5 color=#4D9EA6B8/#4D7484A8 join=bevel cap=butt priority=230
     path_text primary[height=12 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=30
   z11
     line width=1.7 color=#4D98A1B2/#4D7989AB join=bevel cap=butt priority=230
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=60
   z12
     line width=2.4 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=230
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=100
   z13
     line width=3 color=#4DA3ABBD/#4D6E7FA4 join=round cap=butt priority=230
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=120
   z14
     line width=4.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=3.5 color=#4DA5ADBF/#4D6C7DA3 join=round cap=butt priority=230
     path_text primary[height=15 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=175
   z15
     line width=5.3 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=4.2 color=#00A6AFC1/#006A7CA1 join=round cap=butt priority=230
     path_text primary[height=15 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=250
   z16
     line width=8.1 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=6.5 color=#00A8B1C3/#00687AA0 join=round cap=round priority=230
     path_text primary[height=17 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=300
   z17
     line width=14.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=13 color=#00AEB6C8/#0062749C join=round cap=round priority=230
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
   z18
     line width=24.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=22 color=#00B3BCCC/#005D6F98 join=round cap=round priority=230
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4300
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
   z19
     line width=29.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=27 color=#00B1BACB/#005F7199 join=round cap=round priority=230
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4300
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
   z20
     line width=29.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=27 color=#00B1BACB/#005F7199 join=round cap=round priority=230
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4300
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
 type highway-primary-bridge
   z8
     line width=0.9 color=#4D9AA2B4/#4D7888AA join=bevel cap=butt priority=230
@@ -2566,68 +2568,68 @@ type highway-primary-bridge
   z10
     line width=1.5 color=#4D9EA6B8/#4D7484A8 join=bevel cap=butt priority=230
     path_text primary[height=12 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=30
   z11
     line width=1.7 color=#4D98A1B2/#4D7989AB join=bevel cap=butt priority=230
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=60
   z12
     line width=2.4 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=230
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=100
   z13
     line width=3 color=#4DA3ABBD/#4D6E7FA4 join=round cap=butt priority=230
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=120
   z14
     line width=7.8 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=7 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=4.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=3.5 color=#4DA5ADBF/#4D6C7DA3 join=round cap=butt priority=230
     path_text primary[height=15 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=175
   z15
     line width=9.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=8.4 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=5.3 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=4.2 color=#00A6AFC1/#006A7CA1 join=round cap=butt priority=230
     path_text primary[height=15 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=250
   z16
     line width=13.8 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=13 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=8.1 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=6.5 color=#00A8B1C3/#00687AA0 join=round cap=round priority=230
     path_text primary[height=17 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=300
   z17
     line width=29.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=27.6 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=14.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=13 color=#00AEB6C8/#0062749C join=round cap=round priority=230
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
   z18
     line width=48 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=46 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=24.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=22 color=#00B3BCCC/#005D6F98 join=round cap=round priority=230
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4300
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
   z19
     line width=58 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=56 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=29.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=27 color=#00B1BACB/#005F7199 join=round cap=round priority=230
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4300
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
   z20
     line width=58 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=56 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=29.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=229
     line width=27 color=#00B1BACB/#005F7199 join=round cap=round priority=230
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4300
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
 type highway-primary-tunnel
   z8
     line width=0.9 color=#4D9AA2B4/#4D7888AA join=bevel cap=butt priority=230
@@ -2636,212 +2638,212 @@ type highway-primary-tunnel
   z10
     line width=1.5 color=#4D9EA6B8/#4D7484A8 join=bevel cap=butt priority=230
     path_text primary[height=12 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=30
   z11
     line width=1.7 color=#4D98A1B2/#4D7989AB join=bevel cap=butt priority=230
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=60
   z12
     line width=2.4 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=230
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=100
   z13
     line width=3 color=#4DA3ABBD/#4D6E7FA4 join=round cap=butt priority=230
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=120
   z14
     line width=5.1 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=229
     line width=3.5 color=#1AA5ADBF/#1A6C7DA3 join=round cap=butt priority=230
     path_text primary[height=15 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=175
   z15
     line width=6.2 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=229
     line width=4.2 color=#33A6AFC1/#336A7CA1 join=round cap=butt priority=230
     path_text primary[height=15 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=250
   z16
     line width=8.5 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=229
     line width=6.5 color=#33A8B1C3/#33687AA0 join=round cap=round priority=230
     path_text primary[height=17 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=300
   z17
     line width=15 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=229
     line width=13 color=#33AEB6C8/#3362749C join=round cap=round priority=230
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4300
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
   z18
     line width=24 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=229
     line width=22 color=#33B3BCCC/#335D6F98 join=round cap=round priority=230
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4300
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
   z19
     line width=29 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=229
     line width=27 color=#33B1BACB/#335F7199 join=round cap=round priority=230
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4300
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
   z20
     line width=29 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=229
     line width=27 color=#33B1BACB/#335F7199 join=round cap=round priority=230
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4300
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4290 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4290 min_distance=350
 type highway-primary_link
   z11
     line width=1.7 color=#4D98A1B2/#4D7989AB join=bevel cap=butt priority=166
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=60
   z12
     line width=2.4 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=166
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=100
   z13
     line width=3 color=#4DA3ABBD/#4D6E7FA4 join=round cap=butt priority=166
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=120
   z14
     line width=4.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=3.5 color=#4DA5ADBF/#4D6C7DA3 join=round cap=butt priority=166
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=175
   z15
     line width=5.3 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=4.2 color=#00A6AFC1/#006A7CA1 join=round cap=butt priority=166
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=250
   z16
     line width=8.1 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=6.5 color=#00A8B1C3/#00687AA0 join=round cap=round priority=166
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=300
   z17
     line width=14.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=13 color=#00AEB6C8/#0062749C join=round cap=round priority=166
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
   z18
     line width=24.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=22 color=#00B3BCCC/#005D6F98 join=round cap=round priority=166
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4200
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
   z19
     line width=29.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=27 color=#00B1BACB/#005F7199 join=round cap=round priority=166
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4200
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
   z20
     line width=29.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=27 color=#00B1BACB/#005F7199 join=round cap=round priority=166
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4200
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
 type highway-primary_link-bridge
   z11
     line width=1.7 color=#4D98A1B2/#4D7989AB join=bevel cap=butt priority=166
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=60
   z12
     line width=2.4 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=166
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=100
   z13
     line width=3 color=#4DA3ABBD/#4D6E7FA4 join=round cap=butt priority=166
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=120
   z14
     line width=7.8 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=7 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=4.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=3.5 color=#4DA5ADBF/#4D6C7DA3 join=round cap=butt priority=166
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=175
   z15
     line width=9.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=8.4 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=5.3 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=4.2 color=#00A6AFC1/#006A7CA1 join=round cap=butt priority=166
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=250
   z16
     line width=13.8 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=13 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=8.1 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=6.5 color=#00A8B1C3/#00687AA0 join=round cap=round priority=166
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=300
   z17
     line width=29.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=27.6 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=14.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=13 color=#00AEB6C8/#0062749C join=round cap=round priority=166
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
   z18
     line width=48 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=46 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=24.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=22 color=#00B3BCCC/#005D6F98 join=round cap=round priority=166
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4200
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
   z19
     line width=58 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=56 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=29.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=27 color=#00B1BACB/#005F7199 join=round cap=round priority=166
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4200
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
   z20
     line width=58 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=56 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=29.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=165
     line width=27 color=#00B1BACB/#005F7199 join=round cap=round priority=166
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4200
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
 type highway-primary_link-tunnel
   z11
     line width=1.7 color=#4D98A1B2/#4D7989AB join=bevel cap=butt priority=166
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=60
   z12
     line width=2.4 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=166
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=100
   z13
     line width=3 color=#4DA3ABBD/#4D6E7FA4 join=round cap=butt priority=166
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=120
   z14
     line width=5.1 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=165
     line width=3.5 color=#1AA5ADBF/#1A6C7DA3 join=round cap=butt priority=166
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=175
   z15
     line width=6.2 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=165
     line width=4.2 color=#33A6AFC1/#336A7CA1 join=round cap=butt priority=166
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=250
   z16
     line width=8.5 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=165
     line width=6.5 color=#33A8B1C3/#33687AA0 join=round cap=round priority=166
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=300
   z17
     line width=15 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=165
     line width=13 color=#33AEB6C8/#3362749C join=round cap=round priority=166
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4200
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
   z18
     line width=24 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=165
     line width=22 color=#33B3BCCC/#335D6F98 join=round cap=round priority=166
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4200
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
   z19
     line width=29 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=165
     line width=27 color=#33B1BACB/#335F7199 join=round cap=round priority=166
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4200
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
   z20
     line width=29 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=165
     line width=27 color=#33B1BACB/#335F7199 join=round cap=round priority=166
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4200
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3940 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3940 min_distance=350
 type highway-residential
   z12
     line width=0.8 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=170
@@ -2856,32 +2858,32 @@ type highway-residential
     line width=4.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=3.6 color=#00C8CEDA/#004C5E88 join=round cap=butt priority=170
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=250
   z16
     line width=6.1 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=5.1 color=#00CCD2DD/#00495B84 join=round cap=round priority=170
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=300
   z17
     line width=9.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=8 color=#00CCD2DD/#00495B84 join=round cap=round priority=170
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z18
     line width=13.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=12 color=#00CCD2DD/#00495B84 join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z19
     line width=19 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=17 color=#00C2C9D6/#0051638C join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z20
     line width=19 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=17 color=#00C2C9D6/#0051638C join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
 type highway-residential-area
   z12
     line width=0.8 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=170
@@ -2896,32 +2898,32 @@ type highway-residential-area
     line width=4.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=3.6 color=#00C8CEDA/#004C5E88 join=round cap=butt priority=170
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=250
   z16
     line width=6.1 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=5.1 color=#00CCD2DD/#00495B84 join=round cap=round priority=170
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=300
   z17
     line width=9.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=8 color=#00CCD2DD/#00495B84 join=round cap=round priority=170
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z18
     line width=13.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=12 color=#00CCD2DD/#00495B84 join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z19
     line width=19 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=17 color=#00C2C9D6/#0051638C join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z20
     line width=19 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=17 color=#00C2C9D6/#0051638C join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
 type highway-residential-bridge
   z12
     line width=0.8 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=170
@@ -2940,42 +2942,42 @@ type highway-residential-bridge
     line width=4.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=3.6 color=#00C8CEDA/#004C5E88 join=round cap=butt priority=170
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=250
   z16
     line width=11 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=10.2 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=6.1 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=5.1 color=#00CCD2DD/#00495B84 join=round cap=round priority=170
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=300
   z17
     line width=19.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=17.6 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=9.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=8 color=#00CCD2DD/#00495B84 join=round cap=round priority=170
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z18
     line width=28 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=26 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=13.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=12 color=#00CCD2DD/#00495B84 join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z19
     line width=38 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=36 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=19 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=17 color=#00C2C9D6/#0051638C join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z20
     line width=38 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=36 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=19 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=17 color=#00C2C9D6/#0051638C join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
 type highway-residential-tunnel
   z12
     line width=0.8 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=170
@@ -2990,32 +2992,32 @@ type highway-residential-tunnel
     line width=4.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=169
     line width=3.6 color=#00C8CEDA/#004C5E88 join=round cap=butt priority=170
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=250
   z16
     line width=7.1 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=169
     line width=5.1 color=#33CCD2DD/#33495B84 join=round cap=round priority=170
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=300
   z17
     line width=10 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=169
     line width=8 color=#33CCD2DD/#33495B84 join=round cap=round priority=170
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=3950
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z18
     line width=14 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=169
     line width=12 color=#33CCD2DD/#33495B84 join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z19
     line width=19 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=169
     line width=17 color=#33C2C9D6/#3351638C join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
   z20
     line width=19 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=169
     line width=17 color=#33C2C9D6/#3351638C join=round cap=round priority=170
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=3950
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3910 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3910 min_distance=350
 type highway-rest_area
   z14
     area color=#00EBF8E0/#00123B37 priority=-1900
@@ -3133,46 +3135,46 @@ type highway-secondary
   z12
     line width=2.5 color=#33A3ABBD/#336E7FA4 join=bevel cap=butt priority=210
     path_text primary[height=14 color=#00989797/#00919CB1 stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=100
   z13
     line width=2.9 color=#33A3ABBD/#336E7FA4 join=round cap=butt priority=210
     path_text primary[height=14 color=#00989797/#00919CB1 stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=120
   z14
     line width=3.9 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=3.2 color=#33A5ADBF/#336C7DA3 join=round cap=butt priority=210
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=175
   z15
     line width=5.3 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=4.2 color=#00A6AFC1/#006A7CA1 join=round cap=butt priority=210
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=250
   z16
     line width=7.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=6 color=#00A8B1C3/#00687AA0 join=round cap=round priority=210
     path_text primary[height=17 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=300
   z17
     line width=11.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=9.6 color=#00AEB6C8/#0062749C join=round cap=round priority=210
     path_text primary[height=17 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
   z18
     line width=17.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=15 color=#00B3BCCC/#005D6F98 join=round cap=round priority=210
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4150
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
   z19
     line width=24.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=22 color=#00B1BACB/#005F7199 join=round cap=round priority=210
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4150
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
   z20
     line width=24.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=22 color=#00B1BACB/#005F7199 join=round cap=round priority=210
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4150
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
 type highway-secondary-bridge
   z10
     line width=1.55 color=#33C0C7D5/#3352658F join=bevel cap=butt priority=210
@@ -3183,60 +3185,60 @@ type highway-secondary-bridge
   z12
     line width=2.5 color=#33A3ABBD/#336E7FA4 join=bevel cap=butt priority=210
     path_text primary[height=14 color=#00989797/#00919CB1 stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=100
   z13
     line width=2.9 color=#33A3ABBD/#336E7FA4 join=round cap=butt priority=210
     path_text primary[height=14 color=#00989797/#00919CB1 stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=120
   z14
     line width=7.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=6.4 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=3.9 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=3.2 color=#33A5ADBF/#336C7DA3 join=round cap=butt priority=210
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=175
   z15
     line width=9.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=8.4 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=5.3 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=4.2 color=#00A6AFC1/#006A7CA1 join=round cap=butt priority=210
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=250
   z16
     line width=12.8 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=12 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=7.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=6 color=#00A8B1C3/#00687AA0 join=round cap=round priority=210
     path_text primary[height=17 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=300
   z17
     line width=22.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=20.8 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=11.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=9.6 color=#00AEB6C8/#0062749C join=round cap=round priority=210
     path_text primary[height=17 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
   z18
     line width=34 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=32 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=17.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=15 color=#00B3BCCC/#005D6F98 join=round cap=round priority=210
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4150
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
   z19
     line width=48 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=46 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=24.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=22 color=#00B1BACB/#005F7199 join=round cap=round priority=210
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4150
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
   z20
     line width=48 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=46 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=24.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=22 color=#00B1BACB/#005F7199 join=round cap=round priority=210
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4150
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
 type highway-secondary-tunnel
   z10
     line width=1.55 color=#33C0C7D5/#3352658F join=bevel cap=butt priority=210
@@ -3247,46 +3249,46 @@ type highway-secondary-tunnel
   z12
     line width=2.5 color=#33A3ABBD/#336E7FA4 join=bevel cap=butt priority=210
     path_text primary[height=14 color=#00989797/#00919CB1 stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=100
   z13
     line width=2.9 color=#33A3ABBD/#336E7FA4 join=round cap=butt priority=210
     path_text primary[height=14 color=#00989797/#00919CB1 stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=120
   z14
     line width=3.9 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=3.2 color=#33A5ADBF/#336C7DA3 join=round cap=butt priority=210
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=175
   z15
     line width=5.3 color=#00EAE8E6/#00364052 join=round cap=butt priority=209
     line width=4.2 color=#00A6AFC1/#006A7CA1 join=round cap=butt priority=210
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=250
   z16
     line width=8 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=209
     line width=6 color=#33A8B1C3/#33687AA0 join=round cap=round priority=210
     path_text primary[height=17 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=300
   z17
     line width=11.6 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=209
     line width=9.6 color=#33AEB6C8/#3362749C join=round cap=round priority=210
     path_text primary[height=17 color=#002B3343/#00D5DFFA stroke=#33FDFCFC/#33232C3F] priority=4150
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
   z18
     line width=17 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=209
     line width=15 color=#33B3BCCC/#335D6F98 join=round cap=round priority=210
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4150
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
   z19
     line width=24 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=209
     line width=22 color=#33B1BACB/#335F7199 join=round cap=round priority=210
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4150
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
   z20
     line width=24 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=209
     line width=22 color=#33B1BACB/#335F7199 join=round cap=round priority=210
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4150
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3930 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3930 min_distance=350
 type highway-secondary_link
   z13
     line width=2.9 color=#33A3ABBD/#336E7FA4 join=round cap=butt priority=164
@@ -3582,41 +3584,41 @@ type highway-tertiary
   z13
     line width=1.85 color=#4DC0C7D5/#4D52658F join=round cap=butt priority=190
     path_text primary[height=12 color=#00989797/#00919CB1 stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=120
   z14
     line width=3.2 color=#4DC4CBD8/#4D4F628B join=round cap=butt priority=190
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=175
   z15
     line width=4.7 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=3.8 color=#00C8CEDA/#004C5E88 join=round cap=butt priority=190
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=250
   z16
     line width=6.5 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=5.4 color=#00CCD2DD/#00495B84 join=round cap=round priority=190
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=300
   z17
     line width=9.9 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=8.4 color=#00CCD2DD/#00495B84 join=round cap=round priority=190
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
   z18
     line width=15.8 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=14 color=#00CCD2DD/#00495B84 join=round cap=round priority=190
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4100
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
   z19
     line width=22.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=20 color=#00C2C9D6/#0051638C join=round cap=round priority=190
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4100
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
   z20
     line width=22.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=20 color=#00C2C9D6/#0051638C join=round cap=round priority=190
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4100
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
 type highway-tertiary-bridge
   z11
     line width=0.9 color=#4DC0C7D5/#4D52658F join=bevel cap=butt priority=190
@@ -3626,55 +3628,55 @@ type highway-tertiary-bridge
   z13
     line width=1.85 color=#4DC0C7D5/#4D52658F join=round cap=butt priority=190
     path_text primary[height=12 color=#00989797/#00919CB1 stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=120
   z14
     line width=7.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=6.4 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=3.2 color=#4DC4CBD8/#4D4F628B join=round cap=butt priority=190
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=175
   z15
     line width=8.4 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=7.6 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=4.7 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=3.8 color=#00C8CEDA/#004C5E88 join=round cap=butt priority=190
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=250
   z16
     line width=11.6 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=10.8 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=6.5 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=5.4 color=#00CCD2DD/#00495B84 join=round cap=round priority=190
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=300
   z17
     line width=20 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=18.4 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=9.9 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=8.4 color=#00CCD2DD/#00495B84 join=round cap=round priority=190
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
   z18
     line width=32 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=30 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=15.8 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=14 color=#00CCD2DD/#00495B84 join=round cap=round priority=190
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4100
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
   z19
     line width=44 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=42 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=22.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=20 color=#00C2C9D6/#0051638C join=round cap=round priority=190
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4100
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
   z20
     line width=44 color=#00EAE8E6/#00364052 join=round cap=butt priority=100
     line width=42 color=#00FDFCFC/#00232C3F join=round cap=butt priority=110
     line width=22.2 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=20 color=#00C2C9D6/#0051638C join=round cap=round priority=190
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4100
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
 type highway-tertiary-tunnel
   z11
     line width=0.9 color=#4DC0C7D5/#4D52658F join=bevel cap=butt priority=190
@@ -3684,41 +3686,41 @@ type highway-tertiary-tunnel
   z13
     line width=1.85 color=#4DC0C7D5/#4D52658F join=round cap=butt priority=190
     path_text primary[height=12 color=#00989797/#00919CB1 stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=120
   z14
     line width=3.2 color=#4DC4CBD8/#4D4F628B join=round cap=butt priority=190
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=175
   z15
     line width=4.7 color=#00EAE8E6/#00364052 join=round cap=butt priority=189
     line width=3.8 color=#00C8CEDA/#004C5E88 join=round cap=butt priority=190
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=250
   z16
     line width=7.4 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=189
     line width=5.4 color=#33CCD2DD/#33495B84 join=round cap=round priority=190
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=300
   z17
     line width=10.4 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=189
     line width=8.4 color=#33CCD2DD/#33495B84 join=round cap=round priority=190
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#33FDFCFC/#33232C3F] priority=4100
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
   z18
     line width=16 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=189
     line width=14 color=#33CCD2DD/#33495B84 join=round cap=round priority=190
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4100
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
   z19
     line width=22 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=189
     line width=20 color=#33C2C9D6/#3351638C join=round cap=round priority=190
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4100
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
   z20
     line width=22 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=189
     line width=20 color=#33C2C9D6/#3351638C join=round cap=round priority=190
     path_text primary[height=17 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4100
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=3920 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=3920 min_distance=350
 type highway-tertiary_link
   z14
     line width=3.2 color=#4DC4CBD8/#4D4F628B join=round cap=butt priority=162
@@ -3874,54 +3876,54 @@ type highway-trunk
   z10
     line width=2.5 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=30
   z11
     line width=3.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=60
   z12
     line width=3.7 color=#00859DBE/#007081A5 join=bevel cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=100
   z13
     line width=4.6 color=#00859DBE/#007081A5 join=round cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=120
   z14
     line width=6.4 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=4.9 color=#0088A1C2/#006C7EA3 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=175
   z15
     line width=7.7 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=6 color=#008CA4C5/#00697AA0 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=250
   z16
     line width=11.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=9 color=#008FA8C9/#0065779E join=round cap=round priority=250
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=300
   z17
     line width=17.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=15 color=#00A1B2CA/#0061739B join=round cap=round priority=250
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z18
     line width=27.7 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=25 color=#00B3BCCC/#005D6F98 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z19
     line width=37 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=34 color=#00B1BACB/#005F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z20
     line width=37 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=34 color=#00B1BACB/#005F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
 type highway-trunk-bridge
   z6
     line width=0.9 color=#B36B83A3/#B38E9BB9 join=bevel cap=butt priority=250
@@ -3934,70 +3936,70 @@ type highway-trunk-bridge
   z10
     line width=2.5 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=30
   z11
     line width=3.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=60
   z12
     line width=3.7 color=#00859DBE/#007081A5 join=bevel cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=100
   z13
     line width=10 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=9.6 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=4.6 color=#00859DBE/#007081A5 join=round cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=120
   z14
     line width=10.6 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=9.8 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=6.4 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=4.9 color=#0088A1C2/#006C7EA3 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=175
   z15
     line width=12.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=12 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=7.7 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=6 color=#008CA4C5/#00697AA0 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=250
   z16
     line width=18.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=18 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=11.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=9 color=#008FA8C9/#0065779E join=round cap=round priority=250
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=300
   z17
     line width=33.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=31.6 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=17.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=15 color=#00A1B2CA/#0061739B join=round cap=round priority=250
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z18
     line width=54 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=52 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=27.7 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=25 color=#00B3BCCC/#005D6F98 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z19
     line width=72 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=70 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=37 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=34 color=#00B1BACB/#005F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z20
     line width=72 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=70 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=37 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=249
     line width=34 color=#00B1BACB/#005F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
 type highway-trunk-tunnel
   z6
     line width=0.9 color=#B36B83A3/#B38E9BB9 join=bevel cap=butt priority=250
@@ -4010,227 +4012,227 @@ type highway-trunk-tunnel
   z10
     line width=2.5 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=30
   z11
     line width=3.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=250
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=60
   z12
     line width=4.7 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[2,2] priority=249
     line width=3.7 color=#00859DBE/#007081A5 join=bevel cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=100
   z13
     line width=6.2 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=249
     line width=4.6 color=#1A859DBE/#1A7081A5 join=round cap=butt priority=250
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=120
   z14
     line width=6.5 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=249
     line width=4.9 color=#1A88A1C2/#1A6C7EA3 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=175
   z15
     line width=8 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=6 color=#338CA4C5/#33697AA0 join=round cap=butt priority=250
     path_text primary[height=16 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=250
   z16
     line width=11 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=9 color=#338FA8C9/#3365779E join=round cap=round priority=250
     path_text primary[height=18 color=#002B3343/#00D5DFFA stroke=#1AFDFCFC/#1A232C3F] priority=4350
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=300
   z17
     line width=17 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=15 color=#33A1B2CA/#3361739B join=round cap=round priority=250
     path_text primary[height=19 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z18
     line width=27 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=25 color=#33B3BCCC/#335D6F98 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z19
     line width=36 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=34 color=#33B1BACB/#335F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
   z20
     line width=36 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=249
     line width=34 color=#33B1BACB/#335F7199 join=round cap=round priority=250
     path_text primary[height=20 color=#002B3343/#00D5DFFA stroke=#00FDFCFC/#00232C3F] priority=4350
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4360 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4360 min_distance=350
 type highway-trunk_link
   z10
     line width=1.3 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=30
   z11
     line width=2 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=60
   z12
     line width=2.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=100
   z13
     line width=2.8 color=#4D859DBE/#4D7081A5 join=round cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=120
   z14
     line width=4.27 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=3.37 color=#4D88A1C2/#4D6C7EA3 join=round cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=175
   z15
     line width=6.1 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=5 color=#008CA4C5/#00697AA0 join=round cap=butt priority=168
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=250
   z16
     line width=8.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=7.2 color=#4D8FA8C9/#4D65779E join=round cap=round priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=300
   z17
     line width=14 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=12 color=#4DA1B2CA/#4D61739B join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z18
     line width=20.3 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=18 color=#4DB3BCCC/#4D5D6F98 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z19
     line width=26.5 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=24 color=#4DB1BACB/#4D5F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z20
     line width=26.5 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=24 color=#4DB1BACB/#4D5F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
 type highway-trunk_link-bridge
   z10
     line width=1.3 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=30
   z11
     line width=2 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=60
   z12
     line width=2.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=100
   z13
     line width=2.8 color=#4D859DBE/#4D7081A5 join=round cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=120
   z14
     line width=7.54 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=6.74 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=4.27 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=3.37 color=#4D88A1C2/#4D6C7EA3 join=round cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=175
   z15
     line width=10.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=10 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=6.1 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=5 color=#008CA4C5/#00697AA0 join=round cap=butt priority=168
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=250
   z16
     line width=15.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=14.4 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=8.8 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=7.2 color=#4D8FA8C9/#4D65779E join=round cap=round priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=300
   z17
     line width=27.2 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=25.6 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=14 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=12 color=#4DA1B2CA/#4D61739B join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z18
     line width=40 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=38 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=20.3 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=18 color=#4DB3BCCC/#4D5D6F98 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z19
     line width=52 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=50 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=26.5 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=24 color=#4DB1BACB/#4D5F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z20
     line width=52 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=100
     line width=50 color=#33FDFCFC/#33232C3F join=round cap=butt priority=110
     line width=26.5 color=#4DEAE8E6/#4D364052 join=round cap=butt priority=167
     line width=24 color=#4DB1BACB/#4D5F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
 type highway-trunk_link-tunnel
   z10
     line width=1.3 color=#4D8098B8/#4D7686A9 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=30
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=30
   z11
     line width=2 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=60
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=60
   z12
     line width=2.5 color=#4D859DBE/#4D7081A5 join=bevel cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=100
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=100
   z13
     line width=4.4 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=167
     line width=2.8 color=#1A859DBE/#1A7081A5 join=round cap=butt priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=120
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=120
   z14
     line width=4.97 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[4,4] priority=167
     line width=3.37 color=#1A88A1C2/#1A6C7EA3 join=round cap=butt priority=168
     path_text primary[height=13 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=175
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=175
   z15
     line width=7 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=5 color=#338CA4C5/#33697AA0 join=round cap=butt priority=168
     path_text primary[height=14 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=250
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=250
   z16
     line width=9.2 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=7.2 color=#338FA8C9/#3365779E join=round cap=round priority=168
     path_text primary[height=15 color=#00383838/#00DFE3EC stroke=#1AFDFCFC/#1A232C3F] priority=4250
-    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=300
+    shield height=9 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=300
   z17
     line width=14 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=12 color=#33A1B2CA/#3361739B join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z18
     line width=20 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=18 color=#33B3BCCC/#335D6F98 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=10 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z19
     line width=26 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=24 color=#33B1BACB/#335F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
   z20
     line width=26 color=#4DEAE8E6/#4D364052 join=round cap=butt dash=[5,5] priority=167
     line width=24 color=#33B1BACB/#335F7199 join=round cap=round priority=168
     path_text primary[height=16 color=#00383838/#00DFE3EC stroke=#00FDFCFC/#00232C3F] priority=4250
-    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00000000 priority=4240 min_distance=350
+    shield height=11 color=#00FDFCFC/#00232C3F stroke=#00D6D4D2/#00454E5F text_color=#00555555/#00DFE3EC priority=4240 min_distance=350
 type highway-unclassified
   z11
     line width=0.8 color=#4DA3ABBD/#4D6E7FA4 join=bevel cap=butt priority=190

@@ -920,10 +920,6 @@
     <string name="choose_point_on_map_hint">Переміщайте та масштабуйте мапу, щоб розмістити хрестик</string>
     <!-- Track recording notification button: stops the recording and saves the recorded track. -->
     <string name="track_recording_stop_and_save">Зупинити та зберегти</string>
-    <!-- Track recording home screen widget button: opens the app to save or delete the recorded track. -->
-    <string name="track_recording_finish">Завершити</string>
-    <!-- Accessibility label for the button that reverses the complete planned route, including intermediate stops. -->
-    <string name="reverse_route">Розвернути маршрут</string>
     <!-- Use the built-in ROX voice for navigation instructions. -->
     <string name="pref_tts_rox_title">Штатний голос ROX</string>
     <!-- Voice and volume of the built-in ROX speech service are configured by the car. -->
@@ -936,4 +932,8 @@
     <string name="voice_navigation_saved_place_missing">Мітку не знайдено або є кілька міток із такою назвою.</string>
     <!-- Do not silently turn an along-route search into an unrestricted search. -->
     <string name="voice_navigation_along_route_unavailable">Пошук уздовж маршруту не підтримується.</string>
+    <!-- Track recording home screen widget button: opens the app to save or delete the recorded track. -->
+    <string name="track_recording_finish">Завершити</string>
+    <!-- Accessibility label for the button that reverses the complete planned route, including intermediate stops. -->
+    <string name="reverse_route">Розвернути маршрут</string>
 </resources>

@@ -18,6 +18,7 @@ class MetadataDeserializer;
 namespace feature
 {
 class FeaturesOffsetsTable;
+class RoadDetailsReader;
 class RelationReader;
 class RouteRelation;
 
@@ -28,7 +29,8 @@ public:
   using Reader = FilesContainerR::TReader;
 
   SharedLoadInfo(FilesContainerR const & cont, DataHeader const & header,
-                 feature::FeaturesOffsetsTable const * relTable, indexer::MetadataDeserializer * metaDeserializer);
+                 feature::FeaturesOffsetsTable const * relTable, indexer::MetadataDeserializer * metaDeserializer,
+                 feature::RoadDetailsReader const * roadDetails = nullptr);
 
   Reader GetDataReader() const;
   Reader GetGeometryReader(size_t ind) const;
@@ -61,6 +63,7 @@ private:
 
 public:
   indexer::MetadataDeserializer * m_metaDeserializer;
+  RoadDetailsReader const * m_roadDetails;
   feature::DatSectionHeader::Version m_version;
 
   DISALLOW_COPY_AND_MOVE(SharedLoadInfo);

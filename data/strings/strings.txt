@@ -45416,213 +45416,6 @@ vi = Dừng và lưu
 zh-Hans = 停止并保存
 zh-Hant = 停止並儲存
 
-[track_recording_finish]
-comment = Track recording home screen widget button: opens the app to save or delete the recorded track.
-tags = android-app
-en = Finish
-af = Voltooi
-ar = إنهاء
-ast = Acabar
-az = Bitir
-be = Завяршыць
-bg = Завърши
-bn = শেষ করুন
-ca = Finalitza
-cs = Ukončit
-cy = Gorffen
-da = Afslut
-de = Beenden
-el = Ολοκλήρωση
-es = Finalizar
-et = Lõpeta
-eu = Amaitu
-fa = پایان
-fi = Lopeta
-fr = Terminer
-gl = Rematar
-he = סיום
-hi = समाप्त करें
-hr = Završi
-hu = Befejezés
-hy = Ավարտել
-id = Selesai
-is = Ljúka
-it = Termina
-ja = 終了
-ko = 종료
-lo = ສິ້ນສຸດ
-lt = Baigti
-lv = Pabeigt
-ml = പൂർത്തിയാക്കുക
-mr = समाप्त करा
-mt = Temm
-nb = Avslutt
-nl = Beëindigen
-oc = Acabar
-pa = ਸਮਾਪਤ ਕਰੋ
-pl = Zakończ
-pt = Terminar
-pt-BR = Finalizar
-ro = Finalizare
-ru = Завершить
-sk = Ukončiť
-sl = Končaj
-sq = Përfundo
-sr = Заврши
-sv = Avsluta
-sw = Maliza
-te = ముగించు
-th = เสร็จสิ้น
-tr = Bitir
-uk = Завершити
-vi = Kết thúc
-zh-Hans = 结束
-zh-Hant = 結束
-
-[reverse_route]
-comment = Accessibility label for the button that reverses the complete planned route, including intermediate stops.
-tags = android-app,apple-maps
-en = Reverse route
-af = Keer roete om
-ar = عكس اتجاه المسار
-ast = Invertir la ruta
-az = Marşrutu tərsinə çevir
-be = Развярнуць маршрут
-bg = Обърни маршрута
-bn = রুটের দিক উল্টান
-ca = Inverteix la ruta
-cs = Obrátit trasu
-cy = Gwrthdroi'r llwybr
-da = Vend ruten om
-de = Route umkehren
-el = Αντιστροφή διαδρομής
-es = Invertir ruta
-et = Pööra marsruut ümber
-eu = Ibilbidea alderantzikatu
-fa = معکوس کردن مسیر
-fi = Käännä reitti
-fr = Inverser l'itinéraire
-gl = Inverter a ruta
-he = הפוך את המסלול
-hi = मार्ग उलटें
-hr = Obrni rutu
-hu = Útvonal megfordítása
-hy = Շրջել երթուղին
-ia = Inverter le itinerario
-id = Balikkan rute
-is = Snúa leið við
-it = Inverti il percorso
-ja = ルートを逆にする
-ko = 경로를 반대로 설정
-lo = ກັບທິດທາງເສັ້ນທາງ
-lt = Apgręžti maršrutą
-lv = Apgriezt maršrutu
-ml = റൂട്ട് വിപരീതമാക്കുക
-mr = मार्ग उलटा करा
-mt = Aqleb ir-rotta
-nb = Snu ruten
-nl = Route omkeren
-oc = Inversar lo trajècte
-pa = ਰੂਟ ਦੀ ਦਿਸ਼ਾ ਉਲਟਾਓ
-pl = Odwróć trasę
-pt = Inverter percurso
-pt-BR = Inverter rota
-ro = Inversează traseul
-ru = Развернуть маршрут
-sk = Otočiť trasu
-sl = Obrni pot
-sq = Përmbys rrugën
-sr = Обрни руту
-sv = Vänd rutten
-sw = Geuza mwelekeo wa njia
-te = మార్గాన్ని వ్యతిరేక దిశలో మార్చండి
-th = กลับทิศทางเส้นทาง
-tr = Rotayı tersine çevir
-uk = Розвернути маршрут
-vi = Đảo ngược tuyến đường
-zh-Hans = 反转路线
-zh-Hant = 反轉路線
-
-[routing_coordinates_hint]
-comment = Placeholder for a routing endpoint, entered as a latitude and longitude pair.
-tags = qt
-en = Latitude, longitude
-
-[routing_mode]
-comment = Label of the routing profile selector, e.g. driving, walking, cycling.
-tags = qt
-en = Routing mode
-
-[show_route_turns]
-comment = Routing settings checkbox to display turn markers on the map.
-tags = qt
-en = Show turns
-
-[remember_routing_settings]
-comment = Routing settings checkbox to reuse the current settings after restarting the app.
-tags = qt
-en = Remember these settings for the next session
-
-[invalid_route_coordinates]
-comment = Routing error shown when a start or destination coordinate pair cannot be parsed.
-tags = qt
-en = The start or destination coordinates are invalid.
-
-[fax]
-comment = Fax number field in the OpenStreetMap editor.
-tags = qt
-en = Fax
-
-[hotel_stars]
-comment = Hotel star classification field in the OpenStreetMap editor.
-tags = qt
-en = Stars
-
-[internet_access]
-comment = Internet access field in the OpenStreetMap editor.
-tags = qt
-en = Internet access
-
-[elevation]
-comment = Elevation above sea level field in the OpenStreetMap editor.
-tags = qt
-en = Elevation
-
-[apartment_numbers]
-comment = Apartment numbers field in the OpenStreetMap address editor.
-tags = qt
-en = Apartment numbers
-
-[height]
-comment = Object height field in the OpenStreetMap editor.
-tags = qt
-en = Height
-
-[religious_denomination]
-comment = Religious denomination field for a place of worship in the OpenStreetMap editor.
-tags = qt
-en = Religious denomination
-
-[not_specified]
-comment = An optional property has no value set, e.g. internet access in the OpenStreetMap editor.
-tags = qt
-en = Not specified
-
-[wired_internet]
-comment = Internet access option for a wired connection in the OpenStreetMap editor.
-tags = qt
-en = Wired
-
-[internet_terminal]
-comment = Internet access option for a public computer in the OpenStreetMap editor.
-tags = qt
-en = Internet terminal
-
-[qt_license_notice]
-comment = About dialog: %@ placeholders are paths to license files. Preserve the Qt company name.
-tags = qt
-en = Qt 6 (C) The Qt Company Ltd. and other contributors. License texts: %@ and %@.
-
 [pref_tts_rox_title]
 comment = Use the built-in ROX voice for navigation instructions.
 tags = android-app
@@ -46148,3 +45941,265 @@ uk = Пошук уздовж маршруту не підтримується.
     tags = android-app
     en = Sign in again to resume automatic updates
     ru = Для автообновления войдите в источник снова
+
+  [usb_maps_title]
+    tags = android-app
+    en = Maps from USB
+    ru = Карты с USB
+
+  [usb_maps_permission]
+    tags = android-app
+    en = Allow file access to find maps in omdata/maps on a removable drive.
+    ru = Разрешите доступ к файлам для поиска карт в папке omdata/maps на съёмном носителе.
+
+  [usb_maps_allow]
+    tags = android-app
+    en = Allow access
+    ru = Разрешить доступ
+
+  [usb_maps_copying]
+    tags = android-app
+    en = Copying and verifying maps…
+    ru = Копирование и проверка карт…
+
+  [usb_maps_waiting]
+    tags = android-app
+    en = Maps are copied. Waiting for navigation and map downloads to finish before applying them.
+    ru = Карты скопированы. Они будут подключены после завершения навигации и загрузки карт.
+
+  [usb_maps_destination]
+    tags = android-app
+    en = Maps storage: %s
+    ru = Хранилище карт: %s
+
+  [usb_maps_new]
+    tags = android-app
+    en = new map
+    ru = новая карта
+
+  [usb_maps_update]
+    tags = android-app
+    en = update
+    ru = обновление
+
+  [usb_maps_finished]
+    tags = android-app
+    en = Maps installed: %d
+    ru = Установлено карт: %d
+
+  [usb_maps_cancelled]
+    tags = android-app
+    en = Import cancelled. Existing maps have been kept.
+    ru = Импорт отменён. Установленные карты сохранены.
+
+  [usb_maps_errors]
+    tags = android-app
+    en = These files could not be imported. Check the USB drive, map files and available storage space.
+    ru = Не удалось импортировать следующие файлы. Проверьте USB-носитель, файлы карт и свободное место в хранилище.
+
+[track_recording_finish]
+comment = Track recording home screen widget button: opens the app to save or delete the recorded track.
+tags = android-app
+en = Finish
+af = Voltooi
+ar = إنهاء
+ast = Acabar
+az = Bitir
+be = Завяршыць
+bg = Завърши
+bn = শেষ করুন
+ca = Finalitza
+cs = Ukončit
+cy = Gorffen
+da = Afslut
+de = Beenden
+el = Ολοκλήρωση
+es = Finalizar
+et = Lõpeta
+eu = Amaitu
+fa = پایان
+fi = Lopeta
+fr = Terminer
+gl = Rematar
+he = סיום
+hi = समाप्त करें
+hr = Završi
+hu = Befejezés
+hy = Ավարտել
+id = Selesai
+is = Ljúka
+it = Termina
+ja = 終了
+ko = 종료
+lo = ສິ້ນສຸດ
+lt = Baigti
+lv = Pabeigt
+ml = പൂർത്തിയാക്കുക
+mr = समाप्त करा
+mt = Temm
+nb = Avslutt
+nl = Beëindigen
+oc = Acabar
+pa = ਸਮਾਪਤ ਕਰੋ
+pl = Zakończ
+pt = Terminar
+pt-BR = Finalizar
+ro = Finalizare
+ru = Завершить
+sk = Ukončiť
+sl = Končaj
+sq = Përfundo
+sr = Заврши
+sv = Avsluta
+sw = Maliza
+te = ముగించు
+th = เสร็จสิ้น
+tr = Bitir
+uk = Завершити
+vi = Kết thúc
+zh-Hans = 结束
+zh-Hant = 結束
+
+[reverse_route]
+comment = Accessibility label for the button that reverses the complete planned route, including intermediate stops.
+tags = android-app,apple-maps
+en = Reverse route
+af = Keer roete om
+ar = عكس اتجاه المسار
+ast = Invertir la ruta
+az = Marşrutu tərsinə çevir
+be = Развярнуць маршрут
+bg = Обърни маршрута
+bn = রুটের দিক উল্টান
+ca = Inverteix la ruta
+cs = Obrátit trasu
+cy = Gwrthdroi'r llwybr
+da = Vend ruten om
+de = Route umkehren
+el = Αντιστροφή διαδρομής
+es = Invertir ruta
+et = Pööra marsruut ümber
+eu = Ibilbidea alderantzikatu
+fa = معکوس کردن مسیر
+fi = Käännä reitti
+fr = Inverser l'itinéraire
+gl = Inverter a ruta
+he = הפוך את המסלול
+hi = मार्ग उलटें
+hr = Obrni rutu
+hu = Útvonal megfordítása
+hy = Շրջել երթուղին
+ia = Inverter le itinerario
+id = Balikkan rute
+is = Snúa leið við
+it = Inverti il percorso
+ja = ルートを逆にする
+ko = 경로를 반대로 설정
+lo = ກັບທິດທາງເສັ້ນທາງ
+lt = Apgręžti maršrutą
+lv = Apgriezt maršrutu
+ml = റൂട്ട് വിപരീതമാക്കുക
+mr = मार्ग उलटा करा
+mt = Aqleb ir-rotta
+nb = Snu ruten
+nl = Route omkeren
+oc = Inversar lo trajècte
+pa = ਰੂਟ ਦੀ ਦਿਸ਼ਾ ਉਲਟਾਓ
+pl = Odwróć trasę
+pt = Inverter percurso
+pt-BR = Inverter rota
+ro = Inversează traseul
+ru = Развернуть маршрут
+sk = Otočiť trasu
+sl = Obrni pot
+sq = Përmbys rrugën
+sr = Обрни руту
+sv = Vänd rutten
+sw = Geuza mwelekeo wa njia
+te = మార్గాన్ని వ్యతిరేక దిశలో మార్చండి
+th = กลับทิศทางเส้นทาง
+tr = Rotayı tersine çevir
+uk = Розвернути маршрут
+vi = Đảo ngược tuyến đường
+zh-Hans = 反转路线
+zh-Hant = 反轉路線
+
+[routing_coordinates_hint]
+comment = Placeholder for a routing endpoint, entered as a latitude and longitude pair.
+tags = qt
+en = Latitude, longitude
+
+[routing_mode]
+comment = Label of the routing profile selector, e.g. driving, walking, cycling.
+tags = qt
+en = Routing mode
+
+[show_route_turns]
+comment = Routing settings checkbox to display turn markers on the map.
+tags = qt
+en = Show turns
+
+[remember_routing_settings]
+comment = Routing settings checkbox to reuse the current settings after restarting the app.
+tags = qt
+en = Remember these settings for the next session
+
+[invalid_route_coordinates]
+comment = Routing error shown when a start or destination coordinate pair cannot be parsed.
+tags = qt
+en = The start or destination coordinates are invalid.
+
+[fax]
+comment = Fax number field in the OpenStreetMap editor.
+tags = qt
+en = Fax
+
+[hotel_stars]
+comment = Hotel star classification field in the OpenStreetMap editor.
+tags = qt
+en = Stars
+
+[internet_access]
+comment = Internet access field in the OpenStreetMap editor.
+tags = qt
+en = Internet access
+
+[elevation]
+comment = Elevation above sea level field in the OpenStreetMap editor.
+tags = qt
+en = Elevation
+
+[apartment_numbers]
+comment = Apartment numbers field in the OpenStreetMap address editor.
+tags = qt
+en = Apartment numbers
+
+[height]
+comment = Object height field in the OpenStreetMap editor.
+tags = qt
+en = Height
+
+[religious_denomination]
+comment = Religious denomination field for a place of worship in the OpenStreetMap editor.
+tags = qt
+en = Religious denomination
+
+[not_specified]
+comment = An optional property has no value set, e.g. internet access in the OpenStreetMap editor.
+tags = qt
+en = Not specified
+
+[wired_internet]
+comment = Internet access option for a wired connection in the OpenStreetMap editor.
+tags = qt
+en = Wired
+
+[internet_terminal]
+comment = Internet access option for a public computer in the OpenStreetMap editor.
+tags = qt
+en = Internet terminal
+
+[qt_license_notice]
+comment = About dialog: %@ placeholders are paths to license files. Preserve the Qt company name.
+tags = qt
+en = Qt 6 (C) The Qt Company Ltd. and other contributors. License texts: %@ and %@.

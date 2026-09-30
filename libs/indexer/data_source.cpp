@@ -1,4 +1,5 @@
 #include "indexer/data_source.hpp"
+#include "indexer/road_details.hpp"
 #include "indexer/scale_index.hpp"
 #include "indexer/unique_index.hpp"
 

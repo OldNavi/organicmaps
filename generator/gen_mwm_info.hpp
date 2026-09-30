@@ -51,6 +51,8 @@ public:
   void Write(TSink & sink)
   {
     std::sort(std::begin(m_data), std::end(m_data));
+    // Check once after sorting; scanning the growing vector on every append is quadratic.
+    ASSERT(base::IsSortedAndUnique(m_data), ());
     WriteToSink(sink, kHeaderMagic);
     WriteToSink(sink, base::Underlying(m_version));
     rw::WriteVectorOfPOD(sink, m_data);

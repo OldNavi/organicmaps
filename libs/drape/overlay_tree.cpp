@@ -6,6 +6,7 @@
 #include "geometry/mercator.hpp"
 
 #include <algorithm>
+#include <set>
 
 namespace dp
 {
@@ -339,18 +340,54 @@ void OverlayTree::EndOverlayPlacing()
 
   HandleComparator comparator(false /* enableMask */);
 
+#ifdef OMIM_AUTO
+  std::set<OverlayID> incompleteGroups;
+  for (auto const & rankHandles : m_handles)
+    for (auto const & handle : rankHandles)
+    {
+      int const required = handle->GetRequiredOverlayRank();
+      if (required >= 0 && std::none_of(m_handles[required].begin(), m_handles[required].end(), [&](auto const & child)
+      { return child->GetOverlayID() == handle->GetOverlayID(); }))
+        incompleteGroups.insert(handle->GetOverlayID());
+    }
+#endif
   for (int rank = 0; rank < dp::OverlayRanksCount; rank++)
   {
     std::sort(m_handles[rank].begin(), m_handles[rank].end(), comparator);
 
     for (auto const & handle : m_handles[rank])
     {
+#ifdef OMIM_AUTO
+      if (incompleteGroups.contains(handle->GetOverlayID()))
+        continue;
+#endif
       ref_ptr<OverlayHandle> parentOverlay;
       if (CheckHandle(handle, rank, parentOverlay))
         InsertHandle(handle, rank, parentOverlay);
     }
   }
 
+#ifdef OMIM_AUTO
+  // A shield background may be ready while its required text has no layout or pending glyphs.
+  for (auto it = m_overlayIdCache.begin(); it != m_overlayIdCache.end();)
+  {
+    auto const & group = it->second;
+    bool const incomplete = std::any_of(group.begin(), group.end(), [&](auto const & handle)
+    {
+      int const required = handle->GetRequiredOverlayRank();
+      return required >= 0 && std::none_of(group.begin(), group.end(),
+                                           [&](auto const & child) { return child->GetOverlayRank() == required; });
+    });
+    if (incomplete)
+    {
+      for (auto const & handle : group)
+        DeleteHandleImpl(handle);
+      it = m_overlayIdCache.erase(it);
+    }
+    else
+      ++it;
+  }
+#endif
   for (int rank = 0; rank < dp::OverlayRanksCount; rank++)
   {
     for (auto const & handle : m_handles[rank])

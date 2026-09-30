@@ -46,6 +46,13 @@ public final class MapManager
     void onCurrentCountryChanged(String countryId);
   }
 
+  /** Pairs of country ID and the full timestamp stored inside the active MWM. */
+  public static native String[] nativeGetInstalledMapVersions();
+
+  /** Unloads maps only when routing and downloads are idle. Must be paired with nativeEndMapImport. */
+  public static native boolean nativeBeginMapImport();
+  public static native void nativeEndMapImport();
+
   private MapManager() {}
 
   /**

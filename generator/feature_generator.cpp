@@ -75,7 +75,10 @@ uint32_t FeaturesCollector::WriteFeatureBase(std::vector<char> const & bytes, Fe
   Write(packedSize.first, packedSize.second);
   Write(&bytes[0], sz);
 
-  m_bounds.Add(fb.GetLimitRect());
+  if (fb.IsLine() && fb.GetRoadDetails())
+    m_bounds.Add(fb.GetRoadDetails()->BoundsWithRoadWidth(fb.GetLimitRect()));
+  else
+    m_bounds.Add(fb.GetLimitRect());
   return m_featureID++;
 }
 

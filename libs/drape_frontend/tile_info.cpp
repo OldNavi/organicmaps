@@ -20,8 +20,7 @@
 
 namespace df
 {
-TileInfo::TileInfo(drape_ptr<EngineContext> && engineContext) : m_context(std::move(engineContext)), m_isCanceled(false)
-{}
+TileInfo::TileInfo(drape_ptr<EngineContext> && engineContext) : m_context(std::move(engineContext)) {}
 
 void TileInfo::ReadFeatureIndex(MapDataProvider const & model)
 {
@@ -54,7 +53,7 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
   m_context->BeginReadTile();
 
   // Reading can be interrupted by exception throwing
-  SCOPE_GUARD(ReleaseReadTile, [this] { m_context->EndReadTile(IsCancelled()); });
+  SCOPE_GUARD(ReleaseReadTile, [this] { m_context->EndReadTile(); });
 
   ReadFeatureIndex(model);
   ThrowIfCancelled();
@@ -156,7 +155,7 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
 
 void TileInfo::Cancel()
 {
-  m_isCanceled = true;
+  m_context->Cancel();
 }
 
 /*
@@ -166,13 +165,13 @@ void TileInfo::Cancel()
 void TileInfo::ThrowIfCancelled() const
 {
   // The exception is handled in ReadMWMTask::Do().
-  if (m_isCanceled)
+  if (IsCancelled())
     MYTHROW(ReadCanceledException, ());
 }
 
 bool TileInfo::IsCancelled() const
 {
-  return m_isCanceled;
+  return m_context->IsCancelled();
 }
 
 bool TileInfo::DoNeedReadIndex() const

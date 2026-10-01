@@ -8,6 +8,9 @@
 
 #include "drape/pointers.hpp"
 
+#include <atomic>
+#include <memory>
+
 namespace dp
 {
 class TextureManager;
@@ -45,16 +48,23 @@ public:
   ref_ptr<dp::TextureManager> GetTextureManager() const;
   ref_ptr<MetalineManager> GetMetalineManager() const;
 
+  void Cancel() { m_readCancelled->store(true, std::memory_order_relaxed); }
+  bool IsCancelled() const { return m_readCancelled->load(std::memory_order_relaxed); }
+
   void BeginReadTile();
   void Flush(TMapShapes && shapes);
   void FlushOverlays(TMapShapes && shapes);
   void FlushTrafficGeometry(TrafficSegmentsGeometry && geometry);
-  void EndReadTile(bool cancelled = false);
+  void EndReadTile();
 
 private:
+  void FlushGeometry();
   void PostMessage(drape_ptr<Message> && message);
 
   TileKey m_tileKey;
+  // Queued shapes outlive the read, including when the same tile is requested again.
+  TileReadCancellation m_readCancelled = std::make_shared<std::atomic<bool>>(false);
+  TMapShapes m_geometry;
   ref_ptr<ThreadsCommutator> m_commutator;
   ref_ptr<dp::TextureManager> m_texMng;
   ref_ptr<MetalineManager> m_metalineMng;
@@ -69,8 +79,6 @@ private:
 #ifdef OMIM_AUTO
   bool m_drivingPoiFilter = false;
   PoiDensity m_poiDensity = PoiDensity::High;
-  TMapShapes m_geometry;
-  TMapShapes m_overlays;
 #endif
 };
 }  // namespace df

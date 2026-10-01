@@ -16,6 +16,8 @@ set(SRC
   screen_operations_tests.cpp
   scaled_render_target_tests.cpp
   search_mark_overlay_filter_tests.cpp
+  read_cancellation_tests.cpp
+  shape_batch_tests.cpp
   shape_test_fixture.cpp
   shape_test_fixture.hpp
   stylist_tests.cpp

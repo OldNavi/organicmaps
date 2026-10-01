@@ -1043,6 +1043,30 @@ void FrontendRenderer::AcceptMessage(ref_ptr<Message> message)
     break;
   }
 
+#ifdef SCENARIO_ENABLE
+  case Message::Type::ScenarioViewport:
+  {
+    ref_ptr<ScenarioViewportMessage> msg = message;
+    auto const & request = msg->GetRequest();
+    if (msg->IsFence())
+    {
+      if (m_scenarioViewportRequest == request && msg->GetRevision() == m_scenarioViewportRevision &&
+          m_scenarioViewportStage == ScenarioViewportStage::WaitFence)
+        m_scenarioViewportStage = ScenarioViewportStage::ReadyToPresent;
+    }
+    else if (!request->WaitFor(std::chrono::milliseconds(0)))
+    {
+      CompleteScenarioViewport(false);
+      m_scenarioViewportRequest = request;
+      ++m_scenarioViewportRevision;
+      m_scenarioViewportStage = ScenarioViewportStage::WaitViewport;
+      AddUserEvent(make_unique_dp<SetCenterEvent>(request->m_center, request->m_zoom, false /* isAnim */,
+                                                  false /* trackVisibleViewport */, nullptr));
+    }
+    break;
+  }
+#endif
+
   case Message::Type::FinishTexturesInitialization:
   {
     ref_ptr<FinishTexturesInitializationMessage> msg = message;
@@ -1565,7 +1589,7 @@ bool FrontendRenderer::UseScaledBackground() const
 }
 #endif
 
-void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFrame)
+bool FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFrame)
 {
   TRACE_SECTION("[drape] RenderScene");
   CHECK(m_context != nullptr, ());
@@ -1573,7 +1597,8 @@ void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFram
   DrapeImmediateRenderingMeasurerGuard drapeMeasurerGuard(m_context);
 #endif
 
-  if (m_postprocessRenderer->BeginFrame(m_context, modelView, activeFrame))
+  bool const fullFrame = m_postprocessRenderer->BeginFrame(m_context, modelView, activeFrame);
+  if (fullFrame)
   {
     RefreshBgColor();
 
@@ -1628,7 +1653,7 @@ void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFram
       m_scaledBackground->Resolve();
       // Only raster resolution changes: camera, tile coverage, text and input coordinates stay native.
       if (!m_postprocessRenderer->RestoreFrameTarget(m_context))
-        return;
+        return false;
       m_context->Clear(clearBits, storeBits);
       m_context->ApplyFramebuffer("Upscaled ground");
       m_screenQuadRenderer->RenderTexture(m_context, make_ref(m_gpuProgramManager), m_scaledBackground->GetTexture(),
@@ -1705,7 +1730,7 @@ void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFram
   }
 
   if (!m_postprocessRenderer->EndFrame(m_context, make_ref(m_gpuProgramManager), m_viewport))
-    return;
+    return false;
 
   {
     uint32_t clearBits = dp::ClearBits::DepthBit;
@@ -1724,6 +1749,7 @@ void FrontendRenderer::RenderScene(ScreenBase const & modelView, bool activeFram
   if (m_graphicsStage == GraphicsStage::WaitRendering)
     m_graphicsStage = GraphicsStage::Rendered;
 #endif
+  return fullFrame;
 }
 
 void FrontendRenderer::RenderTileBackgroundLayer(ScreenBase const & modelView)
@@ -2036,6 +2062,9 @@ void FrontendRenderer::RenderFrame()
     // responsive because CheckRenderingEnabled() runs immediately after this RenderFrame returns.
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   };
+#ifdef DRAPE_QUEUE_TRACE
+  TraceMessageQueue("frontend");
+#endif
 
   CHECK(m_context != nullptr, ());
   if (!m_context->Validate())
@@ -2062,6 +2091,22 @@ void FrontendRenderer::RenderFrame()
     OnResize(modelView);
 
   bool const zoomChanged = modelViewChanged && ResolveZoomLevel(modelView);
+
+#ifdef SCENARIO_ENABLE
+  if (m_scenarioViewportRequest)
+  {
+    if (m_scenarioViewportRequest->WaitFor(std::chrono::milliseconds(0)) ||
+        (m_scenarioViewportStage != ScenarioViewportStage::WaitViewport && modelView != m_scenarioViewportScreen))
+      CompleteScenarioViewport(false);
+    else if (m_scenarioViewportStage != ScenarioViewportStage::WaitViewport &&
+             (m_forceUpdateScene || m_forceUpdateUserMarks))
+    {
+      // A normal refresh needs a new fence; replies from the previous read must not complete it.
+      ++m_scenarioViewportRevision;
+      m_scenarioViewportStage = ScenarioViewportStage::WaitTiles;
+    }
+  }
+#endif
 
   // Skip starting a new GPU frame if rendering is being disabled (e.g. the app is going to the
   // background). SetRenderingEnabled(false) sets the flag on the UI thread and then blocks until this
@@ -2102,7 +2147,21 @@ void FrontendRenderer::RenderFrame()
   m_frameData.m_framesFast += static_cast<uint64_t>(!isActiveFrameForScene);
 #endif
 
+#ifdef SCENARIO_ENABLE
+  // Snapshot readiness before drawing: messages handled later cannot complete this frame retroactively.
+  auto const readyRequest = m_scenarioViewportStage == ScenarioViewportStage::ReadyToPresent &&
+                                    m_notFinishedTiles.empty() && !m_forceUpdateScene && !m_forceUpdateUserMarks
+                              ? m_scenarioViewportRequest
+                              : nullptr;
+  if (readyRequest)
+  {
+    m_overlayTree->InvalidateOnNextFrame();
+    m_searchMarkTextOverlayTree->InvalidateOnNextFrame();
+  }
+  bool const sceneRendered = RenderScene(modelView, isActiveFrameForScene || readyRequest != nullptr);
+#else
   RenderScene(modelView, isActiveFrameForScene);
+#endif
 
   if (m_renderInjectionHandler)
     m_renderInjectionHandler(m_context, m_texMng, make_ref(m_gpuProgramManager), false);
@@ -2121,6 +2180,35 @@ void FrontendRenderer::RenderFrame()
       UpdateCanBeDeletedStatus();
     UpdateScene(modelView);
   }
+
+#ifdef SCENARIO_ENABLE
+  if (m_scenarioViewportRequest && m_scenarioViewportStage == ScenarioViewportStage::WaitViewport)
+  {
+    auto const & request = m_scenarioViewportRequest;
+    auto const center = modelView.PtoG(modelView.P3dtoP(m_userEventStream.GetVisibleViewport().Center()));
+    auto expectedCenter = request->m_center;
+    expectedCenter.x = mercator::NearestWrapX(expectedCenter.x, center.x);
+    if (!center.EqualDxDy(expectedCenter, 1e-7) || GetCurrentZoom() != request->m_zoom ||
+        AnimationSystem::Instance().HasMapAnimations())
+    {
+      CompleteScenarioViewport(false);
+    }
+    else
+    {
+      m_scenarioViewportScreen = modelView;
+      m_scenarioViewportStage = ScenarioViewportStage::WaitTiles;
+    }
+  }
+  if (m_scenarioViewportRequest && m_scenarioViewportStage == ScenarioViewportStage::WaitTiles &&
+      m_notFinishedTiles.empty())
+  {
+    m_scenarioViewportStage = ScenarioViewportStage::WaitFence;
+    m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
+                              make_unique_dp<ScenarioViewportMessage>(m_scenarioViewportRequest, true /* fence */,
+                                                                      m_scenarioViewportRevision),
+                              MessagePriority::Normal);
+  }
+#endif
 
   InterpolationHolder::Instance().Advance(m_frameData.m_frameTime);
   AnimationSystem::Instance().Advance(m_frameData.m_frameTime);
@@ -2182,6 +2270,12 @@ void FrontendRenderer::RenderFrame()
 #endif
 #ifndef DISABLE_SCREEN_PRESENTATION
   m_context->Present();
+#ifdef SCENARIO_ENABLE
+  if (readyRequest && sceneRendered && m_scenarioViewportRequest == readyRequest && IsRenderingEnabled() &&
+      m_context->Validate() && m_notFinishedTiles.empty() && !m_forceUpdateScene && !m_forceUpdateUserMarks &&
+      modelView == m_scenarioViewportScreen)
+    CompleteScenarioViewport(true);
+#endif
 #endif
 
   // Each renderer has its own budget; rendering and presentation already count towards it.
@@ -2680,6 +2774,9 @@ void FrontendRenderer::OnContextDestroy()
 {
   m_clusterTiles.clear();
   LOG(LINFO, ("On context destroy."));
+#ifdef SCENARIO_ENABLE
+  CompleteScenarioViewport(false);
+#endif
 
   if (m_renderInjectionHandler)
     m_renderInjectionHandler(m_context, m_texMng, make_ref(m_gpuProgramManager), true);
@@ -2827,6 +2924,9 @@ void FrontendRenderer::OnRenderingEnabled()
 
 void FrontendRenderer::OnRenderingDisabled()
 {
+#ifdef SCENARIO_ENABLE
+  CompleteScenarioViewport(false);
+#endif
 #ifndef DRAPE_MEASURER_BENCHMARK
   DrapeMeasurer::Instance().Stop();
 #endif
@@ -2924,6 +3024,38 @@ void FrontendRenderer::AddUserEvent(drape_ptr<UserEvent> && event)
   // arrives just before the renderer starts waiting.
   CancelMessageWaiting();
 }
+
+#ifdef SCENARIO_ENABLE
+void FrontendRenderer::RequestScenarioViewport(std::shared_ptr<ScenarioViewportRequest> const & request)
+{
+  m_commutator->PostMessage(ThreadsCommutator::RenderThread,
+                            make_unique_dp<ScenarioViewportMessage>(request, false /* fence */),
+                            MessagePriority::Normal);
+}
+
+void FrontendRenderer::CompleteScenarioViewport(bool ready)
+{
+  if (m_scenarioViewportRequest)
+  {
+    if (!ready)
+    {
+      constexpr char const * kStages[] = {"viewport", "tiles", "fence", "present"};
+      auto const & screen = m_userEventStream.GetCurrentScreen();
+      auto const center = screen.PtoG(screen.P3dtoP(m_userEventStream.GetVisibleViewport().Center()));
+      LOG(LWARNING,
+          ("Drape viewport incomplete:", "stage", kStages[static_cast<size_t>(m_scenarioViewportStage)], "zoom",
+           GetCurrentZoom(), "expected_zoom", m_scenarioViewportRequest->m_zoom, "center", center, "expected_center",
+           m_scenarioViewportRequest->m_center, "viewport_changed",
+           m_scenarioViewportStage != ScenarioViewportStage::WaitViewport && screen != m_scenarioViewportScreen,
+           "force_scene", m_forceUpdateScene, "force_user_marks", m_forceUpdateUserMarks, "animations",
+           AnimationSystem::Instance().HasMapAnimations(), "unfinished_tiles", m_notFinishedTiles.size(), "enabled",
+           IsRenderingEnabled()));
+    }
+    m_scenarioViewportRequest->Complete(ready);
+    m_scenarioViewportRequest.reset();
+  }
+}
+#endif
 
 void FrontendRenderer::PositionChanged(m2::PointD const & position, bool hasPosition)
 {

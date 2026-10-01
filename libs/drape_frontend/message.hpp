@@ -120,9 +120,7 @@ public:
     SetTileBackgroundData,
     SetTileBackgroundMode,
     AssignTileBackgroundImage,
-#ifdef OMIM_AUTO
-    ReadTileBatch,
-#endif
+    ScenarioViewport,
   };
 
   virtual ~Message() = default;

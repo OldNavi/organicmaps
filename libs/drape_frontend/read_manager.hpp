@@ -46,6 +46,7 @@ public:
   void Invalidate(TTilesCollection const & keyStorage);
   void InvalidateAll();
 
+  // Pending viewport requests can be superseded without retiring active reads.
   bool CheckTileKey(TileKey const & tileKey) const;
 #ifdef OMIM_AUTO
   // Coverage keys have no generation; only completed reads may use this stricter check.
@@ -53,6 +54,11 @@ public:
   {
     return key.m_generation == m_generationCounter && CheckTileKey(key);
   }
+#endif
+  // Accessed only by the backend thread, which also retires reads.
+  uint64_t GetCancellationRevision() const { return m_cancellationRevision; }
+#ifdef SCENARIO_ENABLE
+  bool IsReadingFinished();
 #endif
   void Allow3dBuildings(bool allow3dBuildings);
 
@@ -136,6 +142,7 @@ private:
   std::mutex m_finishedTilesMutex;
   uint64_t m_generationCounter;
   uint64_t m_userMarksGenerationCounter;
+  uint64_t m_cancellationRevision = 0;
 
   using TTileInfoCollection = buffer_vector<std::shared_ptr<TileInfo>, 8>;
   TTilesCollection m_activeTiles;

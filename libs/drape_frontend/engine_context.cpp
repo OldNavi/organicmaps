@@ -37,47 +37,61 @@ ref_ptr<MetalineManager> EngineContext::GetMetalineManager() const
 
 void EngineContext::BeginReadTile()
 {
-#ifndef OMIM_AUTO
   PostMessage(make_unique_dp<TileReadStartMessage>(m_tileKey));
-#endif
 }
 
 void EngineContext::Flush(TMapShapes && shapes)
 {
-#ifdef OMIM_AUTO
-  std::move(shapes.begin(), shapes.end(), std::back_inserter(m_geometry));
-#else
-  PostMessage(make_unique_dp<MapShapeReadedMessage>(m_tileKey, std::move(shapes)));
-#endif
+  // Bound each upload operation while coalescing the small per-feature flushes.
+  size_t constexpr kShapesPerBatch = 64;
+  for (auto & shape : shapes)
+  {
+    if (IsCancelled())
+    {
+      m_geometry.clear();
+      break;
+    }
+    if (m_geometry.empty())
+      m_geometry.reserve(kShapesPerBatch);
+    m_geometry.push_back(std::move(shape));
+    if (m_geometry.size() == kShapesPerBatch)
+      FlushGeometry();
+  }
+  shapes.clear();
+}
+
+void EngineContext::FlushGeometry()
+{
+  if (IsCancelled())
+    m_geometry.clear();
+  if (!m_geometry.empty())
+    PostMessage(make_unique_dp<MapShapeReadedMessage>(m_tileKey, std::exchange(m_geometry, {}), m_readCancelled));
 }
 
 void EngineContext::FlushOverlays(TMapShapes && shapes)
 {
-#ifdef OMIM_AUTO
-  std::move(shapes.begin(), shapes.end(), std::back_inserter(m_overlays));
-#else
-  PostMessage(make_unique_dp<OverlayMapShapeReadedMessage>(m_tileKey, std::move(shapes)));
-#endif
+  FlushGeometry();
+  if (IsCancelled())
+  {
+    shapes.clear();
+    return;
+  }
+  PostMessage(make_unique_dp<OverlayMapShapeReadedMessage>(m_tileKey, std::move(shapes), m_readCancelled));
 }
 
 void EngineContext::FlushTrafficGeometry(TrafficSegmentsGeometry && geometry)
 {
+  if (IsCancelled())
+    return;
   m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
                             make_unique_dp<FlushTrafficGeometryMessage>(m_tileKey, std::move(geometry)),
                             MessagePriority::Low);
 }
 
-void EngineContext::EndReadTile(bool cancelled)
+void EngineContext::EndReadTile()
 {
-#ifdef OMIM_AUTO
-  if (!cancelled)
-    PostMessage(make_unique_dp<TileReadBatchMessage>(m_tileKey, std::move(m_geometry), std::move(m_overlays)));
-  m_geometry.clear();
-  m_overlays.clear();
-#else
-  UNUSED_VALUE(cancelled);
+  FlushGeometry();
   PostMessage(make_unique_dp<TileReadEndMessage>(m_tileKey));
-#endif
 }
 
 void EngineContext::PostMessage(drape_ptr<Message> && message)

@@ -225,6 +225,14 @@ bool ReadManager::CheckTileKey(TileKey const & tileKey) const
   return false;
 }
 
+#ifdef SCENARIO_ENABLE
+bool ReadManager::IsReadingFinished()
+{
+  std::lock_guard lock(m_finishedTilesMutex);
+  return m_counter == 0;
+}
+#endif
+
 bool ReadManager::MustDropAllTiles(ScreenBase const & screen) const
 {
   int const oldScale = df::GetDrawTileScale(m_currentViewport);
@@ -300,6 +308,7 @@ void ReadManager::CancelTileInfo(std::shared_ptr<TileInfo> const & tileToCancel)
   std::lock_guard<std::mutex> lock(m_finishedTilesMutex);
   m_activeTiles.erase(tileToCancel->GetTileKey());
   tileToCancel->Cancel();
+  ++m_cancellationRevision;
 }
 
 void ReadManager::ClearTileInfo(std::shared_ptr<TileInfo> const & tileToClear)

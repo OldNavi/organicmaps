@@ -31,81 +31,16 @@ public:
     while (ProcessSingleMessage(false))
     {}
   }
-  size_t m_messages = 0, m_geometry = 0, m_overlays = 0;
-  bool m_onlyBatches = true;
-  df::TileKey m_key;
 
 private:
   std::unique_ptr<threads::IRoutine> CreateRoutine() override { return std::make_unique<EmptyRoutine>(); }
   void RenderFrame() override {}
   void OnContextCreate() override {}
   void OnContextDestroy() override {}
-  void AcceptMessage(ref_ptr<df::Message> message) override
-  {
-    if (message->GetType() != df::Message::Type::ReadTileBatch)
-    {
-      TEST(!m_onlyBatches, ());
-      return;
-    }
-    ref_ptr<df::TileReadBatchMessage> batch = message;
-    ++m_messages;
-    m_key = batch->GetKey();
-    m_geometry += batch->m_geometry.size();
-    m_overlays += batch->m_overlays.size();
-  }
+  void AcceptMessage(ref_ptr<df::Message>) override {}
 };
 
-class CountedShape : public df::MapShape
-{
-public:
-  explicit CountedShape(size_t & destroyed) : m_destroyed(destroyed) {}
-  ~CountedShape() override { ++m_destroyed; }
-  void Draw(ref_ptr<dp::GraphicsContext>, ref_ptr<dp::Batcher>, ref_ptr<dp::TextureManager>) const override {}
-
-private:
-  size_t & m_destroyed;
-};
 }  // namespace
-
-UNIT_TEST(TileReadBatch_CoalescesGeometryAndDropsCancelledTile)
-{
-  df::ThreadsCommutator commutator;
-  TileBatchReceiver receiver(commutator);
-  df::TileKey const key(df::TileKey(1, 1, 15), 7, 9);
-  df::EngineContext context(key, make_ref(&commutator), nullptr, nullptr, {}, false, false, false, 0,
-                            dp::BackgroundMode::Default, 0.5f);
-  size_t destroyed = 0;
-  auto flush = [&]
-  {
-    for (size_t i = 0; i < 1000; ++i)
-    {
-      df::TMapShapes shapes;
-      shapes.push_back(make_unique_dp<CountedShape>(destroyed));
-      context.Flush(std::move(shapes));
-    }
-    df::TMapShapes overlays;
-    overlays.push_back(make_unique_dp<CountedShape>(destroyed));
-    context.FlushOverlays(std::move(overlays));
-  };
-  context.BeginReadTile();
-  flush();
-  receiver.Drain();
-  TEST_EQUAL(receiver.m_messages, 0, ("Individual features must not fill the upload queue"));
-  context.EndReadTile();
-  receiver.Drain();
-  TEST_EQUAL(receiver.m_messages, 1, ());
-  TEST_EQUAL(receiver.m_geometry, 1000, ());
-  TEST_EQUAL(receiver.m_overlays, 1, ());
-  TEST(receiver.m_key.EqualStrict(key), ("Retain generations for validation before upload"));
-  TEST_EQUAL(destroyed, 1001, ());
-
-  context.BeginReadTile();
-  flush();
-  context.EndReadTile(true);
-  receiver.Drain();
-  TEST_EQUAL(receiver.m_messages, 1, ("Cancelled reads must release CPU geometry without uploading it"));
-  TEST_EQUAL(destroyed, 2002, ());
-}
 
 using ReadCoverageFixture = df::test_support::VisualParamsFixture;
 
@@ -113,7 +48,6 @@ UNIT_CLASS_TEST(ReadCoverageFixture, TileReadBatch_CoverageKeysDoNotInvalidateRe
 {
   df::ThreadsCommutator commutator;
   TileBatchReceiver receiver(commutator);
-  receiver.m_onlyBatches = false;
   df::MapDataProvider model([](auto const &, auto const &, int) {}, [](auto const &, auto const &) {},
                             [](std::string_view) { return true; }, [](auto const &, int) {},
                             [](auto const &, auto) { return false; }, [](auto const &, auto) {});

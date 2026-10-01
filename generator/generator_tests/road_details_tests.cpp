@@ -85,6 +85,53 @@ UNIT_TEST(RoadJunctions_MultipleLinksAndConcurrentLookups)
   other.join();
 }
 
+UNIT_TEST(RoadJunctions_LinksSurviveCacheEvictionAndReaderDestruction)
+{
+  platform::tests_support::ScopedFile file("road-junction-cache.mwm",
+                                           platform::tests_support::ScopedFile::Mode::Create);
+  std::vector<feature::RoadJunction> junctions(4096);
+  for (uint32_t id = 0; id < junctions.size(); ++id)
+  {
+    auto & junction = junctions[id];
+    junction.m_ownerFeatureId = id;
+    junction.m_center = {static_cast<double>(id), 1.0};
+    feature::RoadJunctionArm arm;
+    arm.m_featureId = id;
+    arm.m_widthsCm = {350, 375};
+    arm.m_turns = {RoadDetails::Through, RoadDetails::Right};
+    junction.m_arms.push_back(arm);
+  }
+  {
+    FilesContainerW container(file.GetFullPath());
+    feature::RoadJunctions::Write(*container.GetWriter(ROAD_JUNCTIONS_FILE_TAG), junctions);
+  }
+  auto reader = feature::RoadJunctions::Load(FilesContainerR(file.GetFullPath()));
+  auto held = reader->Get(0);
+  TEST_EQUAL(held.size(), 1, ());
+  std::weak_ptr<feature::RoadJunction const> owner = held.front().m_owner;
+  TEST(!owner.expired(), ());
+  auto const churn = [&]
+  {
+    for (uint32_t id = 1; id < junctions.size(); ++id)
+    {
+      auto const links = reader->Get(id);
+      TEST_EQUAL(links.size(), 1, ());
+      TEST_EQUAL(links.front().m_junction->m_center, junctions[id].m_center, ());
+      TEST_EQUAL(links.front().Arm().m_widthsCm, junctions[id].m_arms.front().m_widthsCm, ());
+    }
+  };
+  std::thread other(churn);
+  churn();
+  other.join();
+  reader.reset();
+  TEST(!owner.expired(), ());
+  TEST_EQUAL(held.front().m_junction, owner.lock().get(), ());
+  TEST_EQUAL(held.front().Arm().m_turns, junctions[0].m_arms.front().m_turns, ());
+  TEST_EQUAL(held.front().Arm().WidthMeters(), 7.25, ());
+  held.clear();
+  TEST(owner.expired(), ());
+}
+
 UNIT_TEST(RoadDetails_ExplicitFiveLanes)
 {
   auto const details =

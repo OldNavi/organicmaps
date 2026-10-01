@@ -30,9 +30,12 @@ node sequence as an optional trailing extension. Older records are still read.
 The spatial index includes road footprints and junction patches. Immutable
 section data is shared across active MwmValues through the existing MwmInfo
 weak-cache lifetime; tile readers do not each expand the complete junction table.
-They do not share FileReader's mutable cache. Junction data is read sequentially
-into a temporary memory region and uses a sorted, flat feature-to-arm lookup,
-avoiding per-field file-cache lookups and per-road hash/vector allocations.
+They do not share FileReader's mutable cache. Junction bytes stay serialized in
+an immutable memory region. The first junction query builds a compact offset
+table and sorted feature-to-arm lookup; individual junctions are then decoded
+into a shared 1024-slot cache instead of expanding every arm and lane in the
+region. Returned links retain their decoded record across cache eviction and
+reader destruction. All existing section versions remain readable.
 The automotive renderer retains GPU tiles and contexts when its window surface
 is hidden, so reopening the existing Activity does not rebuild the map scene. Existing maps without these sections keep the original renderer.
 Existing routing lane guidance remains unchanged.

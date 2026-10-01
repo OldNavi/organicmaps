@@ -75,7 +75,7 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
     {
       auto labels = std::make_shared<RoadLabelOcclusion>();
       auto decks = std::make_shared<RoadDecks>();
-      std::set<feature::RoadJunction const *> labelJunctions;
+      std::map<feature::RoadJunction const *, feature::RoadJunctionLink> labelJunctions;
       auto const bridgeDeckType = classif().GetTypeByPath({"man_made", "bridge"});
       ApplyFeatureParams labelParams;
       labelParams.Init(GetTileKey());
@@ -117,7 +117,7 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
         labels->Add(layer, width, std::move(geometry));
         for (auto const & link : junctions)
           if (link.m_junction->m_ownerFeatureId == feature.GetID().m_index &&
-              labelJunctions.insert(link.m_junction).second)
+              labelJunctions.emplace(link.m_junction, link).second)
             labels->AddJunction(layer, *link.m_junction);
       }, m_featureInfo);
       drawer.SetRoadLabelOcclusion(std::move(labels));

@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <vector>
 
@@ -129,14 +130,13 @@ class RoadDetailsReader
 public:
   static std::unique_ptr<RoadDetailsReader> Load(FilesContainerR const & container);
   std::optional<RoadDetails> Get(uint32_t featureId) const;
-  RoadJunctions::Links GetJunctions(uint32_t id) const
-  {
-    return m_junctions ? m_junctions->Get(id) : RoadJunctions::Links{};
-  }
+  RoadJunctions::Links GetJunctions(uint32_t id) const;
   uint64_t Count() const { return m_index->Count(); }
 
 private:
-  std::unique_ptr<RoadJunctions> m_junctions;
+  mutable std::once_flag m_junctionsOnce;
+  mutable std::unique_ptr<MemoryRegion> m_junctionData;
+  mutable std::unique_ptr<RoadJunctions> m_junctions;
   std::vector<uint8_t> m_data;
   std::unique_ptr<Reader> m_reader;
   std::unique_ptr<MapUint32ToValue<RoadDetails>> m_index;

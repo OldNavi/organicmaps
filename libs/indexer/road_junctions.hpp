@@ -5,8 +5,11 @@
 
 #include "coding/files_container.hpp"
 
+#include "base/cache.hpp"
+
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace feature
@@ -44,6 +47,8 @@ struct RoadJunctionLink
 {
   RoadJunction const * m_junction = nullptr;
   size_t m_armIndex = 0;
+  // Keep an on-demand record alive after its cache slot is reused. Generator links may be non-owning.
+  std::shared_ptr<RoadJunction const> m_owner = {};
   explicit operator bool() const { return m_junction != nullptr; }
   RoadJunctionArm const & Arm() const { return m_junction->m_arms[m_armIndex]; }
 };
@@ -53,11 +58,17 @@ class RoadJunctions
 public:
   using Links = std::vector<RoadJunctionLink>;
   static std::unique_ptr<RoadJunctions> Load(FilesContainerR const & container);
+  static std::unique_ptr<RoadJunctions> Load(std::unique_ptr<MemoryRegion> data);
   static void Write(Writer & writer, std::vector<RoadJunction> const & junctions);
   Links Get(uint32_t featureId) const;
 
 private:
-  std::vector<RoadJunction> m_junctions;
+  std::unique_ptr<MemoryRegion> m_data;
+  std::vector<uint64_t> m_offsets;
+  uint8_t m_version = 0;
+  // Immutable serialized bytes and a compact lookup are shared by all tile workers.
+  mutable std::mutex m_cacheMutex;
+  mutable base::Cache<uint32_t, std::shared_ptr<RoadJunction const>> m_cache{10};
   struct LinkIndex
   {
     uint32_t m_featureId;

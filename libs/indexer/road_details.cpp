@@ -65,7 +65,8 @@ std::unique_ptr<RoadDetailsReader> RoadDetailsReader::Load(FilesContainerR const
       values.emplace_back().Read(input, version);
   });
   CHECK(result->m_index, ());
-  result->m_junctions = RoadJunctions::Load(container);
+  if (container.IsExist(ROAD_JUNCTIONS_FILE_TAG))
+    result->m_junctionData = container.GetMemoryRegion(ROAD_JUNCTIONS_FILE_TAG);
   return result;
 }
 
@@ -75,6 +76,16 @@ std::optional<RoadDetails> RoadDetailsReader::Get(uint32_t featureId) const
   if (m_index->GetThreadsafe(featureId, details))
     return details;
   return {};
+}
+
+RoadJunctions::Links RoadDetailsReader::GetJunctions(uint32_t id) const
+{
+  std::call_once(m_junctionsOnce, [this]
+  {
+    if (m_junctionData)
+      m_junctions = RoadJunctions::Load(std::move(m_junctionData));
+  });
+  return m_junctions ? m_junctions->Get(id) : RoadJunctions::Links{};
 }
 
 void RoadDetailsBuilder::Freeze(Writer & writer) const

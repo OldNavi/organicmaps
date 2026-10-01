@@ -1,7 +1,9 @@
 #include "testing/testing.hpp"
 
 #include "generator/affiliation.hpp"
+#include "generator/cross_mwm_osm_ways_collector.hpp"
 #include "generator/feature_builder.hpp"
+#include "generator/osm_element.hpp"
 
 #include "indexer/classificator.hpp"
 #include "indexer/classificator_loader.hpp"
@@ -180,6 +182,40 @@ UNIT_CLASS_TEST(AffiliationTests, CountriesFilesAffiliationTests)
 UNIT_CLASS_TEST(AffiliationTests, CountriesFilesIndexAffiliationTests)
 {
   TestCountriesFilesAffiliation<feature::CountriesFilesIndexAffiliation>(AffiliationTests::GetBorderPath());
+}
+
+UNIT_CLASS_TEST(AffiliationTests, PartialBordersWithinOneIndexCell)
+{
+  feature::CountriesFilesIndexAffiliation indexed(GetBorderPath(), false);
+  feature::CountriesFilesAffiliation exact(GetBorderPath(), false);
+  // Both points lie in one index cell, but only one lies inside the supplied polygon.
+  auto const inside = mercator::FromLatLon(3.99, 1.06);
+  auto const outside = mercator::FromLatLon(3.94, 1.03);
+  TEST(Test(exact.GetAffiliations(inside), {kOne}), ());
+  TEST(exact.GetAffiliations(outside).empty(), ());
+  TEST_EQUAL(indexed.GetAffiliations(inside), exact.GetAffiliations(inside), ());
+  TEST_EQUAL(indexed.GetAffiliations(outside), exact.GetAffiliations(outside), ());
+  TEST(indexed.GetAffiliations(MakeLineFb({outside, mercator::FromLatLon(3.95, 1.02)})).empty(), ());
+  TEST(Test(indexed.GetAffiliations(MakeLineFb({outside, inside})), {kOne}), ());
+}
+
+UNIT_CLASS_TEST(AffiliationTests, PartialBordersKeepCrossMwmTransition)
+{
+  auto affiliation = std::make_shared<feature::CountriesFilesIndexAffiliation>(GetBorderPath(), false);
+  generator::CrossMwmOsmWaysCollector collector(GetBorderPath(), affiliation);
+  OsmElement way;
+  way.m_id = 1;
+  way.m_type = OsmElement::EntityType::Way;
+  collector.CollectFeature(MakeLineFb({mercator::FromLatLon(3.99, 1.06), mercator::FromLatLon(3.94, 1.03)}), way);
+  collector.Finalize();
+  auto const transitions = generator::CrossMwmOsmWaysCollector::CrossMwmInfo::LoadFromFileToSet(
+      base::JoinPath(GetBorderPath(), CROSS_MWM_OSM_WAYS_DIR, kOne));
+  TEST_EQUAL(transitions.size(), 1, ());
+  auto const & transition = *transitions.begin();
+  TEST_EQUAL(transition.m_osmId, base::MakeOsmWay(1).GetEncodedId(), ());
+  TEST_EQUAL(transition.m_crossMwmSegments.size(), 1, ());
+  TEST_EQUAL(transition.m_crossMwmSegments.front().m_segmentId, 0, ());
+  TEST(!transition.m_crossMwmSegments.front().m_forwardIsEnter, ());
 }
 
 UNIT_TEST(Lithuania_Belarus_Border)

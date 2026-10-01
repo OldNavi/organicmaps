@@ -22,3 +22,8 @@ set(
 )
 
 add_library(${PROJECT_NAME} ${SRC})
+
+if (NOT MSVC)
+  # The sweep predicates rely on consistent floating-point comparisons for nearly coincident edges.
+  target_compile_options(${PROJECT_NAME} PRIVATE -fno-fast-math -ffp-contract=off)
+endif()

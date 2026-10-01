@@ -130,6 +130,7 @@ UNIT_TEST(ShapeBatch_CancellationDropsPendingAndIncomingShapesBeforeEnqueue)
   auto geometry = MakeShapes(7, 130, destroyed);
   read->Flush(std::move(geometry));
   TEST(geometry.empty(), ());
+  TEST_EQUAL(destroyed, 137, ("The producer releases both buffered and incoming geometry"));
   auto overlays = MakeShapes(137, 9, destroyed);
   read->FlushOverlays(std::move(overlays));
   TEST(overlays.empty(), ());

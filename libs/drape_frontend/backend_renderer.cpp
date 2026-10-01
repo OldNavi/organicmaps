@@ -211,8 +211,7 @@ void BackendRenderer::AcceptMessage(ref_ptr<Message> message)
     auto tiles = msg->MoveTiles();
 #ifdef OMIM_AUTO
     // Old completion messages must not recreate marks for a discarded zoom/generation.
-    std::erase_if(tiles, [this](auto const & key)
-    { return !m_readManager->CheckTileGeneration(key); });
+    std::erase_if(tiles, [this](auto const & key) { return !m_readManager->CheckTileGeneration(key); });
     if (tiles.empty())
       break;
 #endif

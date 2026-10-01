@@ -46,6 +46,11 @@ void EngineContext::Flush(TMapShapes && shapes)
   size_t constexpr kShapesPerBatch = 64;
   for (auto & shape : shapes)
   {
+    if (IsCancelled())
+    {
+      m_geometry.clear();
+      break;
+    }
     if (m_geometry.empty())
       m_geometry.reserve(kShapesPerBatch);
     m_geometry.push_back(std::move(shape));
@@ -76,6 +81,8 @@ void EngineContext::FlushOverlays(TMapShapes && shapes)
 
 void EngineContext::FlushTrafficGeometry(TrafficSegmentsGeometry && geometry)
 {
+  if (IsCancelled())
+    return;
   m_commutator->PostMessage(ThreadsCommutator::ResourceUploadThread,
                             make_unique_dp<FlushTrafficGeometryMessage>(m_tileKey, std::move(geometry)),
                             MessagePriority::Low);

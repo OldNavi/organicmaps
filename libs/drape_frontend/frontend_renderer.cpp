@@ -2067,6 +2067,9 @@ void FrontendRenderer::RenderFrame()
     // responsive because CheckRenderingEnabled() runs immediately after this RenderFrame returns.
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   };
+#ifdef DRAPE_QUEUE_TRACE
+  TraceMessageQueue("frontend");
+#endif
 
   CHECK(m_context != nullptr, ());
   if (!m_context->Validate())

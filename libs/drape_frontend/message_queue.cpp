@@ -72,6 +72,9 @@ void MessageQueue::PushMessage(drape_ptr<Message> && message, MessagePriority pr
       if (iter->second == priority && iter->first->GetType() == message->GetType())
       {
         iter->first = std::move(message);
+#ifdef DRAPE_QUEUE_TRACE
+        ++m_trace.m_types[type].m_rejected;
+#endif
         m_condition.notify_one();
         return;
       }

@@ -135,6 +135,11 @@ are retained beside the pictogram. A total `lanes:psv` count alone does not loca
 a lane. This visual designation does not change routing access restrictions.
 
 Geometry is prepared on tile workers and cached in the normal tile/GPU pipeline.
+Geometry uploads are grouped into at most 64 shapes per message. Cancellation is
+attached to each read, so retired payloads can be removed from the upload queue
+before GPU work. Overlay batches remain whole and read start/end messages remain
+paired. Pending viewport requests do not invalidate an accepted read; the atomic
+viewport snapshot and coalesced invalidation flags are retained.
 Dash phase is assigned before tile clipping. Shapes batch all surface/marking
 triangles rather than allocating a render object for every dash. Sharp,
 degenerate geometry retains the ordinary line fallback. This does not change

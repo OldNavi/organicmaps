@@ -18,6 +18,8 @@
 #include "base/logging.hpp"
 #include "base/scope_guard.hpp"
 
+#include "defines.hpp"
+
 #include <limits>
 
 namespace
@@ -111,6 +113,8 @@ RoutesBuilder::RoutesBuilder(size_t threadsNumber) : m_threadPool(threadsNumber)
   for (auto const & localFile : localFiles)
   {
     auto const & countryFile = localFile.GetCountryFile();
+    if (countryFile.GetName() == WORLD_FILE_NAME || countryFile.GetName() == WORLD_COASTS_FILE_NAME)
+      continue;
     // Only maps from countries.json should be used.
     if (!m_cpg->GetStorageForTesting().IsLeaf(countryFile.GetName()))
       continue;

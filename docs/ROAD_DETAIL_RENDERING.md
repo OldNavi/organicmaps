@@ -184,6 +184,17 @@ union of the stock Moscow, Moscow Oblast East and Moscow Oblast West borders,
 with complete ways and multipolygon/boundary members retained where available.
 Build commands and artifacts live in `build-root-auto/maps-260927/`.
 
+When preparing regional maps that will be used with official neighboring maps,
+keep the full stock border catalogue available while collecting cross-MWM ways.
+This includes neighbors outside the source extract, especially for ways ending
+exactly on a border. Only distribute regions fully covered by the source.
+Do not enable `have_borders_for_whole_world` with a partial border catalogue.
+Partial-border affiliation must check the actual polygons, even when an index
+cell has only one candidate country. After changing this logic, regenerate both
+`cross_mwm_osm_ways` and the `cross_mwm` sections with their routing weights;
+updating `road_details` alone cannot repair interregional routing. Validate routes
+across the outer boundary against the neighboring maps that users have installed.
+
 An offline geometry audit of the generated regions exercised 619,963 road
 profiles and 725,571 junctions without an assertion or crash. This checks geometry
 construction, not visual fidelity at every junction or frame-time performance.

@@ -130,7 +130,7 @@ std::optional<std::string> IsOneCountryForLimitRect(m2::RectD const & limitRect,
 }
 
 template <typename T>
-std::vector<std::string> GetHonestAffiliations(T && t, IndexSharedPtr const & index)
+std::vector<std::string> GetHonestAffiliations(T && t, IndexSharedPtr const & index, bool haveBordersForWholeWorld)
 {
   std::vector<std::string> affiliations;
   std::unordered_set<borders::CountryPolygons const *> countires;
@@ -140,7 +140,7 @@ std::vector<std::string> GetHonestAffiliations(T && t, IndexSharedPtr const & in
     boost::geometry::index::query(*index, boost::geometry::index::covers(point), std::back_inserter(values));
     for (auto const & v : values)
     {
-      if (v.second.size() == 1)
+      if (haveBordersForWholeWorld && v.second.size() == 1)
       {
         borders::CountryPolygons const & cp = v.second.front();
         if (countires.insert(&cp).second)
@@ -159,10 +159,16 @@ std::vector<std::string> GetHonestAffiliations(T && t, IndexSharedPtr const & in
 }
 
 template <typename T>
-std::vector<std::string> GetAffiliations(T && t, IndexSharedPtr const & index)
+std::vector<std::string> GetAffiliations(T && t, IndexSharedPtr const & index, bool haveBordersForWholeWorld)
 {
-  auto const oneCountry = IsOneCountryForLimitRect(GetLimitRect(t), index);
-  return oneCountry ? std::vector<std::string>{*oneCountry} : GetHonestAffiliations(t, index);
+  // With a regional extract, a single-country cell may extend beyond the supplied borders.
+  if (haveBordersForWholeWorld)
+  {
+    auto const oneCountry = IsOneCountryForLimitRect(GetLimitRect(t), index);
+    if (oneCountry)
+      return {*oneCountry};
+  }
+  return GetHonestAffiliations(t, index, haveBordersForWholeWorld);
 }
 }  // namespace affiliation
 
@@ -217,12 +223,12 @@ CountriesFilesIndexAffiliation::CountriesFilesIndexAffiliation(std::string const
 
 std::vector<std::string> CountriesFilesIndexAffiliation::GetAffiliations(FeatureBuilder const & fb) const
 {
-  return affiliation::GetAffiliations(fb, m_index);
+  return affiliation::GetAffiliations(fb, m_index, m_haveBordersForWholeWorld);
 }
 
 std::vector<std::string> CountriesFilesIndexAffiliation::GetAffiliations(m2::PointD const & point) const
 {
-  return affiliation::GetAffiliations(point, m_index);
+  return affiliation::GetAffiliations(point, m_index, m_haveBordersForWholeWorld);
 }
 
 std::shared_ptr<CountriesFilesIndexAffiliation::Tree> CountriesFilesIndexAffiliation::BuildIndex(

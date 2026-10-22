@@ -6,9 +6,13 @@
 #include "drape_frontend/message_subclasses.hpp"
 #include "drape_frontend/metaline_manager.hpp"
 #include "drape_frontend/read_manager.hpp"
-#include "drape_frontend/tile_info.hpp"
 #include "drape_frontend/requested_tiles.hpp"
+#include "drape_frontend/tile_info.hpp"
 #include "drape_frontend/visual_params.hpp"
+
+#include "indexer/classificator.hpp"
+#include "indexer/classificator_loader.hpp"
+#include "indexer/feature.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -231,6 +235,39 @@ UNIT_TEST(ReadCancellation_IndexCancellationPreservesLifecycle)
     TEST_EQUAL(receiver.m_types, (std::vector<Type>{Type::TileReadStarted, Type::TileReadEnded}), ());
   }
 }
+
+#ifdef OMIM_AUTO
+UNIT_TEST(ReadCancellation_RoadDetailPassStopsBeforeDrawing)
+{
+  classificator::Load();
+  df::VisualParams::Init(1.0, 1024);
+  df::ThreadsCommutator commutator;
+  ReadReceiver receiver(commutator);
+  df::TileInfo * readingTile = nullptr;
+  size_t featurePasses = 0;
+  df::MapDataProvider model([](auto const & callback, auto const &, int) { callback(FeatureID{}); },
+                            [&](auto const & callback, auto const &)
+  {
+    ++featurePasses;
+    readingTile->Cancel();
+    FeatureType feature(FeatureID{}, classif().GetTypeByPath({"highway", "primary"}));
+    callback(feature);
+  }, [](std::string_view) { return true; }, [](auto const &, int) {}, [](auto const &, auto) { return false; },
+                            [](auto const &, auto) {});
+  df::MetalineManager metalines(make_ref(&commutator), model);
+  auto context = make_unique_dp<df::EngineContext>(df::TileKey(1, 2, 17), make_ref(&commutator), nullptr,
+                                                   make_ref(&metalines), df::CustomFeaturesContextWeakPtr{}, false,
+                                                   false, false, 0, dp::BackgroundMode::Default, 1.0f);
+  df::TileInfo tile(std::move(context));
+  readingTile = &tile;
+  tile.ReadFeatures(model);
+  receiver.Drain();
+  TEST_EQUAL(featurePasses, 1, ("Cancellation during road-label preparation must skip the drawing pass"));
+  TEST_EQUAL(receiver.m_types,
+             (std::vector<df::Message::Type>{df::Message::Type::TileReadStarted, df::Message::Type::TileReadEnded}),
+             ());
+}
+#endif
 
 class ReadCoverageFixture
 {

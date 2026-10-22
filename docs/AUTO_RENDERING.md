@@ -70,10 +70,15 @@ final physical presentation still depends on its compositor/output pipeline.
 
 ## Rendering changes
 
-- Reader threads send geometry/overlays as one completed tile batch. Cancelled
-  reads release CPU data; obsolete generations are checked before GPU work.
+- Reader threads send geometry in batches of at most 64 shapes and keep overlays
+  together. Per-read cancellation releases obsolete queued payloads before GPU
+  work, while start/end messages remain paired. Cancellation during road-detail
+  preparation stops before the drawing pass without throwing an exception.
   Coverage lookup remains independent of generation because viewport keys do not
   carry one. Only completed reads use the strict generation check.
+- Tile coverage, camera parameters and invalidation flags are consumed as one
+  atomic viewport snapshot. Force flags remain latched until consumption, and
+  retired-cell tracking preserves redraws across coalesced A-to-B-to-A requests.
 - Camera sectors with the same local origin and minimum zoom share a batcher.
   The frontend still replaces the full area snapshot atomically.
 - Each renderer owns a GL buffer cache capped at 16 MiB of unused storage. A frame's
@@ -97,7 +102,8 @@ final physical presentation still depends on its compositor/output pipeline.
   lane-control cameras and other road warnings retain the user's category settings.
 
 Regression tests are in `drape_tests` (GLBufferPool/GPUBuffer, FrameCadence),
-`drape_frontend_tests` (TileReadBatch, DrivingPoiPolicy, UserAreas, ScaledTarget,
+`drape_frontend_tests` (ShapeBatch, ReadCancellation, RequestedTiles, TileReadBatch,
+DrivingPoiPolicy, UserAreas, ScaledTarget,
 MyPosition precision), and SDK `RenderConfigTest`. Configure C++ with
 `-DOMIM_AUTO=ON` to exercise the guarded paths. Graphics tests require a real GL
 context: a Qt plugin that skips context creation does not validate them merely

@@ -753,7 +753,7 @@ void RoutingManager::CreateRouteAltMarks(routing::RoutesResult const & result)
 
   auto const generation = m_routeAltMarksGeneration;
   GetPlatform().RunTask(Platform::Thread::Gui,
-                       [this, routesId = result.m_routesId, generation, infos = std::move(infos)]()
+                        [this, routesId = result.m_routesId, generation, infos = std::move(infos)]()
   {
     // A queued balloon must still belong to the current planning result and visibility generation.
     if (generation != m_routeAltMarksGeneration || !IsRoutingActive() || m_routingSession.IsFollowing())

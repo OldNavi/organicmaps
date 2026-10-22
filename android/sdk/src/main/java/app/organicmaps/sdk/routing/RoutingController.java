@@ -178,9 +178,12 @@ public class RoutingController
       if (mLastResultCode == ResultCodes.HAS_WARNINGS)
         mContainer.onDrivingOptionsWarning();
       updatePlan();
-      MapObject startPoint = getStartPoint();
-      boolean startNow = mStartAfterBuild && mLastResultCode == ResultCodes.NO_ERROR && isPlanning() && isBuilt()
-                      && startPoint != null && startPoint.isMyPosition();
+      boolean startNow = mStartAfterBuild && mLastResultCode == ResultCodes.NO_ERROR && isPlanning() && isBuilt();
+      if (startNow)
+      {
+        MapObject startPoint = getStartPoint();
+        startNow = startPoint != null && startPoint.isMyPosition();
+      }
       mStartAfterBuild = false;
       if (startNow)
       {

@@ -121,6 +121,8 @@ void TileInfo::ReadFeatures(MapDataProvider const & model)
               labelJunctions.emplace(link.m_junction, link).second)
             labels->AddJunction(layer, *link.m_junction);
       }, m_featureInfo);
+      if (IsCancelled())
+        return;
       drawer.SetRoadLabelOcclusion(std::move(labels));
       drawer.SetRoadDecks(std::move(decks));
     }

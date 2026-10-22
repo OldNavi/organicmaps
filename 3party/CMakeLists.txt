@@ -97,5 +97,3 @@ add_subdirectory(succinct)
 add_subdirectory(vulkan_wrapper)
 
 add_subdirectory(libtess2)
-
-
